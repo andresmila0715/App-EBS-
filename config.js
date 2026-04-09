@@ -87,7 +87,7 @@ const SHEETS_URLS = {
   'La Belleza': {
     carto:       'https://script.google.com/macros/s/REEMPLAZAR_LABELLEZA_CARTO/exec',
     recoleccion: 'https://script.google.com/macros/s/REEMPLAZAR_LABELLEZA_RECOLECCION/exec',
-    macro:       'https://script.google.com/macros/s/REEMPLAZAR_LABELLEZA_MACRO/exec',
+    macro:       'https://script.google.com/macros/s/AKfycbxIhQ29PNqvYy__USCB_fEdiSum3yF9DwybKY_u9_0T52RDODHJdx1GTqCqhEOBR8SP/exec',
   },
 
   'Sucre': {
