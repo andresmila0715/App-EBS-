@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ebs-app-v4';
+const CACHE_NAME = 'ebs-app-v5';
 
 // Archivos que se guardan para funcionar sin internet
 const ASSETS = [
@@ -31,21 +31,50 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Al hacer fetch: primero caché, si falla intenta red
+// Al hacer fetch:
+// - Navegación e index.html: network-first (mejor para actualizaciones)
+// - Estáticos: cache-first
 self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+
   // Las llamadas a Google Sheets siempre van por red
   if (event.request.url.includes('script.google.com')) {
     event.respondWith(fetch(event.request).catch(() => new Response('', { status: 503 })));
     return;
   }
 
+  const reqUrl = new URL(event.request.url);
+  const isSameOrigin = reqUrl.origin === self.location.origin;
+  const isNavRequest = event.request.mode === 'navigate';
+  const isIndexRequest = reqUrl.pathname === '/' || reqUrl.pathname.endsWith('/index.html');
+
+  // HTML principal: intenta red primero para traer la ultima version.
+  if (isSameOrigin && (isNavRequest || isIndexRequest)) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put('/index.html', clone));
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match('/index.html');
+          return cached || new Response('Sin conexion y sin cache disponible', { status: 503 });
+        })
+    );
+    return;
+  }
+
+  // Demas recursos: cache-first con respaldo de red.
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
       return fetch(event.request).then(response => {
-        // Guarda en caché la respuesta nueva
+        // Guarda respuestas del mismo origen para offline.
         const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        if (isSameOrigin) {
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
         return response;
       }).catch(() => caches.match('/index.html'));
     })
