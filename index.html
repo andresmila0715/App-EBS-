@@ -374,66 +374,21 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
             <span class="sub-chev">▼</span>
           </div>
           <div class="sub-body" id="subbody-familiograma">
-            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px">Complete los datos de cada generación y el familiograma se dibujará automáticamente.</p>
-
-            <div class="sdiv">Abuelos Paternos</div>
-            <div class="frow">
-              <div class="ff"><label>Nombre Abuelo Paterno</label><input type="text" id="fg-abp-nombre" placeholder="Nombre completo"></div>
-              <div class="ff"><label>Año de Nacimiento</label><input type="number" id="fg-abp-anio" placeholder="Ej: 1940" min="1900" max="2024"></div>
-            </div>
-            <div class="frow">
-              <div class="ff"><label>Estado de Salud / Fallecimiento</label><select id="fg-abp-estado"><option value="">—</option><option>Vivo/a</option><option>Fallecido/a</option><option>Enfermedad crónica</option><option>Desconocido</option></select></div>
-              <div class="ff"><label>Enfermedad relevante</label><input type="text" id="fg-abp-enf" placeholder="Ej: HTA, Diabetes, N/A"></div>
-            </div>
-            <div class="frow">
-              <div class="ff"><label>Nombre Abuela Paterna</label><input type="text" id="fg-abm-nombre" placeholder="Nombre completo"></div>
-              <div class="ff"><label>Año de Nacimiento</label><input type="number" id="fg-abm-anio" placeholder="Ej: 1943" min="1900" max="2024"></div>
-            </div>
-            <div class="frow">
-              <div class="ff"><label>Estado de Salud / Fallecimiento</label><select id="fg-abm-estado"><option value="">—</option><option>Vivo/a</option><option>Fallecido/a</option><option>Enfermedad crónica</option><option>Desconocido</option></select></div>
-              <div class="ff"><label>Enfermedad relevante</label><input type="text" id="fg-abm-enf" placeholder="Ej: HTA, Diabetes, N/A"></div>
+            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px">Agregue familiar por familiar y seleccione el parentesco. El familiograma se dibuja automáticamente con los datos anexados.</p>
+            <div class="ff">
+              <label>Tipo de Relación de Pareja (Padre y Madre)</label>
+              <select id="fg-relacion">
+                <option value="">—</option>
+                <option value="matrimonio">Matrimonio</option>
+                <option value="union_libre">Unión Libre</option>
+                <option value="separados">Separados</option>
+                <option value="comprometidos">Compromiso</option>
+              </select>
             </div>
 
-            <div class="sdiv">Abuelos Maternos</div>
-            <div class="frow">
-              <div class="ff"><label>Nombre Abuelo Materno</label><input type="text" id="fg-abmp-nombre" placeholder="Nombre completo"></div>
-              <div class="ff"><label>Año de Nacimiento</label><input type="number" id="fg-abmp-anio" placeholder="Ej: 1945" min="1900" max="2024"></div>
-            </div>
-            <div class="frow">
-              <div class="ff"><label>Estado de Salud / Fallecimiento</label><select id="fg-abmp-estado"><option value="">—</option><option>Vivo/a</option><option>Fallecido/a</option><option>Enfermedad crónica</option><option>Desconocido</option></select></div>
-              <div class="ff"><label>Enfermedad relevante</label><input type="text" id="fg-abmp-enf" placeholder="Ej: HTA, Diabetes, N/A"></div>
-            </div>
-            <div class="frow">
-              <div class="ff"><label>Nombre Abuela Materna</label><input type="text" id="fg-abmm-nombre" placeholder="Nombre completo"></div>
-              <div class="ff"><label>Año de Nacimiento</label><input type="number" id="fg-abmm-anio" placeholder="Ej: 1948" min="1900" max="2024"></div>
-            </div>
-            <div class="frow">
-              <div class="ff"><label>Estado de Salud / Fallecimiento</label><select id="fg-abmm-estado"><option value="">—</option><option>Vivo/a</option><option>Fallecido/a</option><option>Enfermedad crónica</option><option>Desconocido</option></select></div>
-              <div class="ff"><label>Enfermedad relevante</label><input type="text" id="fg-abmm-enf" placeholder="Ej: HTA, Diabetes, N/A"></div>
-            </div>
-
-            <div class="sdiv">Padres (Generación 2)</div>
-            <div class="frow">
-              <div class="ff"><label>Nombre del Padre</label><input type="text" id="fg-padre-nombre" placeholder="Nombre completo" oninput="dibujarFamiliograma()"></div>
-              <div class="ff"><label>Año de Nacimiento</label><input type="number" id="fg-padre-anio" placeholder="Ej: 1970" min="1900" max="2024" oninput="dibujarFamiliograma()"></div>
-            </div>
-            <div class="frow">
-              <div class="ff"><label>Estado de Salud / Fallecimiento</label><select id="fg-padre-estado" onchange="dibujarFamiliograma()"><option value="">—</option><option>Vivo/a</option><option>Fallecido/a</option><option>Enfermedad crónica</option></select></div>
-              <div class="ff"><label>Enfermedad relevante</label><input type="text" id="fg-padre-enf" placeholder="Ej: HTA, N/A" oninput="dibujarFamiliograma()"></div>
-            </div>
-            <div class="frow">
-              <div class="ff"><label>Nombre de la Madre</label><input type="text" id="fg-madre-nombre" placeholder="Nombre completo" oninput="dibujarFamiliograma()"></div>
-              <div class="ff"><label>Año de Nacimiento</label><input type="number" id="fg-madre-anio" placeholder="Ej: 1973" min="1900" max="2024" oninput="dibujarFamiliograma()"></div>
-            </div>
-            <div class="frow">
-              <div class="ff"><label>Estado de Salud / Fallecimiento</label><select id="fg-madre-estado" onchange="dibujarFamiliograma()"><option value="">—</option><option>Vivo/a</option><option>Fallecido/a</option><option>Enfermedad crónica</option></select></div>
-              <div class="ff"><label>Enfermedad relevante</label><input type="text" id="fg-madre-enf" placeholder="Ej: HTA, N/A" oninput="dibujarFamiliograma()"></div>
-            </div>
-            <div class="ff"><label>Tipo de Relación de Pareja</label><select id="fg-relacion" onchange="dibujarFamiliograma()"><option value="">—</option><option value="matrimonio">Matrimonio</option><option value="union_libre">Unión Libre</option><option value="separados">Separados</option><option value="comprometidos">Compromiso</option></select></div>
-
-            <div class="sdiv">Hijos (Generación 3)</div>
-            <div id="fg-hijos-container"></div>
-            <button class="btn-add-int" onclick="agregarHijo()" style="margin-bottom:14px">＋ Agregar Hijo/a</button>
+            <div class="sdiv">Familiares Anexados</div>
+            <div id="fg-miembros-container"></div>
+            <button class="btn-add-int" onclick="agregarFamiliar()" style="margin-bottom:14px">＋ Agregar Familiar</button>
 
             <div class="sdiv">Vista del Familiograma</div>
             <canvas id="familiograma-canvas" style="width:100%;border:1.5px solid var(--border);border-radius:10px;background:#fafafa;display:block"></canvas>
@@ -825,6 +780,7 @@ function initApp() {
   if (online) syncAll();
   setInterval(() => { if (online) syncAll(); }, 30000);
   addIntegrante();
+  agregarFamiliar();
   bindFamiliogramaEvents();
   dibujarFamiliograma();
 }
@@ -983,8 +939,9 @@ function clearF(tipo) {
     document.querySelectorAll('#sub-adgar select, #sub-adgar textarea').forEach(el => el.value = '');
     document.querySelectorAll('#sub-zarit select, #sub-zarit textarea').forEach(el => el.value = '');
     document.querySelectorAll('#sub-ecomapa select, #sub-ecomapa textarea').forEach(el => el.value = '');
-    document.getElementById('fg-hijos-container').innerHTML = '';
-    hijosCount = 0;
+    document.getElementById('fg-miembros-container').innerHTML = '';
+    familiaresCount = 0;
+    agregarFamiliar();
     dibujarFamiliograma();
     calcZarit();
   } else if (tipo === 'macro') {
@@ -1401,28 +1358,74 @@ function toggleSub(id) {
 }
 
 // ── FAMILIOGRAMA ────────────────────────────────────────────
-let hijosCount = 0;
+let familiaresCount = 0;
 
-function agregarHijo() {
-  hijosCount++;
-  const n = hijosCount;
+function agregarFamiliar() {
+  familiaresCount++;
+  const n = familiaresCount;
   const div = document.createElement('div');
   div.className = 'int-card';
-  div.id = 'hijo-' + n;
+  div.id = 'familiar-' + n;
   div.innerHTML = `
-    <span class="int-num">Hijo/a #${n}</span>
-    ${n > 1 ? `<button class="btn-rm-int" onclick="document.getElementById('hijo-${n}').remove();dibujarFamiliograma()">✕</button>` : ''}
-    <div class="frow">
-      <div class="ff"><label>Nombre</label><input type="text" id="fg-h${n}-nombre" placeholder="Nombre completo" oninput="dibujarFamiliograma()"></div>
-      <div class="ff"><label>Año de Nacimiento</label><input type="number" id="fg-h${n}-anio" placeholder="Ej: 2005" min="1950" max="2026" oninput="dibujarFamiliograma()"></div>
+    <span class="int-num">Familiar #${n}</span>
+    ${n > 1 ? `<button class="btn-rm-int" onclick="removeFamiliar(${n})">✕</button>` : ''}
+    <div class="frow3">
+      <div class="ff">
+        <label>Parentesco</label>
+        <select id="fg-f${n}-parentesco">
+          <option value="">— Seleccionar —</option>
+          <option value="padre">Padre</option>
+          <option value="madre">Madre</option>
+          <option value="hijo">Hijo/a</option>
+          <option value="abuelo_paterno">Abuelo paterno</option>
+          <option value="abuela_paterna">Abuela paterna</option>
+          <option value="abuelo_materno">Abuelo materno</option>
+          <option value="abuela_materna">Abuela materna</option>
+          <option value="hermano">Hermano/a</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="ff"><label>Nombre</label><input type="text" id="fg-f${n}-nombre" placeholder="Nombre completo"></div>
+      <div class="ff"><label>Año de Nacimiento</label><input type="number" id="fg-f${n}-anio" placeholder="Ej: 1998" min="1900" max="2026"></div>
     </div>
     <div class="frow">
-      <div class="ff"><label>Género</label><select id="fg-h${n}-genero" onchange="dibujarFamiliograma()"><option value="">—</option><option value="M">Masculino</option><option value="F">Femenino</option></select></div>
-      <div class="ff"><label>Estado de Salud</label><select id="fg-h${n}-estado" onchange="dibujarFamiliograma()"><option value="">—</option><option>Sano/a</option><option>Enfermedad crónica</option><option>Fallecido/a</option></select></div>
-    </div>`;
-  document.getElementById('fg-hijos-container').appendChild(div);
+      <div class="ff"><label>Género</label><select id="fg-f${n}-genero"><option value="">—</option><option value="M">Masculino</option><option value="F">Femenino</option></select></div>
+      <div class="ff"><label>Estado de Salud / Fallecimiento</label><select id="fg-f${n}-estado"><option value="">—</option><option>Vivo/a</option><option>Fallecido/a</option><option>Enfermedad crónica</option><option>Desconocido</option></select></div>
+    </div>
+    <div class="ff"><label>Observación breve</label><input type="text" id="fg-f${n}-nota" placeholder="Ej: Cuidador principal, vive fuera, etc."></div>
+  `;
+  document.getElementById('fg-miembros-container').appendChild(div);
   bindFamiliogramaEvents();
   dibujarFamiliograma();
+}
+
+function removeFamiliar(n) {
+  document.getElementById('familiar-' + n)?.remove();
+  dibujarFamiliograma();
+}
+
+function getFamiliogramaMiembros() {
+  const gv2 = id => document.getElementById(id)?.value || '';
+  const miembros = [];
+  document.querySelectorAll('[id^="familiar-"]').forEach(card => {
+    const n = card.id.replace('familiar-', '');
+    const m = {
+      parentesco: gv2(`fg-f${n}-parentesco`),
+      nombre: gv2(`fg-f${n}-nombre`),
+      anio: gv2(`fg-f${n}-anio`),
+      genero: gv2(`fg-f${n}-genero`),
+      estado: gv2(`fg-f${n}-estado`),
+      nota: gv2(`fg-f${n}-nota`)
+    };
+    if (m.parentesco || m.nombre || m.anio || m.estado || m.nota) miembros.push(m);
+  });
+  return miembros;
+}
+
+function pickFirst(miembros, parentesco, fallbackGenero) {
+  const p = miembros.find(m => m.parentesco === parentesco);
+  if (p) return { ...p, genero: p.genero || fallbackGenero };
+  return { nombre: '', anio: '', estado: '', genero: fallbackGenero, parentesco };
 }
 
 function dibujarFamiliograma() {
@@ -1435,8 +1438,6 @@ function dibujarFamiliograma() {
   canvas.width = W;
   canvas.height = H;
   ctx.clearRect(0, 0, W, H);
-
-  const gv2 = id => document.getElementById(id)?.value || '';
 
   const colorM = '#005f73';
   const colorF = '#d11d5b';
@@ -1540,13 +1541,14 @@ function dibujarFamiliograma() {
     }
   }
 
-  const abueloPaterno = { nombre: gv2('fg-abp-nombre'), anio: gv2('fg-abp-anio'), estado: gv2('fg-abp-estado') };
-  const abuelaPaterna = { nombre: gv2('fg-abm-nombre'), anio: gv2('fg-abm-anio'), estado: gv2('fg-abm-estado') };
-  const abueloMaterno = { nombre: gv2('fg-abmp-nombre'), anio: gv2('fg-abmp-anio'), estado: gv2('fg-abmp-estado') };
-  const abuelaMaterna = { nombre: gv2('fg-abmm-nombre'), anio: gv2('fg-abmm-anio'), estado: gv2('fg-abmm-estado') };
-  const padre = { nombre: gv2('fg-padre-nombre'), anio: gv2('fg-padre-anio'), estado: gv2('fg-padre-estado') };
-  const madre = { nombre: gv2('fg-madre-nombre'), anio: gv2('fg-madre-anio'), estado: gv2('fg-madre-estado') };
-  const relacion = gv2('fg-relacion');
+  const miembros = getFamiliogramaMiembros();
+  const relacion = document.getElementById('fg-relacion')?.value || '';
+  const abueloPaterno = pickFirst(miembros, 'abuelo_paterno', 'M');
+  const abuelaPaterna = pickFirst(miembros, 'abuela_paterna', 'F');
+  const abueloMaterno = pickFirst(miembros, 'abuelo_materno', 'M');
+  const abuelaMaterna = pickFirst(miembros, 'abuela_materna', 'F');
+  const padre = pickFirst(miembros, 'padre', 'M');
+  const madre = pickFirst(miembros, 'madre', 'F');
 
   const gen1y = 72;
   const gen2y = 205;
@@ -1590,17 +1592,14 @@ function dibujarFamiliograma() {
   drawPerson(padreX, gen2y, padre, 'M');
   drawPerson(madreX, gen2y, madre, 'F');
 
-  const hijoCards = document.querySelectorAll('[id^="hijo-"]');
-  const hijos = [...hijoCards].map(card => {
-    const n = card.id.replace('hijo-', '');
-    return {
-      nombre: gv2(`fg-h${n}-nombre`),
-      anio: gv2(`fg-h${n}-anio`),
-      genero: gv2(`fg-h${n}-genero`) || 'M',
-      estado: gv2(`fg-h${n}-estado`)
-    };
-  });
+  const hijos = miembros
+    .filter(m => m.parentesco === 'hijo')
+    .map(h => ({ ...h, genero: h.genero || 'M' }));
   const hijosConDatos = hijos.filter(h => hasData(h));
+
+  const hermanos = miembros
+    .filter(m => m.parentesco === 'hermano' && hasData(m))
+    .map(h => ({ ...h, genero: h.genero || 'M' }));
 
   if (hijosConDatos.length && (hasData(padre) || hasData(madre))) {
     const midX = (padreX + madreX) / 2;
@@ -1617,6 +1616,20 @@ function dibujarFamiliograma() {
       const hx = hijosConDatos.length === 1 ? midX : startX + spacing * idx;
       drawLine(hx, dropY, hx, gen3y - 14);
       drawPerson(hx, gen3y, h, h.genero);
+    });
+  }
+
+  if (hermanos.length) {
+    const yH = gen2y + 98;
+    const spacingH = Math.max(44, Math.min(82, (W - 80) / Math.max(hermanos.length, 2)));
+    const startXH = W * 0.15;
+    ctx.font = '10px DM Sans, sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'left';
+    ctx.fillText('Hermanos/as', startXH, yH - 22);
+    hermanos.forEach((h, idx) => {
+      const x = startXH + spacingH * idx;
+      if (x < W - 20) drawPerson(x, yH, h, h.genero);
     });
   }
 
@@ -1719,11 +1732,7 @@ function getRecoleccionData() {
   const gv2 = id => document.getElementById(id)?.value || '';
   
   // Familiograma
-  const hijos = [];
-  document.querySelectorAll('[id^="hijo-"]').forEach(card => {
-    const n = card.id.replace('hijo-','');
-    hijos.push({nombre:gv2(`fg-h${n}-nombre`),anio:gv2(`fg-h${n}-anio`),genero:gv2(`fg-h${n}-genero`),estado:gv2(`fg-h${n}-estado`)});
-  });
+  const miembros = getFamiliogramaMiembros();
   
   // Zarit score
   let zaritTotal = 0;
@@ -1731,14 +1740,9 @@ function getRecoleccionData() {
   
   return {
     familiograma: {
-      abueloPaterno:  { nombre:gv2('fg-abp-nombre'), anio:gv2('fg-abp-anio'), estado:gv2('fg-abp-estado'), enf:gv2('fg-abp-enf') },
-      abuelaPaterna:  { nombre:gv2('fg-abm-nombre'), anio:gv2('fg-abm-anio'), estado:gv2('fg-abm-estado'), enf:gv2('fg-abm-enf') },
-      abueloMaterno:  { nombre:gv2('fg-abmp-nombre'),anio:gv2('fg-abmp-anio'),estado:gv2('fg-abmp-estado'),enf:gv2('fg-abmp-enf') },
-      abuelaMaterna:  { nombre:gv2('fg-abmm-nombre'),anio:gv2('fg-abmm-anio'),estado:gv2('fg-abmm-estado'),enf:gv2('fg-abmm-enf') },
-      padre:  { nombre:gv2('fg-padre-nombre'), anio:gv2('fg-padre-anio'), estado:gv2('fg-padre-estado'), enf:gv2('fg-padre-enf') },
-      madre:  { nombre:gv2('fg-madre-nombre'), anio:gv2('fg-madre-anio'), estado:gv2('fg-madre-estado'), enf:gv2('fg-madre-enf') },
       relacionPareja: gv2('fg-relacion'),
-      hijos, obs: gv2('fg-obs')
+      miembros,
+      obs: gv2('fg-obs')
     },
     adgar: {
       banio:gv2('adgar-banio'),vestir:gv2('adgar-vestir'),sanitario:gv2('adgar-sanitario'),
