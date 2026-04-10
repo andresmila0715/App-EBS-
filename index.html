@@ -406,12 +406,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
             <div style="display:flex;justify-content:flex-end;margin-top:8px">
               <button class="btn-pri" type="button" onclick="descargarFamiliograma()">⬇ Descargar imagen</button>
             </div>
-            <div style="margin-top:10px;border:1.5px solid var(--border);border-radius:10px;padding:10px;background:#fff">
-              <div style="font-size:.75rem;font-weight:700;color:var(--primary);margin-bottom:6px">Leyenda del familiograma</div>
-              <div style="font-size:.73rem;color:var(--text-muted);line-height:1.55">
-                □ Hombre · ○ Mujer · Figura amarilla: caso índice · X: fallecido/a · Doble borde naranja: enfermedad crónica
-                <br>
-                Línea sólida: pareja/matrimonio · Línea azul punteada: compromiso · Líneas rojas dobles: separados · Línea vertical: descendencia
+            <div style="margin-top:10px;border:1.5px solid var(--border);border-radius:12px;padding:10px;background:rgba(255,255,255,.95);box-shadow:var(--shadow-sm)">
+              <div style="font-size:.78rem;font-weight:700;color:var(--primary);margin-bottom:8px">Simbología del familiograma</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:.73rem;color:var(--text-muted)">
+                <div>□ Hombre</div>
+                <div>○ Mujer</div>
+                <div>🟨 Caso índice</div>
+                <div>✕ Fallecido/a</div>
+                <div>🟧 Enfermedad crónica</div>
+                <div>┃ Descendencia</div>
+                <div>— Matrimonio / unión</div>
+                <div>┈ Compromiso</div>
               </div>
             </div>
 
@@ -1785,22 +1790,45 @@ function dibujarFamiliograma() {
   }
 
   // Leyenda dentro del canvas (sale en la imagen descargada).
-  const lx = 12;
-  const ly = H - 64;
-  const lw = Math.min(520, W - 24);
-  const lh = 52;
+  const lw = Math.min(280, W - 24);
+  const lh = 108;
+  const lx = W - lw - 12;
+  const ly = H - lh - 10;
   ctx.save();
-  ctx.fillStyle = 'rgba(255,255,255,0.95)';
-  ctx.strokeStyle = '#cbd5e1';
-  ctx.lineWidth = 1;
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 1.2;
   ctx.fillRect(lx, ly, lw, lh);
   ctx.strokeRect(lx, ly, lw, lh);
-  ctx.fillStyle = '#334155';
-  ctx.font = 'bold 10px DM Sans, sans-serif';
-  ctx.fillText('Leyenda', lx + 8, ly + 13);
+
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 12px DM Sans, sans-serif';
+  ctx.fillText('Simbologia', lx + 10, ly + 16);
+
+  const sx = lx + 12;
+  let sy = ly + 32;
+  const row = 16;
   ctx.font = '10px DM Sans, sans-serif';
-  ctx.fillText('□ Hombre   ○ Mujer   Amarillo: caso indice   X: fallecido/a', lx + 8, ly + 29);
-  ctx.fillText('Borde naranja: enfermedad cronica   Linea vertical: descendencia', lx + 8, ly + 44);
+  ctx.fillStyle = '#334155';
+
+  ctx.fillText('□ Hombre', sx, sy);
+  ctx.fillText('○ Mujer', sx + 120, sy);
+  sy += row;
+
+  ctx.fillText('🟨 Caso indice', sx, sy);
+  ctx.fillText('✕ Fallecido/a', sx + 120, sy);
+  sy += row;
+
+  ctx.fillText('🟧 Enfermedad cronica', sx, sy);
+  ctx.fillText('┃ Descendencia', sx + 120, sy);
+  sy += row;
+
+  // Muestras de lineas
+  ctx.fillText('Matrimonio / union', sx + 46, sy);
+  drawLine(sx, sy - 3, sx + 36, sy - 3, 'solid');
+  sy += row;
+  ctx.fillText('Compromiso', sx + 46, sy);
+  drawLine(sx, sy - 3, sx + 36, sy - 3, 'dashed');
   ctx.restore();
 }
 
