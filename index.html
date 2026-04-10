@@ -825,6 +825,8 @@ function initApp() {
   if (online) syncAll();
   setInterval(() => { if (online) syncAll(); }, 30000);
   addIntegrante();
+  bindFamiliogramaEvents();
+  dibujarFamiliograma();
 }
 
 function selMuni(m) {
@@ -983,6 +985,7 @@ function clearF(tipo) {
     document.querySelectorAll('#sub-ecomapa select, #sub-ecomapa textarea').forEach(el => el.value = '');
     document.getElementById('fg-hijos-container').innerHTML = '';
     hijosCount = 0;
+    dibujarFamiliograma();
     calcZarit();
   } else if (tipo === 'macro') {
     ['m-fecha','m-vereda','m-microterritorio','m-auxiliar','m-familia','m-casa','m-telefono','m-sisben']
@@ -1418,6 +1421,7 @@ function agregarHijo() {
       <div class="ff"><label>Estado de Salud</label><select id="fg-h${n}-estado" onchange="dibujarFamiliograma()"><option value="">—</option><option>Sano/a</option><option>Enfermedad crónica</option><option>Fallecido/a</option></select></div>
     </div>`;
   document.getElementById('fg-hijos-container').appendChild(div);
+  bindFamiliogramaEvents();
   dibujarFamiliograma();
 }
 
@@ -1425,70 +1429,79 @@ function dibujarFamiliograma() {
   const canvas = document.getElementById('familiograma-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  
-  // Setup canvas size
+
   const W = canvas.offsetWidth || 400;
-  const H = 300;
+  const H = 460;
   canvas.width = W;
   canvas.height = H;
   ctx.clearRect(0, 0, W, H);
 
   const gv2 = id => document.getElementById(id)?.value || '';
-  const cx = W / 2;
 
-  // Colors
   const colorM = '#005f73';
   const colorF = '#d11d5b';
   const colorText = '#1a2332';
-  const colorLine = '#333';
+  const colorLine = '#334155';
+  const frameStroke = '#cbd5e1';
+  const frameFill = '#f8fafc';
 
-  function drawPerson(x, y, nombre, anio, genero, estado, highlight) {
-    const size = 28;
-    ctx.save();
-    // Shadow for highlight
-    if (highlight) { ctx.shadowColor = 'rgba(0,95,115,0.3)'; ctx.shadowBlur = 8; }
-    
+  function hasData(person) {
+    return Boolean(person.nombre || person.anio || person.estado);
+  }
+
+  function shortName(nombre) {
+    const parts = (nombre || '').trim().split(/\s+/).filter(Boolean);
+    return parts.slice(0, 2).join(' ').substring(0, 18);
+  }
+
+  function drawPerson(x, y, person, genero) {
+    const size = 24;
+    const estado = person?.estado || '';
+    const anio = person?.anio || '';
+    const nombre = person?.nombre || '';
     const color = genero === 'F' ? colorF : colorM;
+
+    ctx.save();
     ctx.strokeStyle = color;
-    ctx.lineWidth = highlight ? 3 : 2;
-    ctx.fillStyle = highlight ? (genero === 'F' ? '#fff0f3' : '#f0f9ff') : '#fff';
-    
+    ctx.lineWidth = 2;
+    ctx.fillStyle = '#fff';
     if (genero === 'F') {
-      // Circle for female
       ctx.beginPath();
-      ctx.arc(x, y, size/2, 0, Math.PI*2);
-      ctx.fill(); ctx.stroke();
+      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     } else {
-      // Square for male
       ctx.beginPath();
-      ctx.rect(x - size/2, y - size/2, size, size);
-      ctx.fill(); ctx.stroke();
+      ctx.rect(x - size / 2, y - size / 2, size, size);
+      ctx.fill();
+      ctx.stroke();
     }
-    
-    // Fallecido: X inside
+
     if (estado === 'Fallecido/a') {
-      ctx.strokeStyle = '#666'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(x-size/2+4, y-size/2+4); ctx.lineTo(x+size/2-4, y+size/2-4); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x+size/2-4, y-size/2+4); ctx.lineTo(x-size/2+4, y+size/2-4); ctx.stroke();
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x - size / 2 + 4, y - size / 2 + 4);
+      ctx.lineTo(x + size / 2 - 4, y + size / 2 - 4);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x + size / 2 - 4, y - size / 2 + 4);
+      ctx.lineTo(x - size / 2 + 4, y + size / 2 - 4);
+      ctx.stroke();
     }
-    
     ctx.restore();
-    
-    // Año
+
     if (anio) {
       ctx.font = '10px DM Sans, sans-serif';
       ctx.fillStyle = '#64748b';
       ctx.textAlign = 'center';
-      ctx.fillText(anio, x, y - size/2 - 4);
+      ctx.fillText(anio, x, y - 18);
     }
-    
-    // Nombre (primeros 10 chars)
     if (nombre) {
       ctx.font = 'bold 9px DM Sans, sans-serif';
       ctx.fillStyle = colorText;
       ctx.textAlign = 'center';
-      const parts = nombre.split(' ');
-      ctx.fillText(parts.slice(0,2).join(' ').substring(0,12), x, y + size/2 + 12);
+      ctx.fillText(shortName(nombre), x, y + 22);
     }
   }
 
@@ -1496,82 +1509,131 @@ function dibujarFamiliograma() {
     ctx.save();
     ctx.strokeStyle = colorLine;
     ctx.lineWidth = 1.5;
-    if (style === 'dashed') { ctx.setLineDash([5,3]); ctx.strokeStyle = '#3b82f6'; }
-    if (style === 'green') { ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2; }
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    if (style === 'dashed') {
+      ctx.setLineDash([5, 3]);
+      ctx.strokeStyle = '#2563eb';
+    }
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
     ctx.restore();
   }
 
-  // Get data
-  const padreNombre = gv2('fg-padre-nombre');
-  const padreAnio   = gv2('fg-padre-anio');
-  const madreNombre = gv2('fg-madre-nombre');
-  const madreAnio   = gv2('fg-madre-anio');
-  const relacion    = gv2('fg-relacion');
-  const padreEstado = gv2('fg-padre-estado');
-  const madreEstado = gv2('fg-madre-estado');
-
-  // Positions
-  const gen2y = 120;
-  const gen3y = 230;
-  const padreX = cx - 60;
-  const madreX = cx + 60;
-
-  // Draw parents
-  if (padreNombre || madreNombre) {
-    // Line between parents
-    const lineStyle = relacion === 'comprometidos' ? 'dashed' : 'solid';
-    if (relacion === 'separados') {
-      drawLine(padreX + 14, gen2y, madreX - 14, gen2y, 'solid');
-      // Double slash
-      ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(cx-4, gen2y-6); ctx.lineTo(cx+4, gen2y+6); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(cx+2, gen2y-6); ctx.lineTo(cx+10, gen2y+6); ctx.stroke();
-    } else {
-      drawLine(padreX + 14, gen2y, madreX - 14, gen2y, lineStyle);
+  function drawCouple(p1x, p2x, y, relationType) {
+    const lineStyle = relationType === 'comprometidos' ? 'dashed' : 'solid';
+    drawLine(p1x + 12, y, p2x - 12, y, lineStyle);
+    if (relationType === 'separados') {
+      const cx = (p1x + p2x) / 2;
+      ctx.save();
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - 5, y - 7);
+      ctx.lineTo(cx + 3, y + 7);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + 2, y - 7);
+      ctx.lineTo(cx + 10, y + 7);
+      ctx.stroke();
+      ctx.restore();
     }
   }
 
-  drawPerson(padreX, gen2y, padreNombre, padreAnio, 'M', padreEstado, false);
-  drawPerson(madreX, gen2y, madreNombre, madreAnio, 'F', madreEstado, false);
+  const abueloPaterno = { nombre: gv2('fg-abp-nombre'), anio: gv2('fg-abp-anio'), estado: gv2('fg-abp-estado') };
+  const abuelaPaterna = { nombre: gv2('fg-abm-nombre'), anio: gv2('fg-abm-anio'), estado: gv2('fg-abm-estado') };
+  const abueloMaterno = { nombre: gv2('fg-abmp-nombre'), anio: gv2('fg-abmp-anio'), estado: gv2('fg-abmp-estado') };
+  const abuelaMaterna = { nombre: gv2('fg-abmm-nombre'), anio: gv2('fg-abmm-anio'), estado: gv2('fg-abmm-estado') };
+  const padre = { nombre: gv2('fg-padre-nombre'), anio: gv2('fg-padre-anio'), estado: gv2('fg-padre-estado') };
+  const madre = { nombre: gv2('fg-madre-nombre'), anio: gv2('fg-madre-anio'), estado: gv2('fg-madre-estado') };
+  const relacion = gv2('fg-relacion');
 
-  // Children
+  const gen1y = 72;
+  const gen2y = 205;
+  const gen3y = 328;
+  const pMidX = W * 0.32;
+  const mMidX = W * 0.68;
+  const abueloDx = Math.max(34, Math.min(58, W * 0.08));
+
+  const abpX = pMidX - abueloDx;
+  const abmX = pMidX + abueloDx;
+  const abmpX = mMidX - abueloDx;
+  const abmmX = mMidX + abueloDx;
+  const padreX = pMidX;
+  const madreX = mMidX;
+
+  ctx.save();
+  ctx.fillStyle = frameFill;
+  ctx.strokeStyle = frameStroke;
+  ctx.lineWidth = 1;
+  ctx.fillRect(8, 8, W - 16, H - 50);
+  ctx.strokeRect(8, 8, W - 16, H - 50);
+  ctx.restore();
+
+  if (hasData(abueloPaterno) || hasData(abuelaPaterna)) {
+    drawCouple(abpX, abmX, gen1y, 'matrimonio');
+    drawLine((abpX + abmX) / 2, gen1y + 12, padreX, gen2y - 14);
+  }
+  if (hasData(abueloMaterno) || hasData(abuelaMaterna)) {
+    drawCouple(abmpX, abmmX, gen1y, 'matrimonio');
+    drawLine((abmpX + abmmX) / 2, gen1y + 12, madreX, gen2y - 14);
+  }
+
+  drawPerson(abpX, gen1y, abueloPaterno, 'M');
+  drawPerson(abmX, gen1y, abuelaPaterna, 'F');
+  drawPerson(abmpX, gen1y, abueloMaterno, 'M');
+  drawPerson(abmmX, gen1y, abuelaMaterna, 'F');
+
+  if (hasData(padre) || hasData(madre)) {
+    drawCouple(padreX, madreX, gen2y, relacion);
+  }
+  drawPerson(padreX, gen2y, padre, 'M');
+  drawPerson(madreX, gen2y, madre, 'F');
+
   const hijoCards = document.querySelectorAll('[id^="hijo-"]');
-  const numHijos = hijoCards.length;
-  
-  if (numHijos > 0 && (padreNombre || madreNombre)) {
+  const hijos = [...hijoCards].map(card => {
+    const n = card.id.replace('hijo-', '');
+    return {
+      nombre: gv2(`fg-h${n}-nombre`),
+      anio: gv2(`fg-h${n}-anio`),
+      genero: gv2(`fg-h${n}-genero`) || 'M',
+      estado: gv2(`fg-h${n}-estado`)
+    };
+  });
+  const hijosConDatos = hijos.filter(h => hasData(h));
+
+  if (hijosConDatos.length && (hasData(padre) || hasData(madre))) {
     const midX = (padreX + madreX) / 2;
-    const dropY = gen2y + 30;
-    
-    // Vertical line down from couple
-    drawLine(midX, gen2y + 14, midX, dropY);
-    
-    // Horizontal bar
-    const spacing = Math.min(70, (W - 60) / (numHijos + 1));
-    const startX = midX - (spacing * (numHijos - 1)) / 2;
-    
-    if (numHijos > 1) {
-      drawLine(startX, dropY, startX + spacing * (numHijos - 1), dropY);
+    const dropY = gen2y + 34;
+    drawLine(midX, gen2y + 12, midX, dropY);
+
+    const spacing = Math.max(46, Math.min(88, (W - 80) / Math.max(hijosConDatos.length, 2)));
+    const startX = midX - (spacing * (hijosConDatos.length - 1)) / 2;
+    if (hijosConDatos.length > 1) {
+      drawLine(startX, dropY, startX + spacing * (hijosConDatos.length - 1), dropY);
     }
-    
-    hijoCards.forEach((card, idx) => {
-      const n = card.id.replace('hijo-', '');
-      const hNombre = gv2(`fg-h${n}-nombre`);
-      const hAnio   = gv2(`fg-h${n}-anio`);
-      const hGenero = gv2(`fg-h${n}-genero`) || 'M';
-      const hEstado = gv2(`fg-h${n}-estado`);
-      
-      const hx = numHijos === 1 ? midX : startX + spacing * idx;
+
+    hijosConDatos.forEach((h, idx) => {
+      const hx = hijosConDatos.length === 1 ? midX : startX + spacing * idx;
       drawLine(hx, dropY, hx, gen3y - 14);
-      drawPerson(hx, gen3y, hNombre, hAnio, hGenero, hEstado, false);
+      drawPerson(hx, gen3y, h, h.genero);
     });
   }
 
-  // Label
   ctx.font = '10px DM Sans, sans-serif';
-  ctx.fillStyle = '#94a3b8';
+  ctx.fillStyle = '#64748b';
   ctx.textAlign = 'left';
-  ctx.fillText('□ Masculino  ○ Femenino  ⊠ Fallecido/a', 8, H - 8);
+  ctx.fillText('□ Masculino   ○ Femenino   X Fallecido/a   --- Compromiso', 12, H - 16);
+}
+
+function bindFamiliogramaEvents() {
+  const selector = '#sub-familiograma input, #sub-familiograma select';
+  document.querySelectorAll(selector).forEach(el => {
+    if (el.dataset.fgBound === '1') return;
+    const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+    el.addEventListener(evt, dibujarFamiliograma);
+    el.dataset.fgBound = '1';
+  });
 }
 
 // ── ZARIT ────────────────────────────────────────────────────
@@ -1646,7 +1708,10 @@ function toggleSub(id) {
   block.classList.toggle('open', !isOpen);
   body.style.display = isOpen ? 'none' : 'block';
   if (!isOpen && id === 'zarit') initZarit();
-  if (!isOpen && id === 'familiograma') { setTimeout(dibujarFamiliograma, 100); }
+  if (!isOpen && id === 'familiograma') {
+    bindFamiliogramaEvents();
+    setTimeout(dibujarFamiliograma, 100);
+  }
 }
 
 // ── Collect all Recoleccion sub-data ──────────────────────────
