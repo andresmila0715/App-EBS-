@@ -1789,47 +1789,105 @@ function dibujarFamiliograma() {
     });
   }
 
-  // Leyenda dentro del canvas (sale en la imagen descargada).
-  const lw = Math.min(280, W - 24);
-  const lh = 108;
-  const lx = W - lw - 12;
-  const ly = H - lh - 10;
-  ctx.save();
-  ctx.fillStyle = 'rgba(255,255,255,0.88)';
-  ctx.strokeStyle = '#94a3b8';
-  ctx.lineWidth = 1.2;
-  ctx.fillRect(lx, ly, lw, lh);
-  ctx.strokeRect(lx, ly, lw, lh);
+  // ── LEYENDA ESTÉTICA ────────────────────────────────────
+  (function drawLegend() {
+    const PAD    = 12;
+    const COLW   = 152;
+    const COLS   = 2;
+    const ROW_H  = 22;
+    const items  = [
+      { label: 'Hombre',             type: 'square',   color: '#005f73', fill: '#fff'     },
+      { label: 'Mujer',              type: 'circle',   color: '#d11d5b', fill: '#fff'     },
+      { label: 'Caso índice',        type: 'square',   color: '#005f73', fill: '#fef9c3'  },
+      { label: 'Fallecido/a',        type: 'cross',    color: '#64748b', fill: '#f1f5f9'  },
+      { label: 'Enfermedad crónica', type: 'double',   color: '#f97316', fill: '#fff'     },
+      { label: 'Matrimonio / Unión', type: 'line',     color: '#334155', dash: []         },
+      { label: 'Compromiso',         type: 'line',     color: '#2563eb', dash: [4,3]      },
+      { label: 'Separados',          type: 'break',    color: '#dc2626', fill: '#fff'     },
+    ];
+    const ROWS  = Math.ceil(items.length / COLS);
+    const LW    = PAD * 2 + COLW * COLS;
+    const LH    = 28 + PAD + ROWS * ROW_H + PAD / 2;
+    const LX    = W - LW - 12;
+    const LY    = H - LH - 10;
+    const R     = 6;
 
-  ctx.fillStyle = '#0f172a';
-  ctx.font = 'bold 12px DM Sans, sans-serif';
-  ctx.fillText('Simbologia', lx + 10, ly + 16);
+    ctx.save();
+    ctx.shadowColor   = 'rgba(0,0,0,0.18)';
+    ctx.shadowBlur    = 10;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = 'rgba(255,255,255,0.97)';
+    ctx.beginPath();
+    ctx.roundRect(LX, LY, LW, LH, R);
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
 
-  const sx = lx + 12;
-  let sy = ly + 32;
-  const row = 16;
-  ctx.font = '10px DM Sans, sans-serif';
-  ctx.fillStyle = '#334155';
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(LX, LY, LW, LH, R);
+    ctx.stroke();
 
-  ctx.fillText('□ Hombre', sx, sy);
-  ctx.fillText('○ Mujer', sx + 120, sy);
-  sy += row;
+    ctx.fillStyle = '#003d4d';
+    ctx.beginPath();
+    ctx.roundRect(LX, LY, LW, 26, [R, R, 0, 0]);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 10px DM Sans, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('SIMBOLOGÍA', LX + PAD, LY + 17);
 
-  ctx.fillText('🟨 Caso indice', sx, sy);
-  ctx.fillText('✕ Fallecido/a', sx + 120, sy);
-  sy += row;
+    ctx.fillStyle = '#d11d5b';
+    ctx.fillRect(LX, LY + 26, LW, 2);
 
-  ctx.fillText('🟧 Enfermedad cronica', sx, sy);
-  ctx.fillText('┃ Descendencia', sx + 120, sy);
-  sy += row;
+    items.forEach((item, idx) => {
+      const col  = idx % COLS;
+      const row  = Math.floor(idx / COLS);
+      const iy   = LY + 28 + PAD + row * ROW_H + ROW_H / 2;
+      const symX = LX + PAD + col * COLW + 10;
+      const txtX = symX + 20;
 
-  // Muestras de lineas
-  ctx.fillText('Matrimonio / union', sx + 46, sy);
-  drawLine(sx, sy - 3, sx + 36, sy - 3, 'solid');
-  sy += row;
-  ctx.fillText('Compromiso', sx + 46, sy);
-  drawLine(sx, sy - 3, sx + 36, sy - 3, 'dashed');
-  ctx.restore();
+      ctx.save();
+      const S = 7;
+      if (item.type === 'square') {
+        ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.fillStyle = item.fill;
+        ctx.beginPath(); ctx.rect(symX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke();
+      } else if (item.type === 'circle') {
+        ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.fillStyle = item.fill;
+        ctx.beginPath(); ctx.arc(symX, iy, S, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      } else if (item.type === 'cross') {
+        ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.fillStyle = item.fill;
+        ctx.beginPath(); ctx.rect(symX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(symX-S+3,iy-S+3); ctx.lineTo(symX+S-3,iy+S-3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(symX+S-3,iy-S+3); ctx.lineTo(symX-S+3,iy+S-3); ctx.stroke();
+      } else if (item.type === 'double') {
+        ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.fillStyle = item.fill;
+        ctx.beginPath(); ctx.rect(symX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke();
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.rect(symX-S-3, iy-S-3, S*2+6, S*2+6); ctx.stroke();
+      } else if (item.type === 'line') {
+        ctx.strokeStyle = item.color; ctx.lineWidth = 2;
+        ctx.setLineDash(item.dash || []);
+        ctx.beginPath(); ctx.moveTo(symX-S-2, iy); ctx.lineTo(symX+S+2, iy); ctx.stroke();
+        ctx.setLineDash([]);
+      } else if (item.type === 'break') {
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(symX-S-2, iy); ctx.lineTo(symX+S+2, iy); ctx.stroke();
+        ctx.strokeStyle = item.color; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(symX-3,iy-5); ctx.lineTo(symX+2,iy+5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(symX+2,iy-5); ctx.lineTo(symX+7,iy+5); ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.font = '9.5px DM Sans, sans-serif';
+      ctx.fillStyle = '#334155';
+      ctx.textAlign = 'left';
+      ctx.fillText(item.label, txtX, iy + 3.5);
+    });
+
+    ctx.restore();
+  })();
 }
 
 function descargarFamiliograma() {
