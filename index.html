@@ -337,6 +337,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           <div class="ff"><label>Riesgo</label><select id="c1-riesgo"><option value="">— Seleccionar —</option><option>Riesgo Bajo</option><option>Riesgo Medio</option><option>Riesgo Alto</option><option>Vacía</option></select></div>
           <div class="ff"><label>Convenciones</label><select id="c1-conv"><option value="">— Seleccionar —</option><option>Efectiva</option><option>No Efectiva</option></select></div>
         </div>
+        <div class="ff"><label>Patologías</label><textarea id="c1-patologias" placeholder="Describa las patologías o enfermedades identificadas..."></textarea></div>
         <div class="ff"><label>Observaciones</label><textarea id="c1-obs" placeholder="Observaciones..."></textarea></div>
         <div class="ff"><label>Identificación de la Familia</label><input type="text" id="c1-idfam" placeholder="Apellidos de la familia"></div>
         <div class="factions">
@@ -939,7 +940,7 @@ function getIntData(n) {
 // ── Limpiar formularios ─────────────────────────────────────
 function clearF(tipo) {
   if (tipo === 'carto') {
-    ['c1-casa','c1-familia','c1-obs','c1-idfam','c1-coord'].forEach(i => document.getElementById(i).value = '');
+    ['c1-casa','c1-familia','c1-patologias','c1-obs','c1-idfam','c1-coord'].forEach(i => document.getElementById(i).value = '');
     ['c1-riesgo','c1-conv'].forEach(i => document.getElementById(i).value = '');
     document.getElementById('c1-foto').value = '';
     document.getElementById('c1-prev').style.display = 'none';
@@ -990,7 +991,7 @@ async function saveR(tipo) {
     Object.assign(registro, {
       casa: gv('c1-casa'), familia: gv('c1-familia'),
       coord: gv('c1-coord'), riesgo: gv('c1-riesgo'),
-      conv: gv('c1-conv'), obs: gv('c1-obs'),
+      conv: gv('c1-conv'), patologias: gv('c1-patologias'), obs: gv('c1-obs'),
       idFam: gv('c1-idfam'),
       foto: fotoData['c1-prev'] || null
     });
@@ -1124,6 +1125,7 @@ function buildFields(r) {
       <div class="rfield"><strong>Convenciones</strong>${r.conv || '—'}</div>
       <div class="rfield"><strong>Coordenada</strong>${r.coord || '—'}</div>
       <div class="rfield"><strong>ID Familia</strong>${r.idFam || '—'}</div>
+      <div class="rfield" style="grid-column:1/-1"><strong>Patologías</strong>${r.patologias || '—'}</div>
       <div class="rfield" style="grid-column:1/-1"><strong>Observaciones</strong>${r.obs || '—'}</div>
       ${r.foto ? `<div class="rfield" style="grid-column:1/-1"><strong>Foto</strong><img src="${r.foto}" style="width:100%;max-height:140px;object-fit:cover;border-radius:7px;margin-top:5px"></div>` : ''}`;
   }
@@ -1189,6 +1191,7 @@ function openEdit(id, tipo) {
       <div class="ff"><label>Riesgo</label><select id="e-riesgo"><option>Riesgo Bajo</option><option>Riesgo Medio</option><option>Riesgo Alto</option><option>Vacía</option></select></div>
       <div class="ff"><label>Convenciones</label><select id="e-conv"><option>Efectiva</option><option>No Efectiva</option></select></div>
       <div class="ff"><label>ID Familia</label><input type="text" id="e-idfam" value="${r.idFam || ''}"></div>
+      <div class="ff"><label>Patologías</label><textarea id="e-patologias">${r.patologias || ''}</textarea></div>
       <div class="ff"><label>Observaciones</label><textarea id="e-obs">${r.obs || ''}</textarea></div>`;
     setTimeout(() => {
       document.getElementById('e-riesgo').value = r.riesgo || '';
@@ -1247,6 +1250,7 @@ function saveEdit() {
     r.riesgo = document.getElementById('e-riesgo').value;
     r.conv = document.getElementById('e-conv').value;
     r.idFam = gv('e-idfam');
+    r.patologias = gv('e-patologias');
     r.obs = gv('e-obs');
   } else if (editTipo === 'recoleccion') {
     r.codigo = gv('e-cod');
