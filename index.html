@@ -407,7 +407,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
               <button class="btn-pri" type="button" onclick="descargarFamiliograma()">⬇ Descargar imagen</button>
             </div>
             <div style="margin-top:10px;border:1.5px solid var(--border);border-radius:10px;padding:10px;background:#fff">
-              <div style="font-size:.75rem;font-weight:700;color:var(--primary);margin-bottom:6px">Leyenda GenoPro simplificada</div>
+              <div style="font-size:.75rem;font-weight:700;color:var(--primary);margin-bottom:6px">Leyenda del familiograma</div>
               <div style="font-size:.73rem;color:var(--text-muted);line-height:1.55">
                 □ Hombre · ○ Mujer · Figura amarilla: caso índice · X: fallecido/a · Doble borde naranja: enfermedad crónica
                 <br>
@@ -1597,6 +1597,16 @@ function dibujarFamiliograma() {
     }
   }
 
+  function drawParentChildLink(p1, x1, p2, x2, yParents, childX, childY) {
+    let fromX = null;
+    if (hasData(p1) && hasData(p2)) fromX = (x1 + x2) / 2;
+    else if (hasData(p1)) fromX = x1;
+    else if (hasData(p2)) fromX = x2;
+    if (fromX === null) return;
+    // Start exactly at the relationship line to avoid visual gaps.
+    drawLine(fromX, yParents, childX, childY - PERSON_SIZE / 2);
+  }
+
   const miembros = getFamiliogramaMiembros();
   const relacion = document.getElementById('fg-relacion')?.value || '';
   const principal = {
@@ -1658,32 +1668,32 @@ function dibujarFamiliograma() {
   });
 
   // Parejas bisabuelos -> abuelos
-  if (hasData(bisabueloPP) || hasData(bisabuelaPP)) {
+  if (hasData(bisabueloPP) && hasData(bisabuelaPP)) {
     drawCouple(bisXs[0], bisXs[1], yG3Anc, 'matrimonio');
-    drawLine((bisXs[0] + bisXs[1]) / 2, yG3Anc + PERSON_SIZE / 2, abpX, yG2Anc - PERSON_SIZE / 2);
   }
-  if (hasData(bisabueloPM) || hasData(bisabuelaPM)) {
+  if (hasData(bisabueloPM) && hasData(bisabuelaPM)) {
     drawCouple(bisXs[2], bisXs[3], yG3Anc, 'matrimonio');
-    drawLine((bisXs[2] + bisXs[3]) / 2, yG3Anc + PERSON_SIZE / 2, abmX, yG2Anc - PERSON_SIZE / 2);
   }
-  if (hasData(bisabueloMP) || hasData(bisabuelaMP)) {
+  if (hasData(bisabueloMP) && hasData(bisabuelaMP)) {
     drawCouple(bisXs[4], bisXs[5], yG3Anc, 'matrimonio');
-    drawLine((bisXs[4] + bisXs[5]) / 2, yG3Anc + PERSON_SIZE / 2, abmpX, yG2Anc - PERSON_SIZE / 2);
   }
-  if (hasData(bisabueloMM) || hasData(bisabuelaMM)) {
+  if (hasData(bisabueloMM) && hasData(bisabuelaMM)) {
     drawCouple(bisXs[6], bisXs[7], yG3Anc, 'matrimonio');
-    drawLine((bisXs[6] + bisXs[7]) / 2, yG3Anc + PERSON_SIZE / 2, abmmX, yG2Anc - PERSON_SIZE / 2);
   }
+  drawParentChildLink(bisabueloPP, bisXs[0], bisabuelaPP, bisXs[1], yG3Anc, abpX, yG2Anc);
+  drawParentChildLink(bisabueloPM, bisXs[2], bisabuelaPM, bisXs[3], yG3Anc, abmX, yG2Anc);
+  drawParentChildLink(bisabueloMP, bisXs[4], bisabuelaMP, bisXs[5], yG3Anc, abmpX, yG2Anc);
+  drawParentChildLink(bisabueloMM, bisXs[6], bisabuelaMM, bisXs[7], yG3Anc, abmmX, yG2Anc);
 
   // Abuelos -> padres
-  if (hasData(abueloPaterno) || hasData(abuelaPaterna)) {
+  if (hasData(abueloPaterno) && hasData(abuelaPaterna)) {
     drawCouple(abpX, abmX, yG2Anc, 'matrimonio');
-    drawLine((abpX + abmX) / 2, yG2Anc + PERSON_SIZE / 2, padreX, yG1Anc - PERSON_SIZE / 2);
   }
-  if (hasData(abueloMaterno) || hasData(abuelaMaterna)) {
+  if (hasData(abueloMaterno) && hasData(abuelaMaterna)) {
     drawCouple(abmpX, abmmX, yG2Anc, 'matrimonio');
-    drawLine((abmpX + abmmX) / 2, yG2Anc + PERSON_SIZE / 2, madreX, yG1Anc - PERSON_SIZE / 2);
   }
+  drawParentChildLink(abueloPaterno, abpX, abuelaPaterna, abmX, yG2Anc, padreX, yG1Anc);
+  drawParentChildLink(abueloMaterno, abmpX, abuelaMaterna, abmmX, yG2Anc, madreX, yG1Anc);
 
   if (hasData(abueloPaterno)) drawPerson(abpX, yG2Anc, abueloPaterno, 'M', false);
   if (hasData(abuelaPaterna)) drawPerson(abmX, yG2Anc, abuelaPaterna, 'F', false);
@@ -1691,15 +1701,13 @@ function dibujarFamiliograma() {
   if (hasData(abuelaMaterna)) drawPerson(abmmX, yG2Anc, abuelaMaterna, 'F', false);
 
   // Padres -> principal
-  if (hasData(padre) || hasData(madre)) drawCouple(padreX, madreX, yG1Anc, 'matrimonio');
+  if (hasData(padre) && hasData(madre)) drawCouple(padreX, madreX, yG1Anc, 'matrimonio');
   if (hasData(padre)) drawPerson(padreX, yG1Anc, padre, 'M', false);
   if (hasData(madre)) drawPerson(madreX, yG1Anc, madre, 'F', false);
 
-  if (hasData(padre) || hasData(madre)) {
-    drawLine((padreX + madreX) / 2, yG1Anc + PERSON_SIZE / 2, principalX, yCore - PERSON_SIZE / 2);
-  }
+  drawParentChildLink(padre, padreX, madre, madreX, yG1Anc, principalX, yCore);
 
-  if (hasData(principal) || hasData(pareja)) {
+  if (hasData(principal) && hasData(pareja)) {
     drawCouple(principalX, parejaX, yCore, relacion);
   }
   if (hasData(principal)) drawPerson(principalX, yCore, principal, principal.genero || 'M', true);
@@ -1713,7 +1721,7 @@ function dibujarFamiliograma() {
   if (hijosConDatos.length && (hasData(principal) || hasData(pareja))) {
     const coupleMidX = hasData(pareja) ? (principalX + parejaX) / 2 : principalX;
     const dropY = yCore + 34;
-    drawLine(coupleMidX, yCore + PERSON_SIZE / 2, coupleMidX, dropY);
+    drawLine(coupleMidX, yCore, coupleMidX, dropY);
 
     const spacing = Math.max(46, Math.min(88, (W - 80) / Math.max(hijosConDatos.length, 2)));
     const startX = coupleMidX - (spacing * (hijosConDatos.length - 1)) / 2;
@@ -1751,7 +1759,7 @@ function dibujarFamiliograma() {
     hijosConDatos.forEach((_, idx) => hijosXs.push(hijosConDatos.length === 1 ? coupleMidX : startX + spacing * idx));
     const baseMid = hijosXs.reduce((s, x) => s + x, 0) / hijosXs.length;
     const dropY2 = yG1Des + 34;
-    drawLine(baseMid, yG1Des + PERSON_SIZE / 2, baseMid, dropY2);
+    drawLine(baseMid, yG1Des, baseMid, dropY2);
     const spacing2 = Math.max(42, Math.min(80, (W - 90) / Math.max(nietos.length, 2)));
     const start2 = baseMid - (spacing2 * (nietos.length - 1)) / 2;
     if (nietos.length > 1) drawLine(start2, dropY2, start2 + spacing2 * (nietos.length - 1), dropY2);
@@ -1765,7 +1773,7 @@ function dibujarFamiliograma() {
   if (bisnietos.length && nietos.length) {
     const baseMid2 = W * 0.5;
     const dropY3 = yG2Des + 30;
-    drawLine(baseMid2, yG2Des + PERSON_SIZE / 2, baseMid2, dropY3);
+    drawLine(baseMid2, yG2Des, baseMid2, dropY3);
     const spacing3 = Math.max(40, Math.min(76, (W - 90) / Math.max(bisnietos.length, 2)));
     const start3 = baseMid2 - (spacing3 * (bisnietos.length - 1)) / 2;
     if (bisnietos.length > 1) drawLine(start3, dropY3, start3 + spacing3 * (bisnietos.length - 1), dropY3);
@@ -1776,11 +1784,24 @@ function dibujarFamiliograma() {
     });
   }
 
+  // Leyenda dentro del canvas (sale en la imagen descargada).
+  const lx = 12;
+  const ly = H - 64;
+  const lw = Math.min(520, W - 24);
+  const lh = 52;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.strokeStyle = '#cbd5e1';
+  ctx.lineWidth = 1;
+  ctx.fillRect(lx, ly, lw, lh);
+  ctx.strokeRect(lx, ly, lw, lh);
+  ctx.fillStyle = '#334155';
+  ctx.font = 'bold 10px DM Sans, sans-serif';
+  ctx.fillText('Leyenda', lx + 8, ly + 13);
   ctx.font = '10px DM Sans, sans-serif';
-  ctx.fillStyle = '#64748b';
-  ctx.textAlign = 'left';
-  ctx.fillText('□ Masculino   ○ Femenino   X Fallecido/a   Doble borde naranja: enfermedad cronica', 12, H - 24);
-  ctx.fillText('Figura amarilla: caso indice   Linea vertical: descendencia', 12, H - 10);
+  ctx.fillText('□ Hombre   ○ Mujer   Amarillo: caso indice   X: fallecido/a', lx + 8, ly + 29);
+  ctx.fillText('Borde naranja: enfermedad cronica   Linea vertical: descendencia', lx + 8, ly + 44);
+  ctx.restore();
 }
 
 function descargarFamiliograma() {
