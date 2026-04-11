@@ -398,6 +398,27 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
               </select>
             </div>
 
+          <div class="frow">
+  <div class="ff">
+    <label>¿Vive en el núcleo del hogar?</label>
+    <select id="fg-principal-nucleo" onchange="onNucleoChange('fg-principal')">
+      <option value="">—</option>
+      <option value="SI">Sí</option>
+      <option value="NO">No</option>
+    </select>
+  </div>
+  <div class="ff" id="fg-principal-convivencia-wrap" style="display:none">
+    <label>Convivencia con otros del núcleo</label>
+    <select id="fg-principal-convivencia" onchange="dibujarFamiliograma()">
+      <option value="">—</option>
+      <option value="armoniosa">Armoniosa</option>
+      <option value="con_conflictos">Con conflictos ocasionales</option>
+      <option value="muy_conflictiva">Muy conflictiva</option>
+      <option value="distante">Distante o indiferente</option>
+    </select>
+  </div>
+</div>
+
             <div class="sdiv">Familiares Anexados</div>
             <div id="fg-miembros-container"></div>
             <button class="btn-add-int" onclick="agregarFamiliar()" style="margin-bottom:14px">＋ Agregar Familiar</button>
@@ -1363,7 +1384,14 @@ async function doInstall() {
   installPrompt = null;
 }
 
-
+// ── NÚCLEO FAMILIAR ─────────────────────────────────────────
+function onNucleoChange(prefix) {
+  const val = document.getElementById(prefix + '-nucleo')?.value;
+  const wrap = document.getElementById(prefix + '-convivencia-wrap');
+  if (wrap) wrap.style.display = val === 'SI' ? 'block' : 'none';
+  dibujarFamiliograma();
+}
+     
 // ── SUB-ACORDEONES de Recolección ──────────────────────────
 function toggleSub(id) {
   const block = document.getElementById('sub-' + id);
@@ -1407,6 +1435,26 @@ function agregarFamiliar() {
       <div class="ff"><label>Estado de Salud / Fallecimiento</label><select id="fg-f${n}-estado"><option value="">—</option><option>Vivo/a</option><option>Fallecido/a</option><option>Enfermedad crónica</option><option>Desconocido</option></select></div>
     </div>
     <div class="ff"><label>Observación breve</label><input type="text" id="fg-f${n}-nota" placeholder="Ej: Cuidador principal, vive fuera, etc."></div>
+    <div class="frow">
+      <div class="ff">
+        <label>¿Vive en el núcleo del hogar?</label>
+        <select id="fg-f${n}-nucleo" onchange="onNucleoChange('fg-f${n}')">
+          <option value="">—</option>
+          <option value="SI">Sí</option>
+          <option value="NO">No</option>
+        </select>
+      </div>
+      <div class="ff" id="fg-f${n}-convivencia-wrap" style="display:none">
+        <label>Convivencia con otros del núcleo</label>
+        <select id="fg-f${n}-convivencia" onchange="dibujarFamiliograma()">
+          <option value="">—</option>
+          <option value="armoniosa">Armoniosa</option>
+          <option value="con_conflictos">Con conflictos ocasionales</option>
+          <option value="muy_conflictiva">Muy conflictiva</option>
+          <option value="distante">Distante o indiferente</option>
+        </select>
+      </div>
+    </div>
   `;
   document.getElementById('fg-miembros-container').appendChild(div);
   bindFamiliogramaEvents();
@@ -1429,7 +1477,9 @@ function getFamiliogramaMiembros() {
       anio: gv2(`fg-f${n}-anio`),
       genero: gv2(`fg-f${n}-genero`),
       estado: gv2(`fg-f${n}-estado`),
-      nota: gv2(`fg-f${n}-nota`)
+      nota: gv2(`fg-f${n}-nota`),
+      nucleo: gv2(`fg-f${n}-nucleo`),          // ← AGREGAR
+      convivencia: gv2(`fg-f${n}-convivencia`) // ← AGREGAR
     };
     if (m.parentesco || m.nombre || m.anio || m.estado || m.nota) miembros.push(m);
   });
@@ -1477,75 +1527,80 @@ function dibujarFamiliograma() {
   }
 
   function drawPerson(x, y, person, genero, isPrincipal) {
-    const size = PERSON_SIZE;
-    const estado = person?.estado || '';
-    const anio = person?.anio || '';
-    const nombre = person?.nombre || '';
-    const color = genero === 'F' ? colorF : colorM;
+  const size = PERSON_SIZE;
+  const estado = person?.estado || '';
+  const anio = person?.anio || '';
+  const nombre = person?.nombre || '';
+  const nucleo = person?.nucleo || '';
+  const convivencia = person?.convivencia || '';
+  const color = genero === 'F' ? colorF : colorM;
+  const convColor = convivencia === 'armoniosa' ? '#16a34a'
+    : convivencia === 'con_conflictos' ? '#f59e0b'
+    : convivencia === 'muy_conflictiva' ? '#dc2626'
+    : convivencia === 'distante' ? '#94a3b8' : null;
 
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.fillStyle = isPrincipal ? '#fef9c3' : '#fff';
-    if (genero === 'F') {
-      ctx.beginPath();
-      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    } else {
-      ctx.beginPath();
-      ctx.rect(x - size / 2, y - size / 2, size, size);
-      ctx.fill();
-      ctx.stroke();
-    }
+  ctx.save();
 
-    if (estado === 'Fallecido/a') {
-      ctx.strokeStyle = '#64748b';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(x - size / 2 + 4, y - size / 2 + 4);
-      ctx.lineTo(x + size / 2 - 4, y + size / 2 - 4);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x + size / 2 - 4, y - size / 2 + 4);
-      ctx.lineTo(x - size / 2 + 4, y + size / 2 - 4);
-      ctx.stroke();
-    }
-    if (estado === 'Enfermedad crónica') {
-      ctx.strokeStyle = '#f97316';
-      ctx.lineWidth = 2;
-      if (genero === 'F') {
-        ctx.beginPath();
-        ctx.arc(x, y, size / 2 + 4, 0, Math.PI * 2);
-        ctx.stroke();
-      } else {
-        ctx.beginPath();
-        ctx.rect(x - size / 2 - 4, y - size / 2 - 4, size + 8, size + 8);
-        ctx.stroke();
-      }
-    }
-    ctx.restore();
-
-    if (anio) {
-      ctx.font = '10px DM Sans, sans-serif';
-      ctx.fillStyle = '#64748b';
-      ctx.textAlign = 'center';
-      ctx.fillText(anio, x, y - 18);
-    }
-    if (nombre) {
-      ctx.font = 'bold 9px DM Sans, sans-serif';
-      ctx.fillStyle = colorText;
-      ctx.textAlign = 'center';
-      ctx.fillText(shortName(nombre), x, y + 22);
-    }
-    if (isPrincipal && (nombre || anio || estado)) {
-      ctx.font = 'bold 8px DM Sans, sans-serif';
-      ctx.fillStyle = '#92400e';
-      ctx.textAlign = 'center';
-      ctx.fillText('JEFE DEL HOGAR', x, y + (nombre ? 34 : 22));
-    }
+  // Halo verde agua para miembros del núcleo
+  if (nucleo === 'SI') {
+    ctx.fillStyle = 'rgba(10,147,150,0.10)';
+    ctx.beginPath(); ctx.arc(x, y, size / 2 + 10, 0, Math.PI * 2); ctx.fill();
   }
 
+  // Símbolo — jefe del hogar con glow dorado
+  if (isPrincipal) {
+    ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 14;
+    ctx.fillStyle = '#fef08a'; ctx.strokeStyle = '#b45309'; ctx.lineWidth = 3;
+  } else {
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = color; ctx.lineWidth = 2;
+  }
+  if (genero === 'F') {
+    ctx.beginPath(); ctx.arc(x, y, size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.rect(x - size / 2, y - size / 2, size, size); ctx.fill(); ctx.stroke();
+  }
+  ctx.shadowColor = 'transparent';
+
+  // Anillo de convivencia
+  if (convColor && nucleo === 'SI') {
+    ctx.strokeStyle = convColor; ctx.lineWidth = 2.5;
+    if (genero === 'F') { ctx.beginPath(); ctx.arc(x, y, size / 2 + 5, 0, Math.PI * 2); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.rect(x-size/2-5, y-size/2-5, size+10, size+10); ctx.stroke(); }
+  }
+
+  // Fallecido
+  if (estado === 'Fallecido/a') {
+    ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x-size/2+4, y-size/2+4); ctx.lineTo(x+size/2-4, y+size/2-4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+size/2-4, y-size/2+4); ctx.lineTo(x-size/2+4, y+size/2-4); ctx.stroke();
+  }
+  // Enfermedad crónica
+  if (estado === 'Enfermedad crónica') {
+    ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2;
+    const off = nucleo === 'SI' ? 9 : 4;
+    if (genero === 'F') { ctx.beginPath(); ctx.arc(x, y, size/2+off, 0, Math.PI*2); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.rect(x-size/2-off, y-size/2-off, size+off*2, size+off*2); ctx.stroke(); }
+  }
+  // Fuera del núcleo: anillo gris punteado
+  if (nucleo === 'NO') {
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.setLineDash([3,2]);
+    ctx.beginPath(); ctx.arc(x, y, size/2+7, 0, Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.restore();
+
+  if (anio) { ctx.font='10px DM Sans,sans-serif'; ctx.fillStyle='#64748b'; ctx.textAlign='center'; ctx.fillText(anio, x, y-18); }
+  if (nombre) {
+    ctx.font = isPrincipal ? 'bold 10px DM Sans,sans-serif' : 'bold 9px DM Sans,sans-serif';
+    ctx.fillStyle = isPrincipal ? '#78350f' : colorText;
+    ctx.textAlign = 'center';
+    ctx.fillText(shortName(nombre), x, y+22);
+  }
+  if (isPrincipal && (nombre || anio || estado)) {
+    ctx.font='bold 8px DM Sans,sans-serif'; ctx.fillStyle='#b45309'; ctx.textAlign='center';
+    ctx.fillText('★ JEFE DEL HOGAR', x, y+(nombre ? 34 : 22));
+  }
+}
   function drawLine(x1, y1, x2, y2, style) {
     ctx.save();
     ctx.strokeStyle = colorLine;
@@ -1650,6 +1705,8 @@ function dibujarFamiliograma() {
   }
 
   if (hasData(principal) && hasData(pareja)) drawCouple(principalX, parejaX, yCore, relacion);
+     principal.nucleo = document.getElementById('fg-principal-nucleo')?.value || '';
+principal.convivencia = document.getElementById('fg-principal-convivencia')?.value || '';
   if (hasData(principal)) drawPerson(principalX, yCore, principal, principal.genero || 'M', true);
   if (hasData(pareja)) drawPerson(parejaX, yCore, pareja, pareja.genero || 'F', false);
 
@@ -1676,16 +1733,20 @@ function dibujarFamiliograma() {
     const COLW   = 152;
     const COLS   = 2;
     const ROW_H  = 22;
-    const items  = [
-      { label: 'Hombre',             type: 'square',   color: '#005f73', fill: '#fff'     },
-      { label: 'Mujer',              type: 'circle',   color: '#d11d5b', fill: '#fff'     },
-      { label: 'Jefe del hogar',     type: 'square',   color: '#005f73', fill: '#fef9c3'  },
-      { label: 'Fallecido/a',        type: 'cross',    color: '#64748b', fill: '#f1f5f9'  },
-      { label: 'Enfermedad crónica', type: 'double',   color: '#f97316', fill: '#fff'     },
-      { label: 'Matrimonio / Unión', type: 'line',     color: '#334155', dash: []         },
-      { label: 'Compromiso',         type: 'line',     color: '#2563eb', dash: [4,3]      },
-      { label: 'Separados',          type: 'break',    color: '#dc2626', fill: '#fff'     },
-    ];
+const items = [
+  { label: 'Hombre',              type: 'square',   color: '#005f73', fill: '#fff'    },
+  { label: 'Mujer',               type: 'circle',   color: '#d11d5b', fill: '#fff'    },
+  { label: 'Jefe del hogar ★',    type: 'jefe',     color: '#b45309', fill: '#fef08a' },
+  { label: 'Fallecido/a',         type: 'cross',    color: '#64748b', fill: '#f1f5f9' },
+  { label: 'Enfermedad crónica',  type: 'double',   color: '#f97316', fill: '#fff'    },
+  { label: 'Matrimonio / Unión',  type: 'line',     color: '#334155', dash: []        },
+  { label: 'Compromiso',          type: 'line',     color: '#2563eb', dash: [4,3]     },
+  { label: 'Separados',           type: 'break',    color: '#dc2626', fill: '#fff'    },
+  { label: 'En el núcleo',        type: 'nucleo',   color: '#0a9396', fill: '#fff'    },
+  { label: 'Fuera del núcleo',    type: 'nonucleo', color: '#94a3b8', fill: '#fff'    },
+  { label: 'Conviv. armoniosa',   type: 'convline', color: '#16a34a', fill: '#fff'    },
+  { label: 'Conviv. conflictiva', type: 'convline', color: '#dc2626', fill: '#fff'    },
+];
     const ROWS  = Math.ceil(items.length / COLS);
     const LW    = PAD * 2 + COLW * COLS;
     const LH    = 28 + PAD + ROWS * ROW_H + PAD / 2;
