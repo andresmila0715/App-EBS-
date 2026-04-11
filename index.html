@@ -446,30 +446,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           </div>
         </div>
 
-        <!-- SUB-ACORDEÓN: ADGAR -->
-        <div class="sub-block" id="sub-adgar">
-          <div class="sub-head" onclick="toggleSub('adgar')">
-            <span class="sub-icon">📋</span>
-            <span class="sub-title">ADGAR</span>
-            <span class="sub-chev">▼</span>
-          </div>
-          <div class="sub-body" id="subbody-adgar" style="display:none">
-            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px">Evaluación funcional del adulto mayor.</p>
-            <div class="sdiv">Actividades Básicas de la Vida Diaria</div>
-            <div class="ff"><label>¿Puede bañarse solo/a?</label><select id="adgar-banio"><option value="">—</option><option>Independiente</option><option>Necesita ayuda parcial</option><option>Dependiente total</option></select></div>
-            <div class="ff"><label>¿Puede vestirse solo/a?</label><select id="adgar-vestir"><option value="">—</option><option>Independiente</option><option>Necesita ayuda parcial</option><option>Dependiente total</option></select></div>
-            <div class="ff"><label>¿Puede usar el sanitario solo/a?</label><select id="adgar-sanitario"><option value="">—</option><option>Independiente</option><option>Necesita ayuda parcial</option><option>Dependiente total</option></select></div>
-            <div class="ff"><label>¿Puede desplazarse solo/a dentro del hogar?</label><select id="adgar-desplazamiento"><option value="">—</option><option>Independiente</option><option>Necesita ayuda parcial</option><option>Dependiente total</option></select></div>
-            <div class="ff"><label>¿Tiene continencia urinaria y fecal?</label><select id="adgar-continencia"><option value="">—</option><option>Continente</option><option>Incontinencia ocasional</option><option>Incontinente total</option></select></div>
-            <div class="ff"><label>¿Puede alimentarse solo/a?</label><select id="adgar-alimentacion"><option value="">—</option><option>Independiente</option><option>Necesita ayuda parcial</option><option>Dependiente total</option></select></div>
-            <div class="sdiv">Actividades Instrumentales</div>
-            <div class="ff"><label>¿Puede manejar su dinero?</label><select id="adgar-dinero"><option value="">—</option><option>Independiente</option><option>Necesita supervisión</option><option>No puede</option></select></div>
-            <div class="ff"><label>¿Puede tomar sus medicamentos correctamente?</label><select id="adgar-medicamentos"><option value="">—</option><option>Independiente</option><option>Necesita supervisión</option><option>No puede</option></select></div>
-            <div class="ff"><label>¿Puede usar teléfono?</label><select id="adgar-telefono"><option value="">—</option><option>Sin dificultad</option><option>Solo llama a números conocidos</option><option>No puede usar teléfono</option></select></div>
-            <div class="ff"><label>¿Puede hacer compras?</label><select id="adgar-compras"><option value="">—</option><option>Independiente</option><option>Necesita ayuda</option><option>No puede</option></select></div>
-            <div class="ff"><label>Observaciones ADGAR</label><textarea id="adgar-obs" placeholder="Observaciones sobre funcionalidad del adulto mayor..."></textarea></div>
-          </div>
-        </div>
+
 
         <!-- SUB-ACORDEÓN: APGAR FAMILIAR -->
         <div class="sub-block" id="sub-apgar-familiar">
@@ -542,9 +519,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           </div>
           <div class="sub-body" id="subbody-ecomapa" style="display:none">
             <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:10px">Califique la relación de la familia con cada sistema. Luego verá el <strong>ecomapa visual</strong> con las respuestas; puede descargarlo como imagen.</p>
-            <div class="eco-legend">
-              <strong>Leyenda de valores:</strong> −2 = No aplica · 1 = Fuerte · 2 = Estresante · 3 = Moderada · 4 = Moderadamente estresante · 5 = Débil · 6 = Levemente estresante
-            </div>
             <div id="eco-cuestionario" class="frow" style="margin-top:12px"></div>
             <div class="sdiv" style="margin-top:16px">Diagrama ecomapa</div>
             <canvas id="ecomapa-canvas"></canvas>
@@ -1026,7 +1000,6 @@ function clearF(tipo) {
   } else if (tipo === 'recoleccion') {
     // Clear all sub-form fields
     document.querySelectorAll('#sub-familiograma input, #sub-familiograma select, #sub-familiograma textarea').forEach(el => el.value = '');
-    document.querySelectorAll('#sub-adgar select, #sub-adgar textarea').forEach(el => el.value = '');
     document.querySelectorAll('#sub-zarit select, #sub-zarit textarea').forEach(el => el.value = '');
     document.getElementById('apgar-miembros-tbody').innerHTML = '';
     apgarRowSeq = 0;
@@ -1555,11 +1528,11 @@ function dibujarFamiliograma() {
   const ctx = canvas.getContext('2d');
 
   const W = canvas.offsetWidth || 400;
-  const H = 520;
+  const H = 600;
   canvas.width = W;
   canvas.height = H;
   ctx.clearRect(0, 0, W, H);
-  const PERSON_SIZE = 24;
+  const PERSON_SIZE = 36;
 
   const colorM = '#005f73';
   const colorF = '#d11d5b';
@@ -1715,9 +1688,9 @@ function dibujarFamiliograma() {
   const madrePareja = pickFirst(miembros, 'madre_pareja', 'F');
   const hijos = pickMany(miembros, 'hijo', 'M').filter(h => hasData(h));
 
-  const yPadres = 100;
-  const yCore = 230;
-  const yHijos = 360;
+  const yPadres = 110;
+  const yCore = 270;
+  const yHijos = 430;
   const padreJefeX = W * 0.16;
   const madreJefeX = W * 0.28;
   const padreParejaX = W * 0.72;
@@ -2099,18 +2072,21 @@ function dibujarEcomapa() {
   const canvas = document.getElementById('ecomapa-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const W = Math.max(360, canvas.offsetWidth || 400);
-  const H = 460;
+  const W = Math.max(420, canvas.offsetWidth || 480);
+  // Taller canvas so peripheral nodes don't clip
+  const H = 620;
   canvas.width = W;
   canvas.height = H;
   ctx.fillStyle = '#f8fafc';
   ctx.fillRect(0, 0, W, H);
   const cx = W / 2;
-  const cy = H / 2 - 8;
-  const R = Math.min(W, H) * 0.34;
+  const cy = H / 2;
+  // Increase orbit radius so boxes have room between them
+  const R = Math.min(W, H) * 0.38;
 
-  const bw = 108;
-  const bh = 76;
+  // Central family box
+  const bw = 112;
+  const bh = 78;
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#005f73';
   ctx.lineWidth = 2.5;
@@ -2126,53 +2102,47 @@ function dibujarEcomapa() {
   ctx.fillText('FAMILIA', cx, cy + bh / 2 - 16);
 
   const n = ECOMAPA_CATS.length;
-  const tw = 118;
-  const th = 52;
+  // Smaller boxes to prevent overlap with 13 nodes
+  const tw = 96;
+  const th = 48;
   ECOMAPA_CATS.forEach((cat, i) => {
     const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
     const x = cx + Math.cos(ang) * R;
     const y = cy + Math.sin(ang) * R;
     const val = document.getElementById(cat.id)?.value ?? '';
     const txt = val !== '' && val != null ? `${val} · ${ecoValorTexto(val)}` : '—';
+
+    // Draw connector line from family box edge to node box edge
+    const lineStartX = cx + Math.cos(ang) * (bw / 2 + 4);
+    const lineStartY = cy + Math.sin(ang) * (bh / 2 + 4);
+    const lineEndX = x - Math.cos(ang) * (tw / 2 + 2);
+    const lineEndY = y - Math.sin(ang) * (th / 2 + 2);
+    ctx.save();
+    ctx.strokeStyle = val !== '' ? '#0891b2' : '#cbd5e1';
+    ctx.lineWidth = val !== '' ? 1.8 : 1.2;
+    ctx.setLineDash(val !== '' ? [] : [4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(lineStartX, lineStartY);
+    ctx.lineTo(lineEndX, lineEndY);
+    ctx.stroke();
+    ctx.restore();
+
     ctx.fillStyle = '#fff';
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 1.5;
-    ecomapaRoundRect(ctx, x - tw / 2, y - th / 2, tw, th, 10);
+    ctx.strokeStyle = val !== '' ? '#0891b2' : '#cbd5e1';
+    ctx.lineWidth = val !== '' ? 1.8 : 1.2;
+    ecomapaRoundRect(ctx, x - tw / 2, y - th / 2, tw, th, 9);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = '#1a2332';
-    ctx.font = '700 8.5px DM Sans, sans-serif';
+    ctx.font = '700 8px DM Sans, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const lab = cat.short;
-    ctx.fillText(lab.length > 16 ? lab.slice(0, 15) + '…' : lab, x, y - 12);
+    ctx.fillText(lab.length > 14 ? lab.slice(0, 13) + '…' : lab, x, y - 11);
     ctx.fillStyle = val !== '' ? '#005f73' : '#94a3b8';
-    ctx.font = '600 7.5px DM Sans, sans-serif';
-    const words = txt.split(' ');
-    let line = '';
-    let ly = y + 4;
-    words.forEach(wd => {
-      const test = line + wd + ' ';
-      if (ctx.measureText(test).width > tw - 8 && line) {
-        ctx.fillText(line.trim(), x, ly);
-        line = wd + ' ';
-        ly += 10;
-      } else line = test;
-    });
-    if (line.trim()) ctx.fillText(line.trim(), x, ly);
+    ctx.font = '600 7px DM Sans, sans-serif';
+    ctx.fillText(txt.length > 18 ? txt.slice(0, 17) + '…' : txt, x, y + 5);
   });
-
-  ctx.fillStyle = 'rgba(255,255,255,.92)';
-  ctx.strokeStyle = '#e2e8f0';
-  ecomapaRoundRect(ctx, 8, H - 52, W - 16, 44, 8);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = '#475569';
-  ctx.font = '600 7px DM Sans, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  const leg = 'Leyenda: −2 No aplica · 1 Fuerte · 2 Estresante · 3 Moderada · 4 Mod. estresante · 5 Débil · 6 Levem. estresante';
-  ctx.fillText(leg, 14, H - 46, W - 28);
 }
 
 function descargarEcomapa() {
@@ -2299,13 +2269,6 @@ function getRecoleccionData() {
       relacionPareja: gv2('fg-relacion'),
       miembros,
       obs: gv2('fg-obs')
-    },
-    adgar: {
-      banio: gv2('adgar-banio'), vestir: gv2('adgar-vestir'), sanitario: gv2('adgar-sanitario'),
-      desplazamiento: gv2('adgar-desplazamiento'), continencia: gv2('adgar-continencia'),
-      alimentacion: gv2('adgar-alimentacion'), dinero: gv2('adgar-dinero'),
-      medicamentos: gv2('adgar-medicamentos'), telefono: gv2('adgar-telefono'),
-      compras: gv2('adgar-compras'), obs: gv2('adgar-obs')
     },
     apgar: getApgarData(),
     zarit: { puntaje: zaritTotal, obs: gv2('zarit-obs') },
