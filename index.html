@@ -375,8 +375,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
             <span class="sub-chev">▼</span>
           </div>
           <div class="sub-body" id="subbody-familiograma">
-            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px">Agregue familiar por familiar tomando como referencia una persona principal (caso índice). El familiograma se organiza alrededor de esa persona.</p>
-            <div class="sdiv">Persona Principal (Caso Índice)</div>
+            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px">Registre el nombre de la familia, los datos del jefe del hogar y anexe familiares con el parentesco indicado.</p>
+            <div class="ff"><label>Familia</label><input type="text" id="fg-familia-nombre" placeholder="Nombre de la familia (aparece como título en el familiograma)"></div>
+            <div class="sdiv">Jefe del hogar</div>
             <div class="frow3">
               <div class="ff"><label>Nombre completo</label><input type="text" id="fg-principal-nombre" placeholder="Ej: Arturo Romero González"></div>
               <div class="ff"><label>Año de nacimiento</label><input type="number" id="fg-principal-anio" placeholder="Ej: 1974" min="1900" max="2026"></div>
@@ -387,7 +388,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
               <div class="ff"><label>Enfermedad relevante</label><input type="text" id="fg-principal-enf" placeholder="Ej: HTA, DM, N/A"></div>
             </div>
             <div class="ff">
-              <label>Tipo de Relación de Pareja (Persona principal)</label>
+              <label>Tipo de relación de pareja (jefe del hogar)</label>
               <select id="fg-relacion">
                 <option value="">—</option>
                 <option value="matrimonio">Matrimonio</option>
@@ -1391,24 +1392,11 @@ function agregarFamiliar() {
         <select id="fg-f${n}-parentesco">
           <option value="">— Seleccionar —</option>
           <option value="pareja">Pareja</option>
-          <option value="padre">Padre de principal</option>
-          <option value="madre">Madre de principal</option>
-          <option value="abuelo_paterno">Abuelo paterno de principal</option>
-          <option value="abuela_paterna">Abuela paterna de principal</option>
-          <option value="abuelo_materno">Abuelo materno de principal</option>
-          <option value="abuela_materna">Abuela materna de principal</option>
-          <option value="bisabuelo_pp">Bisabuelo paterno-paterno</option>
-          <option value="bisabuela_pp">Bisabuela paterno-paterna</option>
-          <option value="bisabuelo_pm">Bisabuelo paterno-materno</option>
-          <option value="bisabuela_pm">Bisabuela paterno-materna</option>
-          <option value="bisabuelo_mp">Bisabuelo materno-paterno</option>
-          <option value="bisabuela_mp">Bisabuela materno-paterna</option>
-          <option value="bisabuelo_mm">Bisabuelo materno-materno</option>
-          <option value="bisabuela_mm">Bisabuela materno-materna</option>
-          <option value="hermano">Hermano/a de principal</option>
-          <option value="hijo">Hijo/a de principal</option>
-          <option value="nieto">Nieto/a de principal</option>
-          <option value="bisnieto">Bisnieto/a de principal</option>
+          <option value="padre_jefe">Padre del jefe del hogar</option>
+          <option value="madre_jefe">Madre del jefe del hogar</option>
+          <option value="padre_pareja">Padre de la pareja</option>
+          <option value="madre_pareja">Madre de la pareja</option>
+          <option value="hijo">Hijo o hija del jefe del hogar</option>
         </select>
       </div>
       <div class="ff"><label>Nombre</label><input type="text" id="fg-f${n}-nombre" placeholder="Nombre completo"></div>
@@ -1466,7 +1454,7 @@ function dibujarFamiliograma() {
   const ctx = canvas.getContext('2d');
 
   const W = canvas.offsetWidth || 400;
-  const H = 640;
+  const H = 520;
   canvas.width = W;
   canvas.height = H;
   ctx.clearRect(0, 0, W, H);
@@ -1549,11 +1537,12 @@ function dibujarFamiliograma() {
       ctx.fillStyle = colorText;
       ctx.textAlign = 'center';
       ctx.fillText(shortName(nombre), x, y + 22);
-      if (isPrincipal) {
-        ctx.font = 'bold 9px DM Sans, sans-serif';
-        ctx.fillStyle = '#92400e';
-        ctx.fillText('CASO INDICE', x, y + 34);
-      }
+    }
+    if (isPrincipal && (nombre || anio || estado)) {
+      ctx.font = 'bold 8px DM Sans, sans-serif';
+      ctx.fillStyle = '#92400e';
+      ctx.textAlign = 'center';
+      ctx.fillText('JEFE DEL HOGAR', x, y + (nombre ? 34 : 22));
     }
   }
 
@@ -1604,6 +1593,7 @@ function dibujarFamiliograma() {
 
   const miembros = getFamiliogramaMiembros();
   const relacion = document.getElementById('fg-relacion')?.value || '';
+  const tituloFamilia = (document.getElementById('fg-familia-nombre')?.value || '').trim();
   const principal = {
     nombre: document.getElementById('fg-principal-nombre')?.value || '',
     anio: document.getElementById('fg-principal-anio')?.value || '',
@@ -1613,169 +1603,70 @@ function dibujarFamiliograma() {
     parentesco: 'principal'
   };
   const pareja = pickFirst(miembros, 'pareja', principal.genero === 'F' ? 'M' : 'F');
-  const hermano = pickMany(miembros, 'hermano', 'M').filter(h => hasData(h));
-  const abueloPaterno = pickFirst(miembros, 'abuelo_paterno', 'M');
-  const abuelaPaterna = pickFirst(miembros, 'abuela_paterna', 'F');
-  const abueloMaterno = pickFirst(miembros, 'abuelo_materno', 'M');
-  const abuelaMaterna = pickFirst(miembros, 'abuela_materna', 'F');
-  const bisabueloPP = pickFirst(miembros, 'bisabuelo_pp', 'M');
-  const bisabuelaPP = pickFirst(miembros, 'bisabuela_pp', 'F');
-  const bisabueloPM = pickFirst(miembros, 'bisabuelo_pm', 'M');
-  const bisabuelaPM = pickFirst(miembros, 'bisabuela_pm', 'F');
-  const bisabueloMP = pickFirst(miembros, 'bisabuelo_mp', 'M');
-  const bisabuelaMP = pickFirst(miembros, 'bisabuela_mp', 'F');
-  const bisabueloMM = pickFirst(miembros, 'bisabuelo_mm', 'M');
-  const bisabuelaMM = pickFirst(miembros, 'bisabuela_mm', 'F');
-  const padre = pickFirst(miembros, 'padre', 'M');
-  const madre = pickFirst(miembros, 'madre', 'F');
+  const padreJefe = pickFirst(miembros, 'padre_jefe', 'M');
+  const madreJefe = pickFirst(miembros, 'madre_jefe', 'F');
+  const padrePareja = pickFirst(miembros, 'padre_pareja', 'M');
+  const madrePareja = pickFirst(miembros, 'madre_pareja', 'F');
+  const hijos = pickMany(miembros, 'hijo', 'M').filter(h => hasData(h));
 
-  const yG3Anc = 70;   // bisabuelos
-  const yG2Anc = 155;  // abuelos
-  const yG1Anc = 245;  // padres
-  const yCore  = 330;  // principal
-  const yG1Des = 415;  // hijos
-  const yG2Des = 500;  // nietos
-  const yG3Des = 575;  // bisnietos
-
-  const bisXs = [W * 0.08, W * 0.18, W * 0.28, W * 0.38, W * 0.62, W * 0.72, W * 0.82, W * 0.92];
-  const abpX = W * 0.28;
-  const abmX = W * 0.38;
-  const abmpX = W * 0.62;
-  const abmmX = W * 0.72;
-  const padreX = W * 0.43;
-  const madreX = W * 0.57;
-  const principalX = W * 0.5;
-  const parejaX = W * 0.66;
+  const yPadres = 100;
+  const yCore = 230;
+  const yHijos = 360;
+  const padreJefeX = W * 0.16;
+  const madreJefeX = W * 0.28;
+  const padreParejaX = W * 0.72;
+  const madreParejaX = W * 0.84;
+  const principalX = W * 0.42;
+  const parejaX = W * 0.58;
 
   ctx.save();
   ctx.fillStyle = frameFill;
   ctx.strokeStyle = frameStroke;
   ctx.lineWidth = 1;
-  ctx.fillRect(8, 8, W - 16, H - 65);
-  ctx.strokeRect(8, 8, W - 16, H - 65);
+  const topPad = tituloFamilia ? 44 : 8;
+  ctx.fillRect(8, topPad, W - 16, H - 65 - (topPad - 8));
+  ctx.strokeRect(8, topPad, W - 16, H - 65 - (topPad - 8));
   ctx.restore();
 
-  // Bisabuelos (3 generaciones antes)
-  const bisabuelos = [bisabueloPP, bisabuelaPP, bisabueloPM, bisabuelaPM, bisabueloMP, bisabuelaMP, bisabueloMM, bisabuelaMM];
-  const bisSex = ['M', 'F', 'M', 'F', 'M', 'F', 'M', 'F'];
-  bisabuelos.forEach((p, idx) => {
-    if (hasData(p)) drawPerson(bisXs[idx], yG3Anc, p, bisSex[idx], false);
-  });
+  if (tituloFamilia) {
+    ctx.save();
+    ctx.font = 'bold 13px DM Sans, sans-serif';
+    ctx.fillStyle = '#003d4d';
+    ctx.textAlign = 'center';
+    ctx.fillText(tituloFamilia.toUpperCase(), W / 2, 28);
+    ctx.restore();
+  }
 
-  // Parejas bisabuelos -> abuelos
-  if (hasData(bisabueloPP) && hasData(bisabuelaPP)) {
-    drawCouple(bisXs[0], bisXs[1], yG3Anc, 'matrimonio');
-  }
-  if (hasData(bisabueloPM) && hasData(bisabuelaPM)) {
-    drawCouple(bisXs[2], bisXs[3], yG3Anc, 'matrimonio');
-  }
-  if (hasData(bisabueloMP) && hasData(bisabuelaMP)) {
-    drawCouple(bisXs[4], bisXs[5], yG3Anc, 'matrimonio');
-  }
-  if (hasData(bisabueloMM) && hasData(bisabuelaMM)) {
-    drawCouple(bisXs[6], bisXs[7], yG3Anc, 'matrimonio');
-  }
-  drawParentChildLink(bisabueloPP, bisXs[0], bisabuelaPP, bisXs[1], yG3Anc, abpX, yG2Anc);
-  drawParentChildLink(bisabueloPM, bisXs[2], bisabuelaPM, bisXs[3], yG3Anc, abmX, yG2Anc);
-  drawParentChildLink(bisabueloMP, bisXs[4], bisabuelaMP, bisXs[5], yG3Anc, abmpX, yG2Anc);
-  drawParentChildLink(bisabueloMM, bisXs[6], bisabuelaMM, bisXs[7], yG3Anc, abmmX, yG2Anc);
+  if (hasData(padreJefe) && hasData(madreJefe)) drawCouple(padreJefeX, madreJefeX, yPadres, 'matrimonio');
+  if (hasData(padreJefe)) drawPerson(padreJefeX, yPadres, padreJefe, 'M', false);
+  if (hasData(madreJefe)) drawPerson(madreJefeX, yPadres, madreJefe, 'F', false);
+  drawParentChildLink(padreJefe, padreJefeX, madreJefe, madreJefeX, yPadres, principalX, yCore);
 
-  // Abuelos -> padres
-  if (hasData(abueloPaterno) && hasData(abuelaPaterna)) {
-    drawCouple(abpX, abmX, yG2Anc, 'matrimonio');
+  if (hasData(pareja)) {
+    if (hasData(padrePareja) && hasData(madrePareja)) drawCouple(padreParejaX, madreParejaX, yPadres, 'matrimonio');
+    if (hasData(padrePareja)) drawPerson(padreParejaX, yPadres, padrePareja, 'M', false);
+    if (hasData(madrePareja)) drawPerson(madreParejaX, yPadres, madrePareja, 'F', false);
+    drawParentChildLink(padrePareja, padreParejaX, madrePareja, madreParejaX, yPadres, parejaX, yCore);
   }
-  if (hasData(abueloMaterno) && hasData(abuelaMaterna)) {
-    drawCouple(abmpX, abmmX, yG2Anc, 'matrimonio');
-  }
-  drawParentChildLink(abueloPaterno, abpX, abuelaPaterna, abmX, yG2Anc, padreX, yG1Anc);
-  drawParentChildLink(abueloMaterno, abmpX, abuelaMaterna, abmmX, yG2Anc, madreX, yG1Anc);
 
-  if (hasData(abueloPaterno)) drawPerson(abpX, yG2Anc, abueloPaterno, 'M', false);
-  if (hasData(abuelaPaterna)) drawPerson(abmX, yG2Anc, abuelaPaterna, 'F', false);
-  if (hasData(abueloMaterno)) drawPerson(abmpX, yG2Anc, abueloMaterno, 'M', false);
-  if (hasData(abuelaMaterna)) drawPerson(abmmX, yG2Anc, abuelaMaterna, 'F', false);
-
-  // Padres -> principal
-  if (hasData(padre) && hasData(madre)) drawCouple(padreX, madreX, yG1Anc, 'matrimonio');
-  if (hasData(padre)) drawPerson(padreX, yG1Anc, padre, 'M', false);
-  if (hasData(madre)) drawPerson(madreX, yG1Anc, madre, 'F', false);
-
-  drawParentChildLink(padre, padreX, madre, madreX, yG1Anc, principalX, yCore);
-
-  if (hasData(principal) && hasData(pareja)) {
-    drawCouple(principalX, parejaX, yCore, relacion);
-  }
+  if (hasData(principal) && hasData(pareja)) drawCouple(principalX, parejaX, yCore, relacion);
   if (hasData(principal)) drawPerson(principalX, yCore, principal, principal.genero || 'M', true);
   if (hasData(pareja)) drawPerson(parejaX, yCore, pareja, pareja.genero || 'F', false);
 
-  const hijos = pickMany(miembros, 'hijo', 'M').filter(h => hasData(h));
-  const nietos = pickMany(miembros, 'nieto', 'M').filter(h => hasData(h));
-  const bisnietos = pickMany(miembros, 'bisnieto', 'M').filter(h => hasData(h));
   const hijosConDatos = hijos.filter(h => hasData(h));
-
   if (hijosConDatos.length && (hasData(principal) || hasData(pareja))) {
     const coupleMidX = hasData(pareja) ? (principalX + parejaX) / 2 : principalX;
     const dropY = yCore + 34;
     drawLine(coupleMidX, yCore, coupleMidX, dropY);
-
     const spacing = Math.max(46, Math.min(88, (W - 80) / Math.max(hijosConDatos.length, 2)));
     const startX = coupleMidX - (spacing * (hijosConDatos.length - 1)) / 2;
     if (hijosConDatos.length > 1) {
       drawLine(startX, dropY, startX + spacing * (hijosConDatos.length - 1), dropY);
     }
-
     hijosConDatos.forEach((h, idx) => {
       const hx = hijosConDatos.length === 1 ? coupleMidX : startX + spacing * idx;
-      const hy = yG1Des;
-      drawLine(hx, dropY, hx, hy - PERSON_SIZE / 2);
-      drawPerson(hx, hy, h, h.genero, false);
-    });
-  }
-
-  if (hermano.length) {
-    const yH = yCore;
-    const spacingH = 62;
-    const startXH = principalX - spacingH * hermano.length;
-    ctx.font = '10px DM Sans, sans-serif';
-    ctx.fillStyle = '#64748b';
-    ctx.textAlign = 'left';
-    ctx.fillText('Hermanos/as', Math.max(12, startXH), yH - 22);
-    hermano.forEach((h, idx) => {
-      const x = startXH + spacingH * idx;
-      if (x > 20 && x < W - 20) drawPerson(x, yH, h, h.genero, false);
-    });
-  }
-
-  if (nietos.length && hijosConDatos.length) {
-    const hijosXs = [];
-    const coupleMidX = hasData(pareja) ? (principalX + parejaX) / 2 : principalX;
-    const spacing = Math.max(46, Math.min(88, (W - 80) / Math.max(hijosConDatos.length, 2)));
-    const startX = coupleMidX - (spacing * (hijosConDatos.length - 1)) / 2;
-    hijosConDatos.forEach((_, idx) => hijosXs.push(hijosConDatos.length === 1 ? coupleMidX : startX + spacing * idx));
-    const baseMid = hijosXs.reduce((s, x) => s + x, 0) / hijosXs.length;
-    const dropY2 = yG1Des + 34;
-    drawLine(baseMid, yG1Des, baseMid, dropY2);
-    const spacing2 = Math.max(42, Math.min(80, (W - 90) / Math.max(nietos.length, 2)));
-    const start2 = baseMid - (spacing2 * (nietos.length - 1)) / 2;
-    if (nietos.length > 1) drawLine(start2, dropY2, start2 + spacing2 * (nietos.length - 1), dropY2);
-    nietos.forEach((n, idx) => {
-      const nx = nietos.length === 1 ? baseMid : start2 + spacing2 * idx;
-      drawLine(nx, dropY2, nx, yG2Des - PERSON_SIZE / 2);
-      drawPerson(nx, yG2Des, n, n.genero, false);
-    });
-  }
-
-  if (bisnietos.length && nietos.length) {
-    const baseMid2 = W * 0.5;
-    const dropY3 = yG2Des + 30;
-    drawLine(baseMid2, yG2Des, baseMid2, dropY3);
-    const spacing3 = Math.max(40, Math.min(76, (W - 90) / Math.max(bisnietos.length, 2)));
-    const start3 = baseMid2 - (spacing3 * (bisnietos.length - 1)) / 2;
-    if (bisnietos.length > 1) drawLine(start3, dropY3, start3 + spacing3 * (bisnietos.length - 1), dropY3);
-    bisnietos.forEach((b, idx) => {
-      const bx = bisnietos.length === 1 ? baseMid2 : start3 + spacing3 * idx;
-      drawLine(bx, dropY3, bx, yG3Des - PERSON_SIZE / 2);
-      drawPerson(bx, yG3Des, b, b.genero, false);
+      drawLine(hx, dropY, hx, yHijos - PERSON_SIZE / 2);
+      drawPerson(hx, yHijos, h, h.genero, false);
     });
   }
 
@@ -1788,7 +1679,7 @@ function dibujarFamiliograma() {
     const items  = [
       { label: 'Hombre',             type: 'square',   color: '#005f73', fill: '#fff'     },
       { label: 'Mujer',              type: 'circle',   color: '#d11d5b', fill: '#fff'     },
-      { label: 'Caso índice',        type: 'square',   color: '#005f73', fill: '#fef9c3'  },
+      { label: 'Jefe del hogar',     type: 'square',   color: '#005f73', fill: '#fef9c3'  },
       { label: 'Fallecido/a',        type: 'cross',    color: '#64748b', fill: '#f1f5f9'  },
       { label: 'Enfermedad crónica', type: 'double',   color: '#f97316', fill: '#fff'     },
       { label: 'Matrimonio / Unión', type: 'line',     color: '#334155', dash: []         },
@@ -1883,10 +1774,12 @@ function dibujarFamiliograma() {
 function descargarFamiliograma() {
   const canvas = document.getElementById('familiograma-canvas');
   if (!canvas) return;
-  const nombre = (document.getElementById('fg-principal-nombre')?.value || 'familiograma').trim().replace(/\s+/g, '_').toLowerCase();
+  const fam = (document.getElementById('fg-familia-nombre')?.value || '').trim().replace(/\s+/g, '_').toLowerCase();
+  const jefe = (document.getElementById('fg-principal-nombre')?.value || '').trim().replace(/\s+/g, '_').toLowerCase();
+  const nombre = fam || jefe || 'familiograma';
   const link = document.createElement('a');
   link.href = canvas.toDataURL('image/png');
-  link.download = `familiograma_${nombre || 'caso'}.png`;
+  link.download = `familiograma_${nombre}.png`;
   link.click();
 }
 
@@ -1991,6 +1884,7 @@ function getRecoleccionData() {
   
   return {
     familiograma: {
+      familia: gv2('fg-familia-nombre'),
       principal: {
         nombre: gv2('fg-principal-nombre'),
         anio: gv2('fg-principal-anio'),
