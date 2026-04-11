@@ -124,6 +124,19 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .ff input:focus, .ff select:focus, .ff textarea:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(10,147,150,.10); background: #fff; }
 .ff textarea { resize: vertical; min-height: 75px; }
 .sdiv { font-size: .7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .08em; padding: 8px 0 4px; border-bottom: 1px solid var(--border); margin-bottom: 12px; margin-top: 4px; }
+.apgar-ref { background: #f0f9ff; border: 1.5px solid var(--primary-light); border-radius: 10px; padding: 12px 14px; font-size: .78rem; color: var(--text); margin-bottom: 14px; line-height: 1.45; }
+.apgar-ref strong { color: var(--primary-dark); }
+.apgar-preg { font-size: .76rem; color: var(--text); margin: 6px 0 6px 14px; list-style: decimal; padding-left: 0; margin-left: 18px; }
+.apgar-table-wrap { overflow-x: auto; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; }
+.apgar-table { width: 100%; border-collapse: collapse; font-size: .72rem; min-width: 720px; }
+.apgar-table th, .apgar-table td { border: 1px solid var(--border); padding: 4px 5px; text-align: center; vertical-align: middle; }
+.apgar-table th { background: #f1f5f9; font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: .65rem; }
+.apgar-table td input[type="text"], .apgar-table td input[type="number"] { width: 100%; max-width: 120px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; font-size: .75rem; }
+.apgar-table td select { width: 100%; min-width: 44px; padding: 3px 2px; border: 1px solid var(--border); border-radius: 6px; font-size: .68rem; }
+.apgar-table .apgar-total { font-weight: 700; color: var(--primary); }
+.apgar-table .apgar-func { font-size: .68rem; color: var(--text-muted); max-width: 100px; line-height: 1.2; }
+#ecomapa-canvas { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; background: #fafafa; display: block; margin-top: 10px; }
+.eco-legend { font-size: .72rem; color: var(--text-muted); background: #f8fafc; border-radius: 8px; padding: 10px 12px; margin-top: 10px; line-height: 1.5; }
 
 /* ── FOTO Y GPS ────────────────────────────────────────── */
 .photo-zone { border: 2px dashed var(--border); border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; background: var(--bg); position: relative; overflow: hidden; transition: all .2s; }
@@ -458,6 +471,50 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           </div>
         </div>
 
+        <!-- SUB-ACORDEÓN: APGAR FAMILIAR -->
+        <div class="sub-block" id="sub-apgar-familiar">
+          <div class="sub-head" onclick="toggleSub('apgar-familiar')">
+            <span class="sub-icon">❤️</span>
+            <span class="sub-title">APGAR Familiar</span>
+            <span class="sub-chev">▼</span>
+          </div>
+          <div class="sub-body" id="subbody-apgar-familiar" style="display:none">
+            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:12px">Evaluación de la función familiar (preguntas 0–5 por ítem; total por persona 0–25).</p>
+            <div class="apgar-ref">
+              <strong>Interpretación del total (por persona)</strong><br>
+              Función familiar normal: <strong>21–25</strong> · Disfunción leve: <strong>16–20</strong> · Disfunción moderada: <strong>11–15</strong> · Disfunción severa: <strong>0–10</strong>
+            </div>
+            <div class="sdiv">Preguntas (marque la frecuencia para cada integrante)</div>
+            <ol class="apgar-preg">
+              <li>¿Se siente satisfecho con la ayuda que recibe de su familia cuando tiene algún problema o necesidad?</li>
+              <li>¿Se siente satisfecho con la forma en que su familia habla de las cosas y comparten sus problemas?</li>
+              <li>¿Se siente satisfecho con la forma en que su familia acepta y apoya sus deseos de emprender nuevas actividades?</li>
+              <li>¿Se siente satisfecho con la forma en que su familia expresa afecto y responde a sus emociones como rabia, tristeza o amor?</li>
+              <li>¿Se siente satisfecho con la manera como comparten en su familia el tiempo para estar juntos, los espacios en la casa o el dinero?</li>
+            </ol>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:8px"><strong>Escala:</strong> 0 = Nunca · 1 = Casi nunca · 2 = Algunas veces · 3 = A veces · 4 = Casi siempre · 5 = Siempre</p>
+            <div class="apgar-table-wrap">
+              <table class="apgar-table" id="apgar-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Nombres y apellidos</th>
+                    <th>Sexo</th>
+                    <th>Edad</th>
+                    <th>P.1</th><th>P.2</th><th>P.3</th><th>P.4</th><th>P.5</th>
+                    <th>Total</th>
+                    <th>Función</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="apgar-miembros-tbody"></tbody>
+              </table>
+            </div>
+            <button type="button" class="btn-add-int" onclick="apgarAddRow()">＋ Agregar integrante</button>
+            <div class="ff"><label>Análisis</label><textarea id="apgar-analisis" placeholder="Interpretación cualitativa del APGAR familiar..."></textarea></div>
+          </div>
+        </div>
+
         <!-- SUB-ACORDEÓN: ESCALA DE ZARIT -->
         <div class="sub-block" id="sub-zarit">
           <div class="sub-head" onclick="toggleSub('zarit')">
@@ -466,7 +523,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
             <span class="sub-chev">▼</span>
           </div>
           <div class="sub-body" id="subbody-zarit" style="display:none">
-            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px">Evalúa el nivel de sobrecarga del cuidador principal. Escala: 1=Nunca · 2=Casi nunca · 3=A veces · 4=Frecuentemente · 5=Casi siempre.</p>
+            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px">Escala Zarit (0–4 por ítem). Sume las 22 respuestas: <strong>puntaje global 0 a 88</strong>. 0 = Nunca · 1 = Rara vez · 2 = Algunas veces · 3 = Bastantes veces · 4 = Casi siempre.</p>
             <div id="zarit-preguntas"></div>
             <div style="background:#f0f9ff;border:1.5px solid var(--primary-light);border-radius:10px;padding:12px;margin-top:10px">
               <div style="font-size:.8rem;font-weight:700;color:var(--primary)">Puntuación Total: <span id="zarit-puntaje" style="font-size:1.1rem">0</span> / 88</div>
@@ -484,20 +541,18 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
             <span class="sub-chev">▼</span>
           </div>
           <div class="sub-body" id="subbody-ecomapa" style="display:none">
-            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px">Identifica las relaciones de la familia con su entorno y redes de apoyo.</p>
-            <div class="sdiv">Redes de Apoyo Institucional</div>
-            <div class="ff"><label>Relación con el Sistema de Salud</label><select id="eco-salud"><option value="">—</option><option>Fuerte y positiva</option><option>Débil o tensa</option><option>Sin relación</option><option>En conflicto</option></select></div>
-            <div class="ff"><label>Relación con Instituciones Educativas</label><select id="eco-educacion"><option value="">—</option><option>Fuerte y positiva</option><option>Débil o tensa</option><option>Sin relación</option><option>En conflicto</option></select></div>
-            <div class="ff"><label>Relación con Entidades Gubernamentales (ICBF, alcaldía, etc.)</label><select id="eco-gobierno"><option value="">—</option><option>Fuerte y positiva</option><option>Débil o tensa</option><option>Sin relación</option><option>En conflicto</option></select></div>
-            <div class="ff"><label>Relación con Iglesia o grupos religiosos</label><select id="eco-iglesia"><option value="">—</option><option>Fuerte y positiva</option><option>Débil o tensa</option><option>Sin relación</option><option>No aplica</option></select></div>
-            <div class="sdiv">Redes de Apoyo Social</div>
-            <div class="ff"><label>Relación con Vecinos</label><select id="eco-vecinos"><option value="">—</option><option>Fuerte y positiva</option><option>Débil o tensa</option><option>Sin relación</option><option>En conflicto</option></select></div>
-            <div class="ff"><label>Relación con Familia Extensa (tíos, primos, etc.)</label><select id="eco-familia-ext"><option value="">—</option><option>Fuerte y positiva</option><option>Débil o tensa</option><option>Sin relación</option><option>En conflicto</option></select></div>
-            <div class="ff"><label>Pertenencia a Grupos Comunitarios o Sociales</label><select id="eco-grupos"><option value="">—</option><option>Activo en grupos</option><option>Participación ocasional</option><option>Sin participación</option></select></div>
-            <div class="sdiv">Trabajo y Economía</div>
-            <div class="ff"><label>Relación con el entorno laboral</label><select id="eco-trabajo"><option value="">—</option><option>Estable y positiva</option><option>Inestable</option><option>Desempleo</option><option>No aplica</option></select></div>
-            <div class="ff"><label>Acceso a programas de apoyo económico</label><select id="eco-apoyo-eco"><option value="">—</option><option>Recibe apoyo</option><option>En proceso de acceso</option><option>Sin acceso</option><option>No requiere</option></select></div>
-            <div class="ff"><label>Observaciones del Ecomapa</label><textarea id="eco-obs" placeholder="Describe las principales redes de apoyo y tensiones identificadas..."></textarea></div>
+            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:10px">Califique la relación de la familia con cada sistema. Luego verá el <strong>ecomapa visual</strong> con las respuestas; puede descargarlo como imagen.</p>
+            <div class="eco-legend">
+              <strong>Leyenda de valores:</strong> −2 = No aplica · 1 = Fuerte · 2 = Estresante · 3 = Moderada · 4 = Moderadamente estresante · 5 = Débil · 6 = Levemente estresante
+            </div>
+            <div id="eco-cuestionario" class="frow" style="margin-top:12px"></div>
+            <div class="sdiv" style="margin-top:16px">Diagrama ecomapa</div>
+            <canvas id="ecomapa-canvas"></canvas>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-top:6px;text-align:center">El diagrama se actualiza al cambiar las respuestas.</p>
+            <div style="display:flex;justify-content:flex-end;margin-top:8px">
+              <button class="btn-pri" type="button" onclick="descargarEcomapa()">⬇ Descargar ecomapa (PNG)</button>
+            </div>
+            <div class="ff" style="margin-top:14px"><label>Observaciones del Ecomapa</label><textarea id="eco-obs" placeholder="Notas clínicas u observaciones adicionales..."></textarea></div>
           </div>
         </div>
 
@@ -973,7 +1028,13 @@ function clearF(tipo) {
     document.querySelectorAll('#sub-familiograma input, #sub-familiograma select, #sub-familiograma textarea').forEach(el => el.value = '');
     document.querySelectorAll('#sub-adgar select, #sub-adgar textarea').forEach(el => el.value = '');
     document.querySelectorAll('#sub-zarit select, #sub-zarit textarea').forEach(el => el.value = '');
-    document.querySelectorAll('#sub-ecomapa select, #sub-ecomapa textarea').forEach(el => el.value = '');
+    document.getElementById('apgar-miembros-tbody').innerHTML = '';
+    apgarRowSeq = 0;
+    apgarAddRow();
+    const apAn = document.getElementById('apgar-analisis');
+    if (apAn) apAn.value = '';
+    document.querySelectorAll('#sub-ecomapa .eco-q, #sub-ecomapa #eco-obs').forEach(el => { el.value = ''; });
+    dibujarEcomapa();
     document.getElementById('fg-miembros-container').innerHTML = '';
     familiaresCount = 0;
     agregarFamiliar();
@@ -1390,16 +1451,6 @@ function onNucleoChange(prefix) {
   const wrap = document.getElementById(prefix + '-convivencia-wrap');
   if (wrap) wrap.style.display = val === 'SI' ? 'block' : 'none';
   dibujarFamiliograma();
-}
-     
-// ── SUB-ACORDEONES de Recolección ──────────────────────────
-function toggleSub(id) {
-  const block = document.getElementById('sub-' + id);
-  const body  = document.getElementById('subbody-' + id);
-  const chev  = block.querySelector('.sub-chev');
-  const isOpen = block.classList.contains('open');
-  block.classList.toggle('open', !isOpen);
-  body.style.display = isOpen ? 'none' : 'block';
 }
 
 // ── FAMILIOGRAMA ────────────────────────────────────────────
@@ -1883,30 +1934,288 @@ function bindFamiliogramaEvents() {
   });
 }
 
-// ── ZARIT ────────────────────────────────────────────────────
+// ── APGAR FAMILIAR ───────────────────────────────────────────
+let apgarRowSeq = 0;
+
+function interpretApgarBand(total) {
+  if (total >= 21) return 'Función normal';
+  if (total >= 16) return 'Disfunción leve';
+  if (total >= 11) return 'Disfunción moderada';
+  return 'Disfunción severa';
+}
+
+function apgarPreguntaOptions() {
+  return `<option value="">—</option>
+<option value="0">0</option><option value="1">1</option><option value="2">2</option>
+<option value="3">3</option><option value="4">4</option><option value="5">5</option>`;
+}
+
+function calcApgarRow(n) {
+  let sum = 0;
+  let nAns = 0;
+  for (let i = 1; i <= 5; i++) {
+    const v = document.getElementById(`apgar-${n}-p${i}`)?.value;
+    if (v !== '' && v != null) {
+      sum += parseInt(v, 10) || 0;
+      nAns++;
+    }
+  }
+  const tot = document.getElementById(`apgar-${n}-total`);
+  const fn = document.getElementById(`apgar-${n}-func`);
+  if (tot) tot.textContent = nAns ? String(sum) : '—';
+  if (fn) {
+    if (nAns === 5) fn.textContent = interpretApgarBand(sum);
+    else if (nAns > 0) fn.textContent = '(Incompleto)';
+    else fn.textContent = '—';
+  }
+}
+
+function apgarAddRow() {
+  apgarRowSeq++;
+  const n = apgarRowSeq;
+  const opts = apgarPreguntaOptions();
+  const tr = document.createElement('tr');
+  tr.dataset.n = String(n);
+  tr.innerHTML = `
+    <td>${n}</td>
+    <td style="text-align:left"><input type="text" id="apgar-${n}-nombre" placeholder="Nombres"></td>
+    <td><select id="apgar-${n}-sexo"><option value="">—</option><option value="M">M</option><option value="F">F</option><option value="NB">NB</option></select></td>
+    <td><input type="number" id="apgar-${n}-edad" placeholder="Edad" min="0" max="120" style="max-width:64px"></td>
+    <td><select id="apgar-${n}-p1" onchange="calcApgarRow(${n})">${opts}</select></td>
+    <td><select id="apgar-${n}-p2" onchange="calcApgarRow(${n})">${opts}</select></td>
+    <td><select id="apgar-${n}-p3" onchange="calcApgarRow(${n})">${opts}</select></td>
+    <td><select id="apgar-${n}-p4" onchange="calcApgarRow(${n})">${opts}</select></td>
+    <td><select id="apgar-${n}-p5" onchange="calcApgarRow(${n})">${opts}</select></td>
+    <td class="apgar-total" id="apgar-${n}-total">—</td>
+    <td class="apgar-func" id="apgar-${n}-func">—</td>
+    <td>${n > 1 ? `<button type="button" class="btn-rm-int" onclick="apgarRemoveRow(${n})" style="position:static">✕</button>` : ''}</td>`;
+  document.getElementById('apgar-miembros-tbody').appendChild(tr);
+}
+
+function apgarRemoveRow(n) {
+  const tb = document.getElementById('apgar-miembros-tbody');
+  if (!tb || tb.querySelectorAll('tr').length <= 1) return;
+  document.querySelector(`#apgar-miembros-tbody tr[data-n="${n}"]`)?.remove();
+}
+
+function initApgarFam() {
+  const tb = document.getElementById('apgar-miembros-tbody');
+  if (!tb || tb.querySelector('tr')) return;
+  apgarAddRow();
+}
+
+function getApgarData() {
+  const miembros = [];
+  document.querySelectorAll('#apgar-miembros-tbody tr').forEach(tr => {
+    const n = tr.dataset.n;
+    if (!n) return;
+    const g = id => document.getElementById(`apgar-${n}-${id}`)?.value || '';
+    let sum = 0;
+    let ok = true;
+    for (let i = 1; i <= 5; i++) {
+      const v = g(`p${i}`);
+      if (v === '') ok = false;
+      else sum += parseInt(v, 10) || 0;
+    }
+    miembros.push({
+      nombres: g('nombre'),
+      sexo: g('sexo'),
+      edad: g('edad'),
+      p1: g('p1'), p2: g('p2'), p3: g('p3'), p4: g('p4'), p5: g('p5'),
+      total: ok ? sum : null,
+      interpretacion: ok ? interpretApgarBand(sum) : ''
+    });
+  });
+  return { miembros, analisis: document.getElementById('apgar-analisis')?.value || '' };
+}
+
+// ── ECOMAPA (cuestionario + canvas) ──────────────────────────
+const ECOMAPA_CATS = [
+  { id: 'eco-vias', label: 'Vías de acceso', short: 'Vías acceso' },
+  { id: 'eco-fam-ext', label: 'Familia extensa', short: 'Fam. extensa' },
+  { id: 'eco-programas', label: 'Programas sociales y comunitarios', short: 'Prog. social' },
+  { id: 'eco-justicia', label: 'Protección en justicia', short: 'Justicia' },
+  { id: 'eco-org-com', label: 'Organización comunitaria', short: 'Org. comunit.' },
+  { id: 'eco-vecinos', label: 'Vecinos', short: 'Vecinos' },
+  { id: 'eco-espiritualidad', label: 'Espiritualidad', short: 'Espiritual.' },
+  { id: 'eco-educacion', label: 'Educación', short: 'Educación' },
+  { id: 'eco-trabajo', label: 'Trabajo', short: 'Trabajo' },
+  { id: 'eco-jac', label: 'Junta de acción comunal', short: 'JAC' },
+  { id: 'eco-recreacion', label: 'Recreación y esparcimiento', short: 'Recreación' },
+  { id: 'eco-salud', label: 'Servicios de salud', short: 'Salud' },
+  { id: 'eco-recursos', label: 'Recursos económicos', short: 'Rec. económ.' }
+];
+
+function ecoValorTexto(val) {
+  const m = {
+    '-2': 'No aplica',
+    '1': 'Fuerte',
+    '2': 'Estresante',
+    '3': 'Moderada',
+    '4': 'Mod. estresante',
+    '5': 'Débil',
+    '6': 'Levem. estresante'
+  };
+  return m[String(val)] || '';
+}
+
+function initEcomapaCuestionario() {
+  const host = document.getElementById('eco-cuestionario');
+  if (!host || host.dataset.ready === '1') return;
+  host.dataset.ready = '1';
+  const opts = `<option value="">—</option>
+<option value="-2">−2 No aplica</option>
+<option value="1">1 Fuerte</option>
+<option value="2">2 Estresante</option>
+<option value="3">3 Moderada</option>
+<option value="4">4 Mod. estresante</option>
+<option value="5">5 Débil</option>
+<option value="6">6 Levem. estresante</option>`;
+  ECOMAPA_CATS.forEach(cat => {
+    const div = document.createElement('div');
+    div.className = 'ff';
+    div.innerHTML = `<label>${cat.label}</label><select class="eco-q" id="${cat.id}" onchange="dibujarEcomapa()">${opts}</select>`;
+    host.appendChild(div);
+  });
+  document.getElementById('eco-obs')?.addEventListener('input', dibujarEcomapa);
+  dibujarEcomapa();
+}
+
+function ecomapaRoundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  if (typeof ctx.roundRect === 'function') ctx.roundRect(x, y, w, h, rr);
+  else {
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+  }
+  ctx.closePath();
+}
+
+function dibujarEcomapa() {
+  const canvas = document.getElementById('ecomapa-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = Math.max(360, canvas.offsetWidth || 400);
+  const H = 460;
+  canvas.width = W;
+  canvas.height = H;
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 0, W, H);
+  const cx = W / 2;
+  const cy = H / 2 - 8;
+  const R = Math.min(W, H) * 0.34;
+
+  const bw = 108;
+  const bh = 76;
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#005f73';
+  ctx.lineWidth = 2.5;
+  ecomapaRoundRect(ctx, cx - bw / 2, cy - bh / 2, bw, bh, 14);
+  ctx.fill();
+  ctx.stroke();
+  ctx.font = '34px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('👨‍👩‍👧‍👦', cx, cy - 10);
+  ctx.font = '700 10px DM Sans, sans-serif';
+  ctx.fillStyle = '#003d4d';
+  ctx.fillText('FAMILIA', cx, cy + bh / 2 - 16);
+
+  const n = ECOMAPA_CATS.length;
+  const tw = 118;
+  const th = 52;
+  ECOMAPA_CATS.forEach((cat, i) => {
+    const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
+    const x = cx + Math.cos(ang) * R;
+    const y = cy + Math.sin(ang) * R;
+    const val = document.getElementById(cat.id)?.value ?? '';
+    const txt = val !== '' && val != null ? `${val} · ${ecoValorTexto(val)}` : '—';
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1.5;
+    ecomapaRoundRect(ctx, x - tw / 2, y - th / 2, tw, th, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#1a2332';
+    ctx.font = '700 8.5px DM Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lab = cat.short;
+    ctx.fillText(lab.length > 16 ? lab.slice(0, 15) + '…' : lab, x, y - 12);
+    ctx.fillStyle = val !== '' ? '#005f73' : '#94a3b8';
+    ctx.font = '600 7.5px DM Sans, sans-serif';
+    const words = txt.split(' ');
+    let line = '';
+    let ly = y + 4;
+    words.forEach(wd => {
+      const test = line + wd + ' ';
+      if (ctx.measureText(test).width > tw - 8 && line) {
+        ctx.fillText(line.trim(), x, ly);
+        line = wd + ' ';
+        ly += 10;
+      } else line = test;
+    });
+    if (line.trim()) ctx.fillText(line.trim(), x, ly);
+  });
+
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  ctx.strokeStyle = '#e2e8f0';
+  ecomapaRoundRect(ctx, 8, H - 52, W - 16, 44, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#475569';
+  ctx.font = '600 7px DM Sans, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  const leg = 'Leyenda: −2 No aplica · 1 Fuerte · 2 Estresante · 3 Moderada · 4 Mod. estresante · 5 Débil · 6 Levem. estresante';
+  ctx.fillText(leg, 14, H - 46, W - 28);
+}
+
+function descargarEcomapa() {
+  const canvas = document.getElementById('ecomapa-canvas');
+  if (!canvas) return;
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'ecomapa_' + new Date().toISOString().slice(0, 10) + '.png';
+  a.click();
+}
+
+function getEcomapaData() {
+  const o = { obs: document.getElementById('eco-obs')?.value || '' };
+  ECOMAPA_CATS.forEach(c => {
+    o[c.id.replace(/^eco-/, '')] = document.getElementById(c.id)?.value || '';
+  });
+  return o;
+}
+
+// ── ZARIT (22 ítems, 0–4) ─────────────────────────────────────
 const ZARIT_ITEMS = [
-  '¿Siente que su familiar le pide más ayuda de la que realmente necesita?',
-  '¿Siente que por el tiempo que dedica a su familiar no tiene suficiente tiempo para usted?',
-  '¿Se siente tenso/a cuando tiene que cuidar a su familiar?',
-  '¿Se siente avergonzado/a por el comportamiento de su familiar?',
-  '¿Se siente irritado/a cuando está cerca de su familiar?',
-  '¿Cree que la situación actual afecta su relación con amigos u otros familiares?',
-  '¿Siente temor por el futuro de su familiar?',
-  '¿Siente que su familiar depende de usted?',
-  '¿Se siente agotado/a cuando tiene que estar junto a su familiar?',
-  '¿Siente que su salud se ha resentido por cuidar a su familiar?',
-  '¿Siente que no tiene tanta intimidad como quisiera a causa de su familiar?',
-  '¿Cree que su vida social se ha visto afectada por tener que cuidar a su familiar?',
-  '¿Se siente incómodo/a por distanciarse de sus amistades por cuidar a su familiar?',
-  '¿Cree que su familiar le considera a usted la única persona que le puede cuidar?',
-  '¿Cree que no tiene suficiente dinero para cuidar a su familiar?',
-  '¿Siente que será incapaz de cuidar a su familiar por mucho más tiempo?',
-  '¿Siente que ha perdido el control de su vida desde que comenzó la enfermedad de su familiar?',
-  '¿Desearía poder dejar el cuidado de su familiar a otra persona?',
-  '¿Se siente inseguro/a sobre qué hacer con su familiar?',
-  '¿Siente que debería hacer más por su familiar?',
-  '¿Cree que podría cuidar mejor a su familiar?',
-  'Globalmente, ¿qué grado de sobrecarga experimenta por el hecho de cuidar a su familiar?'
+  '¿Cree que su familiar solicita más ayuda de la que realmente necesita?',
+  '¿Cree que debido al tiempo que dedica a su familiar ya no dispone de tiempo suficiente para usted?',
+  '¿Se siente agobiado entre cuidar a su familiar y atender además otras responsabilidades en su trabajo o familia?',
+  '¿Se siente avergonzado por la conducta de su familiar?',
+  '¿Se siente enfadado cuando está cerca de su familiar?',
+  '¿Piensa que su familiar afecta negativamente a su relación con otros miembros de su familia?',
+  '¿Tiene miedo de lo que el futuro depare a su familiar?',
+  '¿Cree que su familiar depende de usted?',
+  '¿Se siente tenso cuando está cerca de su familiar?',
+  '¿Cree que su salud se ha resentido por cuidar a su familiar?',
+  '¿Cree que no tiene tanta intimidad como le gustaría debido a su familiar?',
+  '¿Cree que su vida social se ha resentido por cuidar a su familiar?',
+  '¿Se siente incómodo por desatender a sus amistades debido a su familiar?',
+  '¿Cree que su familiar parece esperar que usted sea la persona que le cuide, como si usted fuera la única persona de quien depende?',
+  '¿Cree que no tiene suficiente dinero para cuidar a su familiar además de sus otros gastos?',
+  '¿Cree que será incapaz de cuidarle/a por mucho más tiempo?',
+  '¿Siente que ha perdido el control de su vida desde la enfermedad de su familiar?',
+  '¿Desearía poder dejar el cuidado de su familiar a otros?',
+  '¿Se siente indeciso sobre qué hacer con su familiar?',
+  '¿Cree que debería hacer más por su familiar?',
+  '¿Cree que podría cuidar mejor de su familiar?',
+  'Globalmente, ¿qué grado de carga experimenta por el hecho de cuidar a su familiar?'
 ];
 
 function initZarit() {
@@ -1920,12 +2229,12 @@ function initZarit() {
     div.innerHTML = `
       <label style="text-transform:none;letter-spacing:0;font-size:.82rem;font-weight:600;color:var(--text)">${n}. ${q}</label>
       <select id="zarit-${n}" onchange="calcZarit()" style="margin-top:5px">
-        <option value="0">— Seleccionar —</option>
-        <option value="1">1 – Nunca</option>
-        <option value="2">2 – Casi nunca</option>
-        <option value="3">3 – A veces</option>
-        <option value="4">4 – Frecuentemente</option>
-        <option value="5">5 – Casi siempre</option>
+        <option value="">— Seleccionar —</option>
+        <option value="0">0 – Nunca</option>
+        <option value="1">1 – Rara vez</option>
+        <option value="2">2 – Algunas veces</option>
+        <option value="3">3 – Bastantes veces</option>
+        <option value="4">4 – Casi siempre</option>
       </select>`;
     container.appendChild(div);
   });
@@ -1934,23 +2243,22 @@ function initZarit() {
 function calcZarit() {
   let total = 0;
   for (let i = 1; i <= 22; i++) {
-    total += parseInt(document.getElementById('zarit-'+i)?.value || 0);
+    const raw = document.getElementById('zarit-' + i)?.value;
+    total += raw === '' || raw == null ? 0 : (parseInt(raw, 10) || 0);
   }
   document.getElementById('zarit-puntaje').textContent = total;
   let interp = '';
-  if (total < 22) interp = '✅ Sin sobrecarga';
-  else if (total <= 46) interp = '⚠️ Sobrecarga leve';
-  else interp = '🔴 Sobrecarga intensa — Se recomienda intervención';
+  if (total <= 20) interp = '✅ Carga ausente o leve (0–20)';
+  else if (total <= 40) interp = '⚠️ Carga leve a moderada (21–40)';
+  else if (total <= 60) interp = '🔶 Carga moderada a relevante (41–60)';
+  else interp = '🔴 Carga severa (61–88) — Valorar apoyo';
   document.getElementById('zarit-interpretacion').textContent = interp;
 }
 
-// Init Zarit when sub-accordion opens
-const origToggleSub = toggleSub;
-
-// Override to init zarit on open
 function toggleSub(id) {
   const block = document.getElementById('sub-' + id);
-  const body  = document.getElementById('subbody-' + id);
+  const body = document.getElementById('subbody-' + id);
+  if (!block || !body) return;
   const isOpen = block.classList.contains('open');
   block.classList.toggle('open', !isOpen);
   body.style.display = isOpen ? 'none' : 'block';
@@ -1959,19 +2267,25 @@ function toggleSub(id) {
     bindFamiliogramaEvents();
     setTimeout(dibujarFamiliograma, 100);
   }
+  if (!isOpen && id === 'apgar-familiar') initApgarFam();
+  if (!isOpen && id === 'ecomapa') {
+    initEcomapaCuestionario();
+    setTimeout(dibujarEcomapa, 80);
+  }
 }
 
 // ── Collect all Recoleccion sub-data ──────────────────────────
 function getRecoleccionData() {
   const gv2 = id => document.getElementById(id)?.value || '';
-  
-  // Familiograma
+
   const miembros = getFamiliogramaMiembros();
-  
-  // Zarit score
+
   let zaritTotal = 0;
-  for (let i=1;i<=22;i++) zaritTotal += parseInt(document.getElementById('zarit-'+i)?.value||0);
-  
+  for (let i = 1; i <= 22; i++) {
+    const raw = document.getElementById('zarit-' + i)?.value;
+    zaritTotal += raw === '' || raw == null ? 0 : (parseInt(raw, 10) || 0);
+  }
+
   return {
     familiograma: {
       familia: gv2('fg-familia-nombre'),
@@ -1987,21 +2301,19 @@ function getRecoleccionData() {
       obs: gv2('fg-obs')
     },
     adgar: {
-      banio:gv2('adgar-banio'),vestir:gv2('adgar-vestir'),sanitario:gv2('adgar-sanitario'),
-      desplazamiento:gv2('adgar-desplazamiento'),continencia:gv2('adgar-continencia'),
-      alimentacion:gv2('adgar-alimentacion'),dinero:gv2('adgar-dinero'),
-      medicamentos:gv2('adgar-medicamentos'),telefono:gv2('adgar-telefono'),
-      compras:gv2('adgar-compras'),obs:gv2('adgar-obs')
+      banio: gv2('adgar-banio'), vestir: gv2('adgar-vestir'), sanitario: gv2('adgar-sanitario'),
+      desplazamiento: gv2('adgar-desplazamiento'), continencia: gv2('adgar-continencia'),
+      alimentacion: gv2('adgar-alimentacion'), dinero: gv2('adgar-dinero'),
+      medicamentos: gv2('adgar-medicamentos'), telefono: gv2('adgar-telefono'),
+      compras: gv2('adgar-compras'), obs: gv2('adgar-obs')
     },
+    apgar: getApgarData(),
     zarit: { puntaje: zaritTotal, obs: gv2('zarit-obs') },
-    ecomapa: {
-      salud:gv2('eco-salud'),educacion:gv2('eco-educacion'),gobierno:gv2('eco-gobierno'),
-      iglesia:gv2('eco-iglesia'),vecinos:gv2('eco-vecinos'),familiaExt:gv2('eco-familia-ext'),
-      grupos:gv2('eco-grupos'),trabajo:gv2('eco-trabajo'),apoyoEco:gv2('eco-apoyo-eco'),
-      obs:gv2('eco-obs')
-    }
+    ecomapa: getEcomapaData()
   };
 }
+
+if (document.getElementById('apgar-miembros-tbody') && !document.querySelector('#apgar-miembros-tbody tr')) apgarAddRow();
 
 </script>
 </body>
