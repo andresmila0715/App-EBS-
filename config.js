@@ -6,6 +6,12 @@
  *   1. Agregar/cambiar municipios
  *   2. Agregar/cambiar usuarios y contraseñas
  *   3. Cambiar los links de Google Sheets
+ *
+ *  ⚠️  IMPORTANTE — CADA VEZ QUE EDITES ESTE ARCHIVO:
+ *      Abre sw.js y cambia el número de versión del caché:
+ *        CACHE_NAME = 'ebs-app-v7'  →  'ebs-app-v8'  (suma 1)
+ *      Esto obliga a todos los dispositivos a descargar
+ *      el config actualizado en la próxima apertura.
  * ============================================================
  */
 
@@ -18,7 +24,6 @@
 const MUNIS = [
   'La Belleza',
   'Sucre',
-  'Enciso',
   // 'Landázuri',   // <-- para agregar un nuevo municipio:
   //                //     1) descomenta esta línea
   //                //     2) agrega su usuario abajo
@@ -45,11 +50,6 @@ const USERS = {
   'SUCRE': {
     password: 'Sucr32026',
     municipio: 'Sucre',
-    role: 'user'
-  },
-    'ENCISO': {
-    password: '3nciso2026',
-    municipio: 'Enciso',
     role: 'user'
   },
   // Para agregar un nuevo usuario de municipio:
@@ -97,12 +97,6 @@ const SHEETS_URLS = {
   },
 
   'Sucre': {
-    carto:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_CARTO/exec',
-    recoleccion: 'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_RECOLECCION/exec',
-    macro:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_MACRO/exec',
-  },
-
-    'Enciso': {
     carto:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_CARTO/exec',
     recoleccion: 'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_RECOLECCION/exec',
     macro:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_MACRO/exec',
