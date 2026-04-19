@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="EBS+">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-     
+
 <!-- ══════════════════════════════════════════════════════
      CONFIGURACIÓN CENTRAL
      Edita config.js para cambiar usuarios, municipios y URLs
@@ -2155,9 +2155,11 @@ function descargarEcomapa() {
 }
 
 function getEcomapaData() {
-  const o = { obs: document.getElementById('eco-obs')?.value || '' };
+  const o = { obs: document.getElementById('eco-obs')?.value || '', valores: {} };
   ECOMAPA_CATS.forEach(c => {
-    o[c.id.replace(/^eco-/, '')] = document.getElementById(c.id)?.value || '';
+    o.valores[c.id] = document.getElementById(c.id)?.value || '';
+    // también al nivel raíz para compatibilidad
+    o[c.id] = o.valores[c.id];
   });
   return o;
 }
@@ -2256,6 +2258,15 @@ function getRecoleccionData() {
     zaritTotal += raw === '' || raw == null ? 0 : (parseInt(raw, 10) || 0);
   }
 
+  // Capturar imágenes de los canvas para los documentos Google
+  const fgCanvas  = document.getElementById('familiograma-canvas');
+  const ecoCanvas = document.getElementById('ecomapa-canvas');
+  const fgImagen  = fgCanvas  ? fgCanvas.toDataURL('image/png')  : '';
+  const ecoImagen = ecoCanvas ? ecoCanvas.toDataURL('image/png') : '';
+
+  const ecoData = getEcomapaData();
+  ecoData.imagenBase64 = ecoImagen;
+
   return {
     familiograma: {
       familia: gv2('fg-familia-nombre'),
@@ -2268,11 +2279,12 @@ function getRecoleccionData() {
       },
       relacionPareja: gv2('fg-relacion'),
       miembros,
-      obs: gv2('fg-obs')
+      obs: gv2('fg-obs'),
+      imagenBase64: fgImagen
     },
     apgar: getApgarData(),
     zarit: { puntaje: zaritTotal, obs: gv2('zarit-obs') },
-    ecomapa: getEcomapaData()
+    ecomapa: ecoData
   };
 }
 
