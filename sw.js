@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ebs-app-v6';
+const CACHE_NAME = 'ebs-app-v7';
 
 // Archivos que se guardan para funcionar sin internet
 const ASSETS = [
@@ -47,18 +47,21 @@ self.addEventListener('fetch', event => {
   const isSameOrigin = reqUrl.origin === self.location.origin;
   const isNavRequest = event.request.mode === 'navigate';
   const isIndexRequest = reqUrl.pathname === '/' || reqUrl.pathname.endsWith('/index.html');
+  const isConfigRequest = reqUrl.pathname.endsWith('/config.js');
 
-  // HTML principal: intenta red primero para traer la ultima version.
-  if (isSameOrigin && (isNavRequest || isIndexRequest)) {
+  // HTML principal y config.js: network-first para reflejar cambios de usuarios/municipios
+  if (isSameOrigin && (isNavRequest || isIndexRequest || isConfigRequest)) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put('/index.html', clone));
+          const key = isConfigRequest ? '/config.js' : '/index.html';
+          caches.open(CACHE_NAME).then(cache => cache.put(key, clone));
           return response;
         })
         .catch(async () => {
-          const cached = await caches.match('/index.html');
+          const key = isConfigRequest ? '/config.js' : '/index.html';
+          const cached = await caches.match(key);
           return cached || new Response('Sin conexion y sin cache disponible', { status: 503 });
         })
     );
