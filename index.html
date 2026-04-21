@@ -12,14 +12,9 @@
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-<!-- ══════════════════════════════════════════════════════
-     CONFIGURACIÓN CENTRAL
-     Edita config.js para cambiar usuarios, municipios y URLs
-     ══════════════════════════════════════════════════════ -->
 <script src="config.js"></script>
 
 <style>
-/* ── Variables y reset ─────────────────────────────────── */
 :root {
   --primary: #005f73;
   --primary-light: #0a9396;
@@ -40,11 +35,9 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: var(--font-body); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; min-height: 100vh; }
 
-/* ── Pantallas ─────────────────────────────────────────── */
 .screen { display: none; min-height: 100vh; }
 .screen.active { display: flex; flex-direction: column; }
 
-/* ── LOGIN ────────────────────────────────────────────── */
 #screen-login { background: linear-gradient(145deg, var(--primary-dark), var(--primary) 50%, var(--primary-light)); align-items: center; justify-content: center; position: relative; overflow: hidden; }
 #screen-login::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 20% 80%, rgba(209,29,91,0.18), transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(10,147,150,0.2), transparent 50%); }
 .login-card { background: rgba(255,255,255,0.97); border-radius: 20px; padding: 48px 40px 40px; width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); position: relative; z-index: 1; animation: fadeUp .6s ease both; }
@@ -61,7 +54,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .btn-login:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,95,115,.3); }
 .login-error { background: #fff0f3; border: 1px solid #fecdd3; color: #be123c; border-radius: 8px; padding: 10px 14px; font-size: .875rem; margin-top: 14px; text-align: center; display: none; }
 
-/* ── HEADER ────────────────────────────────────────────── */
 .app-header { background: var(--primary-dark); padding: 0 16px; display: flex; align-items: center; justify-content: space-between; height: 56px; box-shadow: 0 2px 12px rgba(0,0,0,.2); position: sticky; top: 0; z-index: 100; }
 .logo-text { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: #fff; }
 .logo-text span { color: var(--accent); }
@@ -71,7 +63,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .btn-logout { background: transparent; border: 1.5px solid rgba(255,255,255,.3); color: rgba(255,255,255,.8); padding: 4px 10px; border-radius: 8px; font-size: .75rem; cursor: pointer; }
 .btn-logout:hover { background: rgba(255,255,255,.1); }
 
-/* ── BARRA DE SYNC ─────────────────────────────────────── */
 .sync-bar { background: var(--primary); padding: 6px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: .75rem; color: rgba(255,255,255,.85); }
 .sync-left { display: flex; align-items: center; gap: 7px; }
 .sdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -81,19 +72,16 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .spill { background: rgba(209,29,91,.85); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: .7rem; font-weight: 700; }
 .btn-sync { background: rgba(255,255,255,.15); color: #fff; border: none; border-radius: 6px; padding: 3px 10px; font-size: .7rem; font-weight: 600; cursor: pointer; }
 
-/* ── TABS ──────────────────────────────────────────────── */
 .app-tabs { background: var(--primary); display: flex; border-bottom: 2px solid var(--primary-dark); overflow-x: auto; }
 .tab-btn { flex-shrink: 0; padding: 12px 16px; color: rgba(255,255,255,.7); font-family: var(--font-body); font-size: .83rem; font-weight: 500; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .2s; white-space: nowrap; }
 .tab-btn.active { color: #fff; border-bottom-color: var(--accent); background: rgba(255,255,255,.08); }
 .tab-panel { display: none; padding: 16px; animation: fadeUp .3s ease; }
 .tab-panel.active { display: block; }
 
-/* ── SELECTOR DE MUNICIPIO (BOSS) ──────────────────────── */
 .muni-sel { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
 .muni-btn { padding: 7px 18px; border-radius: 20px; border: 2px solid var(--border); background: var(--surface); color: var(--text-muted); font-family: var(--font-body); font-size: .83rem; font-weight: 600; cursor: pointer; transition: all .2s; }
 .muni-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-/* ── ACORDEÓN DE FORMULARIOS ───────────────────────────── */
 .qblock { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 14px; overflow: hidden; border: 1.5px solid var(--border); transition: border-color .2s; }
 .qblock.open { border-color: var(--primary-light); }
 .qhead { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background .2s; gap: 12px; }
@@ -114,7 +102,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .qbody { display: none; padding: 18px; border-top: 1px solid var(--border); animation: fadeUp .2s ease; }
 .qblock.open .qbody { display: block; }
 
-/* ── CAMPOS DE FORMULARIO ──────────────────────────────── */
 .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .frow3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 @media(max-width: 580px) { .frow, .frow3 { grid-template-columns: 1fr; } }
@@ -135,10 +122,33 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .apgar-table td select { width: 100%; min-width: 44px; padding: 3px 2px; border: 1px solid var(--border); border-radius: 6px; font-size: .68rem; }
 .apgar-table .apgar-total { font-weight: 700; color: var(--primary); }
 .apgar-table .apgar-func { font-size: .68rem; color: var(--text-muted); max-width: 100px; line-height: 1.2; }
-#ecomapa-canvas { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; background: #fafafa; display: block; margin-top: 10px; }
+
+/* CANVAS MEJORADOS PARA ALTA CALIDAD */
+#familiograma-canvas { 
+  min-height: 300px; 
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: #fafafa;
+  display: block;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+#ecomapa-canvas { 
+  min-height: 350px; 
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: #fafafa;
+  display: block;
+  margin-top: 10px;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
 .eco-legend { font-size: .72rem; color: var(--text-muted); background: #f8fafc; border-radius: 8px; padding: 10px 12px; margin-top: 10px; line-height: 1.5; }
 
-/* ── FOTO Y GPS ────────────────────────────────────────── */
 .photo-zone { border: 2px dashed var(--border); border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; background: var(--bg); position: relative; overflow: hidden; transition: all .2s; }
 .photo-zone:hover { border-color: var(--primary-light); background: #f0f9ff; }
 .photo-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
@@ -149,7 +159,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .btn-loc:hover { background: var(--primary-light); }
 .coord-st { font-size: .73rem; color: var(--text-muted); margin-top: 4px; }
 
-/* ── ACCIONES DEL FORMULARIO ───────────────────────────── */
 .factions { display: flex; gap: 10px; justify-content: flex-end; padding-top: 14px; border-top: 1px solid var(--border); margin-top: 4px; }
 .btn-sec { padding: 9px 18px; background: transparent; color: var(--text-muted); border: 1.5px solid var(--border); border-radius: 9px; font-family: var(--font-body); font-size: .85rem; font-weight: 500; cursor: pointer; }
 .btn-sec:hover { border-color: var(--primary-light); color: var(--primary); }
@@ -157,7 +166,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .btn-pri:hover { transform: translateY(-1px); }
 .btn-pri:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-/* ── INTEGRANTES ───────────────────────────────────────── */
 .int-card, .familiar-card { background: #f8fafc; border: 1.5px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; position: relative; }
 .int-num { background: var(--primary); color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 7px; display: inline-block; margin-bottom: 10px; }
 .btn-rm-int { position: absolute; top: 11px; right: 11px; background: #fee2e2; color: #991b1b; border: none; border-radius: 6px; padding: 3px 9px; font-size: .72rem; font-weight: 600; cursor: pointer; }
@@ -165,7 +173,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .btn-add-int { width: 100%; padding: 10px; background: transparent; border: 2px dashed var(--primary-light); border-radius: 9px; color: var(--primary); font-family: var(--font-body); font-size: .85rem; font-weight: 600; cursor: pointer; margin-bottom: 14px; }
 .btn-add-int:hover { background: #f0f9ff; }
 
-/* ── REGISTROS ─────────────────────────────────────────── */
 .rec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .rec-header h3 { font-family: var(--font-display); font-size: 1.05rem; color: var(--primary-dark); }
 .rec-count { background: var(--primary); color: #fff; padding: 2px 9px; border-radius: 11px; font-size: .75rem; font-weight: 600; }
@@ -208,7 +215,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .empty { text-align: center; padding: 36px 16px; color: var(--text-muted); }
 .empty .ico { font-size: 2.2rem; margin-bottom: 9px; }
 
-/* ── MODAL ─────────────────────────────────────────────── */
 .modal-back { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; align-items: center; justify-content: center; padding: 14px; }
 .modal-back.open { display: flex; }
 .modal { background: var(--surface); border-radius: 15px; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); animation: fadeUp .3s ease; }
@@ -218,7 +224,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .modal-body { padding: 18px; }
 .modal-foot { padding: 13px 18px; border-top: 1px solid var(--border); display: flex; gap: 9px; justify-content: flex-end; }
 
-/* ── TOAST ─────────────────────────────────────────────── */
 .toast { position: fixed; bottom: 20px; right: 20px; background: var(--primary-dark); color: #fff; padding: 11px 16px; border-radius: 9px; font-size: .83rem; font-weight: 500; box-shadow: var(--shadow-md); z-index: 9999; transform: translateY(80px); opacity: 0; transition: all .3s ease; max-width: 270px; }
 .toast.show { transform: translateY(0); opacity: 1; }
 .toast.ok { background: #166534; }
@@ -228,7 +233,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
-/* SUB-ACORDEONES dentro de Recolección */
 .sub-block { border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
 .sub-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; background: #f8fafc; transition: background .2s; user-select: none; }
 .sub-head:hover { background: #f0f9ff; }
@@ -238,15 +242,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .sub-block.open .sub-head { background: linear-gradient(135deg, #e0f2fe, #f0fdf4); }
 .sub-block.open .sub-chev { transform: rotate(180deg); }
 .sub-body { padding: 16px; border-top: 1px solid var(--border); animation: fadeUp .2s ease; }
-/* Familiograma canvas */
-#familiograma-canvas { min-height: 220px; }
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════
-     PANTALLA DE LOGIN
-     ══════════════════════════════════════════════════════ -->
 <div id="screen-login" class="screen active">
   <div class="login-card">
     <div class="login-logo">
@@ -267,13 +266,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
   </div>
 </div>
 
-
-<!-- ══════════════════════════════════════════════════════
-     PANTALLA PRINCIPAL DE LA APP
-     ══════════════════════════════════════════════════════ -->
 <div id="screen-app" class="screen">
-
-  <!-- Header -->
   <header class="app-header">
     <div class="logo-text">EBS<span>+</span></div>
     <div class="header-right">
@@ -283,7 +276,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
     </div>
   </header>
 
-  <!-- Barra de sincronización -->
   <div class="sync-bar">
     <div class="sync-left">
       <div class="sdot offline" id="sdot"></div>
@@ -293,24 +285,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
     <button class="btn-sync" onclick="syncAll()" id="bsync" style="display:none">↑ Sincronizar</button>
   </div>
 
-  <!-- Tabs de navegación -->
   <div class="app-tabs">
     <button class="tab-btn active" onclick="showTab('nuevo')" id="tab-nuevo">＋ Nuevo</button>
     <button class="tab-btn" onclick="showTab('registros')" id="tab-registros">📋 Registros</button>
   </div>
 
-
-  <!-- ── TAB: NUEVO REGISTRO ──────────────────────────── -->
   <div class="tab-panel active" id="panel-nuevo">
-
-    <!-- Selector de municipio (solo visible para BOSS) -->
     <div id="boss-sel" style="display:none">
       <div class="muni-sel" id="muni-btns"></div>
     </div>
 
-    <!-- ═══ FORMULARIO 1: CARTOGRAFÍAS ═══════════════════
-         Spreadsheet: SHEETS_URLS[municipio].carto
-         ═══════════════════════════════════════════════ -->
+    <!-- FORMULARIO 1: CARTOGRAFÍAS -->
     <div class="qblock open" id="q-carto">
       <div class="qhead" onclick="toggleQ('carto')">
         <div class="qleft">
@@ -362,10 +347,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       </div>
     </div>
 
-
-    <!-- ═══ FORMULARIO 2: RECOLECCIÓN ════════════════════
-         Spreadsheet: SHEETS_URLS[municipio].recoleccion
-         ═══════════════════════════════════════════════ -->
+    <!-- FORMULARIO 2: RECOLECCIÓN -->
     <div class="qblock" id="q-recoleccion">
       <div class="qhead" onclick="toggleQ('recoleccion')">
         <div class="qleft">
@@ -382,7 +364,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       </div>
       <div class="qbody">
 
-        <!-- SUB-ACORDEÓN: FAMILIOGRAMA -->
+        <!-- FAMILIOGRAMA -->
         <div class="sub-block" id="sub-familiograma">
           <div class="sub-head" onclick="toggleSub('familiograma')">
             <span class="sub-icon">🌳</span>
@@ -391,8 +373,16 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           </div>
           <div class="sub-body" id="subbody-familiograma">
             <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px">Registre el nombre de la familia, los datos del jefe del hogar y anexe familiares con el parentesco indicado.</p>
+            
+            <!-- NUEVOS CAMPOS: Teléfono y Microterritorio (ANTES del jefe del hogar) -->
+            <div class="frow">
+              <div class="ff"><label>Teléfono de Contacto</label><input type="tel" id="fg-telefono" placeholder="Ej: 3001234567"></div>
+              <div class="ff"><label>Microterritorio</label><input type="text" id="fg-microterritorio" placeholder="Ej: MT-26 SAN FERNANDO"></div>
+            </div>
+            
             <div class="ff"><label>Familia</label><input type="text" id="fg-familia-nombre" placeholder="Nombre de la familia (aparece como título en el familiograma)"></div>
             <div class="ff"><label>Vereda / Sector</label><input type="text" id="fg-vereda" placeholder="Ej: Casco Urbano, Vereda Villa Hermosa..."></div>
+            
             <div class="sdiv">Jefe del hogar</div>
             <div class="frow3">
               <div class="ff"><label>Nombre completo</label><input type="text" id="fg-principal-nombre" placeholder="Ej: Arturo Romero González"></div>
@@ -414,33 +404,33 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
               </select>
             </div>
 
-          <div class="frow">
-  <div class="ff">
-    <label>¿Vive en el núcleo del hogar?</label>
-    <select id="fg-principal-nucleo" onchange="onNucleoChange('fg-principal')">
-      <option value="">—</option>
-      <option value="SI">Sí</option>
-      <option value="NO">No</option>
-    </select>
-  </div>
-  <div class="ff" id="fg-principal-convivencia-wrap" style="display:none">
-    <label>Convivencia con otros del núcleo</label>
-    <select id="fg-principal-convivencia" onchange="dibujarFamiliograma()">
-      <option value="">—</option>
-      <option value="armoniosa">Armoniosa</option>
-      <option value="con_conflictos">Con conflictos ocasionales</option>
-      <option value="muy_conflictiva">Muy conflictiva</option>
-      <option value="distante">Distante o indiferente</option>
-    </select>
-  </div>
-</div>
+            <div class="frow">
+              <div class="ff">
+                <label>¿Vive en el núcleo del hogar?</label>
+                <select id="fg-principal-nucleo" onchange="onNucleoChange('fg-principal')">
+                  <option value="">—</option>
+                  <option value="SI">Sí</option>
+                  <option value="NO">No</option>
+                </select>
+              </div>
+              <div class="ff" id="fg-principal-convivencia-wrap" style="display:none">
+                <label>Convivencia con otros del núcleo</label>
+                <select id="fg-principal-convivencia" onchange="dibujarFamiliograma()">
+                  <option value="">—</option>
+                  <option value="armoniosa">Armoniosa</option>
+                  <option value="con_conflictos">Con conflictos ocasionales</option>
+                  <option value="muy_conflictiva">Muy conflictiva</option>
+                  <option value="distante">Distante o indiferente</option>
+                </select>
+              </div>
+            </div>
 
             <div class="sdiv">Familiares Anexados</div>
             <div id="fg-miembros-container"></div>
             <button class="btn-add-int" onclick="agregarFamiliar()" style="margin-bottom:14px">＋ Agregar Familiar</button>
 
             <div class="sdiv">Vista del Familiograma</div>
-            <canvas id="familiograma-canvas" style="width:100%;border:1.5px solid var(--border);border-radius:10px;background:#fafafa;display:block"></canvas>
+            <canvas id="familiograma-canvas"></canvas>
             <p style="font-size:.72rem;color:var(--text-muted);margin-top:6px;text-align:center">El familiograma se actualiza automáticamente</p>
             <div style="display:flex;justify-content:flex-end;margin-top:8px">
               <button class="btn-pri" type="button" onclick="descargarFamiliograma()">⬇ Descargar imagen</button>
@@ -449,9 +439,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           </div>
         </div>
 
-
-
-        <!-- SUB-ACORDEÓN: APGAR FAMILIAR -->
+        <!-- APGAR FAMILIAR -->
         <div class="sub-block" id="sub-apgar-familiar">
           <div class="sub-head" onclick="toggleSub('apgar-familiar')">
             <span class="sub-icon">❤️</span>
@@ -495,7 +483,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           </div>
         </div>
 
-        <!-- SUB-ACORDEÓN: ESCALA DE ZARIT -->
+        <!-- ESCALA DE ZARIT -->
         <div class="sub-block" id="sub-zarit">
           <div class="sub-head" onclick="toggleSub('zarit')">
             <span class="sub-icon">🧠</span>
@@ -513,7 +501,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           </div>
         </div>
 
-        <!-- SUB-ACORDEÓN: ECOMAPA -->
+        <!-- ECOMAPA -->
         <div class="sub-block" id="sub-ecomapa">
           <div class="sub-head" onclick="toggleSub('ecomapa')">
             <span class="sub-icon">🗺️</span>
@@ -540,10 +528,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       </div>
     </div>
 
-
-    <!-- ═══ FORMULARIO 3: MACRO ═══════════════════════════
-         Spreadsheet: SHEETS_URLS[municipio].macro
-         ═══════════════════════════════════════════════ -->
+    <!-- FORMULARIO 3: MACRO -->
     <div class="qblock" id="q-macro">
       <div class="qhead" onclick="toggleQ('macro')">
         <div class="qleft">
@@ -576,8 +561,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           <div class="ff"><label>Número de Casa</label><input type="text" id="m-casa" placeholder="Ej: Casa #1"></div>
           <div class="ff"><label>Contacto Telefónico Principal</label><input type="tel" id="m-telefono" placeholder="3001234567"></div>
         </div>
-
-
         <div class="sdiv">Características de la Vivienda</div>
         <div class="frow">
           <div class="ff"><label>Acueducto</label><select id="m-acueducto"><option value="">—</option><option>SI</option><option>NO</option><option>ARTESANAL</option><option>NO TIENE</option></select></div>
@@ -607,7 +590,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           <div class="ff"><label>Ingresos Económicos</label><select id="m-ingresos"><option value="">—</option><option>AGRICULTURA</option><option>GANADERIA</option><option>JORNALES</option><option>EMPLEADO</option><option>INDEPENDIENTE</option><option>DOCENTE</option><option>PENSIONES</option><option>SUBSIDIOS</option><option>AYUDA FAMILIAR</option><option>REBUSQUE</option><option>AGRICULTURA, GANADERIA</option><option>GANADERIA, JORNALES</option></select></div>
           <div class="ff"><label>Nivel del SISBEN</label><input type="text" id="m-sisben" placeholder="Ej: GRUPO A1-A5, GRUPO B1-B7..."></div>
         </div>
-
         <div class="sdiv">Integrantes de la Familia</div>
         <div id="integrantes-container"></div>
         <button class="btn-add-int" onclick="addIntegrante()">＋ Agregar Integrante</button>
@@ -618,10 +600,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       </div>
     </div>
 
-  </div> <!-- /panel-nuevo -->
+  </div>
 
-
-  <!-- ── TAB: REGISTROS GUARDADOS ─────────────────────── -->
   <div class="tab-panel" id="panel-registros">
     <div class="rec-header">
       <div style="display:flex;align-items:center;gap:9px">
@@ -639,12 +619,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
     <div class="rlist" id="rlist"></div>
   </div>
 
-</div> <!-- /screen-app -->
+</div>
 
-
-<!-- ══════════════════════════════════════════════════════
-     MODAL DE EDICIÓN
-     ══════════════════════════════════════════════════════ -->
 <div class="modal-back" id="modal">
   <div class="modal">
     <div class="modal-head">
@@ -661,81 +637,42 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 
 <div class="toast" id="toast"></div>
 
-
-<!-- ══════════════════════════════════════════════════════
-     LÓGICA DE LA APLICACIÓN
-     ══════════════════════════════════════════════════════ -->
 <script>
-
-// ── Constantes derivadas de config.js ──────────────────────
-// (USERS, MUNIS, SHEETS_URLS, getSheetUrl vienen de config.js)
-
 const TIPOS = ['carto', 'recoleccion', 'macro'];
+const TLABELS = { carto: '🗺️ Cartografías', recoleccion: '📝 Recolección', macro: '📊 Macro' };
+const TCSS = { carto: 'tc', recoleccion: 'tr', macro: 'tm' };
 
-const TLABELS = {
-  carto: '🗺️ Cartografías',
-  recoleccion: '📝 Recolección',
-  macro: '📊 Macro'
-};
-
-const TCSS = {
-  carto: 'tc',
-  recoleccion: 'tr',
-  macro: 'tm'
-};
-
-
-// ── Estado global ───────────────────────────────────────────
-let CU = null;        // Usuario actual
-let CM = null;        // Municipio actual
+let CU = null;
+let CM = null;
 let editId = null;
 let editTipo = null;
-let fotoData = {};    // Almacena fotos en base64 por id de preview
+let fotoData = {};
 let activeF = 'todos';
 let online = navigator.onLine;
 let intCount = 0;
-let isProcessing = false; // ⚠️ NUEVO: Para evitar doble clic en Guardar
-let isSyncing = false;    // ⚠️ NUEVO: Para evitar sincronizaciones simultáneas
+let isProcessing = false;
+let isSyncing = false;
 
-
-// ── Almacenamiento local (localStorage) ────────────────────
-// Clave: ebs_{tipo}_{municipio} → array de registros guardados
-// Clave: ebs_p_{tipo}_{municipio} → array de registros pendientes de sync
-
-const storageKey    = (m, t) => `ebs_${t}_${m.replace(/\s/g, '_')}`;
+const storageKey = (m, t) => `ebs_${t}_${m.replace(/\s/g, '_')}`;
 const storagePendKey = (m, t) => `ebs_p_${t}_${m.replace(/\s/g, '_')}`;
 
-function getRecs(m, t) {
-  try { return JSON.parse(localStorage.getItem(storageKey(m, t)) || '[]'); }
-  catch { return []; }
-}
-function getPend(m, t) {
-  try { return JSON.parse(localStorage.getItem(storagePendKey(m, t)) || '[]'); }
-  catch { return []; }
-}
+function getRecs(m, t) { try { return JSON.parse(localStorage.getItem(storageKey(m, t)) || '[]'); } catch { return []; } }
+function getPend(m, t) { try { return JSON.parse(localStorage.getItem(storagePendKey(m, t)) || '[]'); } catch { return []; } }
 function setRecs(m, t, arr) { localStorage.setItem(storageKey(m, t), JSON.stringify(arr)); }
 function setPend(m, t, arr) { localStorage.setItem(storagePendKey(m, t), JSON.stringify(arr)); }
 
-
-// ── Manejo de conectividad ──────────────────────────────────
-window.addEventListener('online',  () => { online = true;  updateSync(); syncAll(); });
+window.addEventListener('online', () => { online = true; updateSync(); syncAll(); });
 window.addEventListener('offline', () => { online = false; updateSync(); });
 
 function updateSync() {
   if (!CU) return;
   const munis = CU.role === 'boss' ? MUNIS : [CM];
-  const total = munis.reduce((s, m) =>
-    s + TIPOS.reduce((s2, t) => s2 + getPend(m, t).length, 0), 0);
-
+  const total = munis.reduce((s, m) => s + TIPOS.reduce((s2, t) => s2 + getPend(m, t).length, 0), 0);
   document.getElementById('sdot').className = 'sdot ' + (online ? 'online' : 'offline');
-  document.getElementById('slabel').textContent = online
-    ? 'Conectado · Sincronización activa'
-    : 'Sin conexión · Guardando localmente';
+  document.getElementById('slabel').textContent = online ? 'Conectado · Sincronización activa' : 'Sin conexión · Guardando localmente';
   document.getElementById('spill').style.display = total > 0 ? 'inline' : 'none';
   document.getElementById('spill').textContent = `${total} pendiente${total !== 1 ? 's' : ''}`;
   document.getElementById('bsync').style.display = (total > 0 && online) ? 'inline' : 'none';
-
-  // Actualizar contadores de cada formulario
   TIPOS.forEach(t => {
     const n = CM ? getRecs(CM, t).length : 0;
     const el = document.getElementById('qc-' + t);
@@ -743,37 +680,25 @@ function updateSync() {
   });
 }
 
-
-// ── Sincronización con Google Sheets ───────────────────────
-// Cada formulario se envía al spreadsheet correspondiente
-// según getSheetUrl(municipio, tipo) definido en config.js
-
 async function syncAll() {
-  // ⚠️ CORRECCIÓN: Evitar ejecuciones simultáneas
   if (isSyncing || !online || !CU) return;
-  
   isSyncing = true;
   const munis = CU.role === 'boss' ? MUNIS : [CM];
   document.getElementById('sdot').className = 'sdot syncing';
-
   try {
     for (const m of munis) {
       for (const t of TIPOS) {
         const pendientes = getPend(m, t);
         if (!pendientes.length) continue;
-
         const url = getSheetUrl(m, t);
         if (!url) continue;
-
         const fallidos = [];
         for (const r of pendientes) {
-          await new Promise(resolve => setTimeout(resolve, 100)); // Pequeña pausa
+          await new Promise(resolve => setTimeout(resolve, 100));
           const ok = await pushToSheet(r, url);
           if (!ok) fallidos.push(r);
         }
         setPend(m, t, fallidos);
-
-        // Marcar como sincronizados en registros locales
         const recs = getRecs(m, t);
         let changed = false;
         recs.forEach(r => {
@@ -785,35 +710,23 @@ async function syncAll() {
         if (changed) setRecs(m, t, recs);
       }
     }
-  } catch (e) {
-    console.error("Error en syncAll:", e);
-  } finally {
+  } catch (e) { console.error("Error en syncAll:", e); }
+  finally {
     isSyncing = false;
     updateSync();
     renderRecs();
-
-    const restantes = (CU.role === 'boss' ? MUNIS : [CM])
-      .reduce((s, m) => s + TIPOS.reduce((s2, t) => s2 + getPend(m, t).length, 0), 0);
+    const restantes = (CU.role === 'boss' ? MUNIS : [CM]).reduce((s, m) => s + TIPOS.reduce((s2, t) => s2 + getPend(m, t).length, 0), 0);
     if (restantes === 0) toast('☁️ Todo sincronizado', 'ok');
   }
 }
 
 async function pushToSheet(registro, url) {
   try {
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(registro)
-    });
+    await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(registro) });
     return true;
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
-
-// ── Login / Logout ──────────────────────────────────────────
 document.getElementById('inp-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 document.getElementById('inp-user').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('inp-pass').focus(); });
 
@@ -821,7 +734,6 @@ function doLogin() {
   const u = document.getElementById('inp-user').value.trim().toUpperCase();
   const p = document.getElementById('inp-pass').value;
   const err = document.getElementById('login-error');
-
   if (USERS[u] && USERS[u].password === p) {
     err.style.display = 'none';
     CU = { username: u, ...USERS[u] };
@@ -840,19 +752,13 @@ function doLogout() {
   showScreen('login');
 }
 
-
-// ── Inicialización de la app ────────────────────────────────
 function initApp() {
   document.getElementById('hdr-user').textContent = CU.username;
   setMuniUI();
-
   if (CU.role === 'boss') {
     document.getElementById('boss-sel').style.display = 'block';
-    document.getElementById('muni-btns').innerHTML = MUNIS
-      .map(m => `<button class="muni-btn${m === CM ? ' active' : ''}" onclick="selMuni('${m}')">${m}</button>`)
-      .join('');
+    document.getElementById('muni-btns').innerHTML = MUNIS.map(m => `<button class="muni-btn${m === CM ? ' active' : ''}" onclick="selMuni('${m}')">${m}</button>`).join('');
   }
-
   showScreen('app');
   showTab('nuevo');
   updateSync();
@@ -872,15 +778,11 @@ function selMuni(m) {
   updateSync();
 }
 
-function setMuniUI() {
-  document.getElementById('hdr-muni').textContent = CM;
-}
-
+function setMuniUI() { document.getElementById('hdr-muni').textContent = CM; }
 function showScreen(s) {
   document.getElementById('screen-login').classList.toggle('active', s === 'login');
   document.getElementById('screen-app').classList.toggle('active', s === 'app');
 }
-
 function showTab(t) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -888,7 +790,6 @@ function showTab(t) {
   document.getElementById('panel-' + t).classList.add('active');
   if (t === 'registros') renderRecs();
 }
-
 function toggleQ(id) {
   const bloque = document.getElementById('q-' + id);
   const estaAbierto = bloque.classList.contains('open');
@@ -896,8 +797,6 @@ function toggleQ(id) {
   if (!estaAbierto) bloque.classList.add('open');
 }
 
-
-// ── Foto y GPS ──────────────────────────────────────────────
 function handlePhoto(input, prevId) {
   const f = input.files[0];
   if (!f) return;
@@ -927,8 +826,6 @@ function getGPS(inputId, statusId) {
   );
 }
 
-
-// ── Integrantes (formulario Macro) ──────────────────────────
 function addIntegrante() {
   intCount++;
   const n = intCount;
@@ -983,9 +880,7 @@ function addIntegrante() {
   document.getElementById('integrantes-container').appendChild(div);
 }
 
-function removeInt(n) {
-  document.getElementById(`int-${n}`)?.remove();
-}
+function removeInt(n) { document.getElementById(`int-${n}`)?.remove(); }
 
 function getIntData(n) {
   const g = id => document.getElementById(`i${n}-${id}`)?.value || '';
@@ -1002,8 +897,6 @@ function getIntData(n) {
   };
 }
 
-
-// ── Limpiar formularios ─────────────────────────────────────
 function clearF(tipo) {
   if (tipo === 'carto') {
     ['c1-casa','c1-familia','c1-vereda','c1-patologias','c1-obs','c1-idfam','c1-coord'].forEach(i => document.getElementById(i).value = '');
@@ -1013,7 +906,6 @@ function clearF(tipo) {
     document.getElementById('c1-cst').textContent = 'Presiona 📍 para ubicar';
     fotoData['c1-prev'] = null;
   } else if (tipo === 'recoleccion') {
-    // Clear all sub-form fields
     document.querySelectorAll('#sub-familiograma input, #sub-familiograma select, #sub-familiograma textarea').forEach(el => el.value = '');
     document.querySelectorAll('#sub-zarit select, #sub-zarit textarea').forEach(el => el.value = '');
     document.getElementById('apgar-miembros-tbody').innerHTML = '';
@@ -1029,28 +921,19 @@ function clearF(tipo) {
     dibujarFamiliograma();
     calcZarit();
   } else if (tipo === 'macro') {
-    ['m-fecha','m-vereda','m-microterritorio','m-auxiliar','m-familia','m-casa','m-telefono','m-sisben']
-      .forEach(i => document.getElementById(i).value = '');
-    ['m-novedad','m-cargado','m-segtelf','m-segmedico','m-acueducto','m-pozo',
-     'm-sanitaria','m-ducha','m-cocina','m-residuos','m-paredes','m-piso','m-techo',
-     'm-electricidad','m-riesgoentorno','m-nivelriesgo','m-ingresos']
-      .forEach(i => document.getElementById(i).value = '');
+    ['m-fecha','m-vereda','m-microterritorio','m-auxiliar','m-familia','m-casa','m-telefono','m-sisben'].forEach(i => document.getElementById(i).value = '');
+    ['m-novedad','m-cargado','m-segtelf','m-segmedico','m-acueducto','m-pozo','m-sanitaria','m-ducha','m-cocina','m-residuos','m-paredes','m-piso','m-techo','m-electricidad','m-riesgoentorno','m-nivelriesgo','m-ingresos'].forEach(i => document.getElementById(i).value = '');
     document.getElementById('integrantes-container').innerHTML = '';
     intCount = 0;
     addIntegrante();
   }
 }
 
-
-// ── Guardar registro ────────────────────────────────────────
 const gv = id => document.getElementById(id)?.value || '';
 
 async function saveR(tipo) {
-  // ⚠️ CORRECCIÓN: Evitar doble clic
   if (isProcessing) return;
   isProcessing = true;
-
-  // Deshabilitar visualmente el botón
   const btns = document.querySelectorAll('.btn-pri');
   const originalText = {};
   btns.forEach(b => {
@@ -1059,85 +942,57 @@ async function saveR(tipo) {
     b.style.opacity = '0.7';
     b.style.pointerEvents = 'none';
   });
-
   try {
-    // Construir registro base
-    let registro = {
-      id: Date.now(),
-      fecha: new Date().toLocaleString('es-CO'),
-      municipio: CM,
-      tipo,
-      synced: false
-    };
-
-    // Validar y agregar campos específicos por tipo
+    let registro = { id: Date.now(), fecha: new Date().toLocaleString('es-CO'), municipio: CM, tipo, synced: false };
     if (tipo === 'carto') {
       if (!gv('c1-casa') || !gv('c1-familia')) { toast('⚠️ Casa y familia son obligatorios', 'err'); throw new Error('Validación'); }
       if (!gv('c1-riesgo')) { toast('⚠️ Selecciona el riesgo', 'err'); throw new Error('Validación'); }
       Object.assign(registro, {
-        casa: gv('c1-casa'), familia: gv('c1-familia'),
-        vereda: gv('c1-vereda'),
-        coord: gv('c1-coord'), riesgo: gv('c1-riesgo'),
-        conv: gv('c1-conv'), patologias: gv('c1-patologias'), obs: gv('c1-obs'),
-        idFam: gv('c1-idfam'),
+        casa: gv('c1-casa'), familia: gv('c1-familia'), vereda: gv('c1-vereda'),
+        coord: gv('c1-coord'), riesgo: gv('c1-riesgo'), conv: gv('c1-conv'),
+        patologias: gv('c1-patologias'), obs: gv('c1-obs'), idFam: gv('c1-idfam'),
         foto: fotoData['c1-prev'] || null
       });
-
     } else if (tipo === 'recoleccion') {
       const subData = getRecoleccionData();
       Object.assign(registro, { subData });
-
     } else if (tipo === 'macro') {
       if (!gv('m-vereda')) { toast('⚠️ La vereda es obligatoria', 'err'); throw new Error('Validación'); }
       if (!gv('m-familia')) { toast('⚠️ El nombre de la familia es obligatorio', 'err'); throw new Error('Validación'); }
-      const integrantes = [...document.querySelectorAll('.int-card')]
-        .map(card => getIntData(card.id.replace('int-', '')));
+      const integrantes = [...document.querySelectorAll('.int-card')].map(card => getIntData(card.id.replace('int-', '')));
       Object.assign(registro, {
-        fechaVisita: gv('m-fecha'), vereda: gv('m-vereda'),
-        microterritorio: gv('m-microterritorio'), auxiliar: gv('m-auxiliar'),
-        novedad: gv('m-novedad'), familia: gv('m-familia'),
-        casa: gv('m-casa'), telefono: gv('m-telefono'),
-        cargado: gv('m-cargado'),
+        fechaVisita: gv('m-fecha'), vereda: gv('m-vereda'), microterritorio: gv('m-microterritorio'),
+        auxiliar: gv('m-auxiliar'), novedad: gv('m-novedad'), familia: gv('m-familia'),
+        casa: gv('m-casa'), telefono: gv('m-telefono'), cargado: gv('m-cargado'),
         segTelf: gv('m-segtelf'), segMedico: gv('m-segmedico'),
         vivienda: {
-          acueducto: gv('m-acueducto'), pozo: gv('m-pozo'),
-          sanitaria: gv('m-sanitaria'), ducha: gv('m-ducha'),
-          cocina: gv('m-cocina'), residuos: gv('m-residuos'),
-          paredes: gv('m-paredes'), piso: gv('m-piso'),
-          techo: gv('m-techo'), electricidad: gv('m-electricidad'),
-          riesgoEntorno: gv('m-riesgoentorno'), nivelRiesgo: gv('m-nivelriesgo'),
-          ingresos: gv('m-ingresos'), sisben: gv('m-sisben')
+          acueducto: gv('m-acueducto'), pozo: gv('m-pozo'), sanitaria: gv('m-sanitaria'),
+          ducha: gv('m-ducha'), cocina: gv('m-cocina'), residuos: gv('m-residuos'),
+          paredes: gv('m-paredes'), piso: gv('m-piso'), techo: gv('m-techo'),
+          electricidad: gv('m-electricidad'), riesgoEntorno: gv('m-riesgoentorno'),
+          nivelRiesgo: gv('m-nivelriesgo'), ingresos: gv('m-ingresos'), sisben: gv('m-sisben')
         },
         integrantes
       });
     }
-
-    // Guardar localmente
     const recs = getRecs(CM, tipo);
     recs.unshift(registro);
     setRecs(CM, tipo, recs);
-
-    // Agregar a cola de sincronización
-    const paraSheets = { ...registro, foto: registro.foto ? '✅ Tiene foto' : 'Sin foto' };
+    const paraSheets = { ...registro, foto: registro.foto ? 'Tiene foto' : 'Sin foto' };
     const pendientes = getPend(CM, tipo);
     pendientes.push(paraSheets);
     setPend(CM, tipo, pendientes);
-
     if (online) {
       toast('💾 Guardado · Subiendo...', 'ok');
       await syncAll();
     } else {
       toast('💾 Guardado · Se subirá con señal', 'warn');
     }
-
     updateSync();
     clearF(tipo);
     showTab('registros');
-
-  } catch (e) {
-    console.error(e);
-  } finally {
-    // Restaurar botones y liberar proceso
+  } catch (e) { console.error(e); }
+  finally {
     isProcessing = false;
     btns.forEach(b => {
       if(originalText[b]) {
@@ -1149,8 +1004,6 @@ async function saveR(tipo) {
   }
 }
 
-
-// ── Filtros y renderizado de registros ──────────────────────
 function setFilter(f) {
   activeF = f;
   document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
@@ -1168,32 +1021,16 @@ function renderRecs() {
   });
   todos.sort((a, b) => b.id - a.id);
   if (activeF !== 'todos') todos = todos.filter(r => r.tipo === activeF);
-
   document.getElementById('rec-cnt').textContent = todos.length;
-
   if (!todos.length) {
     lista.innerHTML = `<div class="empty"><div class="ico">📋</div><p>No hay registros para <strong>${CM}</strong>.</p></div>`;
     return;
   }
-
   lista.innerHTML = todos.map(r => {
-    const syncBadge = r.synced
-      ? `<span class="sbadge s">☁️</span>`
-      : `<span class="sbadge p">⏳</span>`;
-    const etiqueta = r.tipo === 'carto'
-      ? `Casa ${r.casa || '—'}`
-      : r.tipo === 'recoleccion'
-      ? `Hogar ${r.codigo || '—'}`
-      : `${r.familia || '—'} · ${r.vereda || '—'}`;
-    const subtitulo = r.tipo === 'carto'
-      ? (r.idFam || `Fam. ${r.familia}`)
-      : r.tipo === 'recoleccion'
-      ? `${r.personas || '?'} personas · ${r.estrato || 'Sin estrato'}`
-      : `${r.integrantes?.length || 0} integrantes · ${r.microterritorio || '—'}`;
-    const riesgoBadge = r.tipo === 'carto'
-      ? `<span class="rbadge ${r.riesgo === 'Riesgo Bajo' ? 'bajo' : r.riesgo === 'Riesgo Medio' ? 'medio' : r.riesgo === 'Riesgo Alto' ? 'alto' : 'vacia'}">${r.riesgo || '—'}</span>`
-      : '';
-
+    const syncBadge = r.synced ? `<span class="sbadge s">☁️</span>` : `<span class="sbadge p">⏳</span>`;
+    const etiqueta = r.tipo === 'carto' ? `Casa ${r.casa || '—'}` : r.tipo === 'recoleccion' ? `Hogar ${r.codigo || '—'}` : `${r.familia || '—'} · ${r.vereda || '—'}`;
+    const subtitulo = r.tipo === 'carto' ? (r.idFam || `Fam. ${r.familia}`) : r.tipo === 'recoleccion' ? `${r.personas || '?'} personas · ${r.estrato || 'Sin estrato'}` : `${r.integrantes?.length || 0} integrantes · ${r.microterritorio || '—'}`;
+    const riesgoBadge = r.tipo === 'carto' ? `<span class="rbadge ${r.riesgo === 'Riesgo Bajo' ? 'bajo' : r.riesgo === 'Riesgo Medio' ? 'medio' : r.riesgo === 'Riesgo Alto' ? 'alto' : 'vacia'}">${r.riesgo || '—'}</span>` : '';
     return `<div class="rcard" id="rc-${r.id}">
       <div class="rcard-head" onclick="togRec('${r.id}')">
         <div class="rcard-left">
@@ -1219,8 +1056,7 @@ function renderRecs() {
 
 function buildFields(r) {
   if (r.tipo === 'carto') {
-    return `
-      <div class="rfield"><strong>Casa</strong>${r.casa || '—'}</div>
+    return `<div class="rfield"><strong>Casa</strong>${r.casa || '—'}</div>
       <div class="rfield"><strong>Familia</strong>${r.familia || '—'}</div>
       <div class="rfield"><strong>Vereda</strong>${r.vereda || '—'}</div>
       <div class="rfield"><strong>Riesgo</strong>${r.riesgo || '—'}</div>
@@ -1232,8 +1068,7 @@ function buildFields(r) {
       ${r.foto ? `<div class="rfield" style="grid-column:1/-1"><strong>Foto</strong><img src="${r.foto}" style="width:100%;max-height:140px;object-fit:cover;border-radius:7px;margin-top:5px"></div>` : ''}`;
   }
   if (r.tipo === 'recoleccion') {
-    return `
-      <div class="rfield"><strong>Código</strong>${r.codigo || '—'}</div>
+    return `<div class="rfield"><strong>Código</strong>${r.codigo || '—'}</div>
       <div class="rfield"><strong>Personas</strong>${r.personas || '—'}</div>
       <div class="rfield"><strong>Estrato</strong>${r.estrato || '—'}</div>
       <div class="rfield"><strong>Vivienda</strong>${r.vivienda || '—'}</div>
@@ -1242,11 +1077,9 @@ function buildFields(r) {
       <div class="rfield" style="grid-column:1/-1"><strong>Servicios</strong>${r.servicios || '—'}</div>
       <div class="rfield" style="grid-column:1/-1"><strong>Enfermedades</strong>${r.enfermedades || '—'}</div>`;
   }
-  // MACRO
   const viv = r.vivienda || {};
   const ints = r.integrantes || [];
-  return `
-    <div class="rfield"><strong>Vereda</strong>${r.vereda || '—'}</div>
+  return `<div class="rfield"><strong>Vereda</strong>${r.vereda || '—'}</div>
     <div class="rfield"><strong>Microterritorio</strong>${r.microterritorio || '—'}</div>
     <div class="rfield"><strong>Auxiliar</strong>${r.auxiliar || '—'}</div>
     <div class="rfield"><strong>Novedad</strong>${r.novedad || '—'}</div>
@@ -1260,9 +1093,7 @@ function buildFields(r) {
     </div>`;
 }
 
-function togRec(id) {
-  document.getElementById('rc-' + id)?.classList.toggle('open');
-}
+function togRec(id) { document.getElementById('rc-' + id)?.classList.toggle('open'); }
 
 function delRec(id, tipo) {
   if (!confirm('¿Eliminar este registro?')) return;
@@ -1273,141 +1104,87 @@ function delRec(id, tipo) {
   toast('🗑️ Registro eliminado');
 }
 
-
-// ── Modal de edición ────────────────────────────────────────
 function openEdit(id, tipo) {
   editId = parseInt(id);
   editTipo = tipo;
   const r = getRecs(CM, tipo).find(x => x.id == id);
   if (!r) return;
-
   document.getElementById('modal-title').textContent = 'Editar · ' + TLABELS[tipo];
   const body = document.getElementById('modal-body');
-
   if (tipo === 'carto') {
-    body.innerHTML = `
-      <div class="ff"><label>Vereda / Sector</label><input type="text" id="e-vereda" value="${r.vereda || ''}"></div>
-      <div class="frow">
-        <div class="ff"><label>N° Casa</label><input type="number" id="e-casa" value="${r.casa || ''}"></div>
-        <div class="ff"><label>N° Familia</label><input type="number" id="e-fam" value="${r.familia || ''}"></div>
-      </div>
+    body.innerHTML = `<div class="ff"><label>Vereda / Sector</label><input type="text" id="e-vereda" value="${r.vereda || ''}"></div>
+      <div class="frow"><div class="ff"><label>N° Casa</label><input type="number" id="e-casa" value="${r.casa || ''}"></div>
+      <div class="ff"><label>N° Familia</label><input type="number" id="e-fam" value="${r.familia || ''}"></div></div>
       <div class="ff"><label>Riesgo</label><select id="e-riesgo"><option>Riesgo Bajo</option><option>Riesgo Medio</option><option>Riesgo Alto</option><option>Vacía</option></select></div>
       <div class="ff"><label>Convenciones</label><select id="e-conv"><option>Efectiva</option><option>No Efectiva</option></select></div>
       <div class="ff"><label>ID Familia</label><input type="text" id="e-idfam" value="${r.idFam || ''}"></div>
       <div class="ff"><label>Patologías</label><textarea id="e-patologias">${r.patologias || ''}</textarea></div>
       <div class="ff"><label>Observaciones</label><textarea id="e-obs">${r.obs || ''}</textarea></div>`;
-    setTimeout(() => {
-      document.getElementById('e-riesgo').value = r.riesgo || '';
-      document.getElementById('e-conv').value = r.conv || '';
-    }, 10);
-
+    setTimeout(() => { document.getElementById('e-riesgo').value = r.riesgo || ''; document.getElementById('e-conv').value = r.conv || ''; }, 10);
   } else if (tipo === 'recoleccion') {
-    body.innerHTML = `
-      <div class="frow">
-        <div class="ff"><label>Código Hogar</label><input type="text" id="e-cod" value="${r.codigo || ''}"></div>
-        <div class="ff"><label>N° Personas</label><input type="number" id="e-pers" value="${r.personas || ''}"></div>
-      </div>
+    body.innerHTML = `<div class="frow"><div class="ff"><label>Código Hogar</label><input type="text" id="e-cod" value="${r.codigo || ''}"></div>
+      <div class="ff"><label>N° Personas</label><input type="number" id="e-pers" value="${r.personas || ''}"></div></div>
       <div class="ff"><label>Estrato</label><select id="e-est"><option value="">—</option><option>Estrato 1</option><option>Estrato 2</option><option>Estrato 3</option><option>Sin estrato</option></select></div>
       <div class="ff"><label>Tipo Vivienda</label><select id="e-viv"><option value="">—</option><option>Propia</option><option>Arrendada</option><option>Familiar</option><option>Invasión</option></select></div>
       <div class="ff"><label>Salud</label><select id="e-sal"><option value="">—</option><option>Contributivo</option><option>Subsidiado</option><option>Vinculado</option><option>Sin afiliación</option></select></div>
       <div class="ff"><label>Enfermedades</label><textarea id="e-enf">${r.enfermedades || ''}</textarea></div>
       <div class="ff"><label>Observaciones</label><textarea id="e-obs">${r.obs || ''}</textarea></div>`;
-    setTimeout(() => {
-      document.getElementById('e-est').value = r.estrato || '';
-      document.getElementById('e-viv').value = r.vivienda || '';
-      document.getElementById('e-sal').value = r.salud || '';
-    }, 10);
-
+    setTimeout(() => { document.getElementById('e-est').value = r.estrato || ''; document.getElementById('e-viv').value = r.vivienda || ''; document.getElementById('e-sal').value = r.salud || ''; }, 10);
   } else {
-    body.innerHTML = `
-      <div class="frow">
-        <div class="ff"><label>Vereda/Sector</label><input type="text" id="e-ver" value="${r.vereda || ''}"></div>
-        <div class="ff"><label>Auxiliar</label><input type="text" id="e-aux" value="${r.auxiliar || ''}"></div>
-      </div>
+    body.innerHTML = `<div class="frow"><div class="ff"><label>Vereda/Sector</label><input type="text" id="e-ver" value="${r.vereda || ''}"></div>
+      <div class="ff"><label>Auxiliar</label><input type="text" id="e-aux" value="${r.auxiliar || ''}"></div></div>
       <div class="ff"><label>Novedad</label><select id="e-nov"><option value="">—</option><option>SEGUIMIENTO</option><option>FAMILIA NUEVA</option><option>NO APLICA</option><option>CONCERTACIÓN</option><option>NUEVOS INTEGRANTES</option></select></div>
       <div class="ff"><label>Nivel Riesgo Vivienda</label><select id="e-nriesgo"><option value="">—</option><option>VERDE BAJO</option><option>MEDIO AMARILLO</option><option>ALTO ROJO</option></select></div>
       <div class="ff"><label>SISBEN</label><input type="text" id="e-sisben" value="${(r.vivienda || {}).sisben || ''}"></div>`;
-    setTimeout(() => {
-      document.getElementById('e-nov').value = r.novedad || '';
-      document.getElementById('e-nriesgo').value = (r.vivienda || {}).nivelRiesgo || '';
-    }, 10);
+    setTimeout(() => { document.getElementById('e-nov').value = r.novedad || ''; document.getElementById('e-nriesgo').value = (r.vivienda || {}).nivelRiesgo || ''; }, 10);
   }
-
   document.getElementById('modal').classList.add('open');
 }
 
-function closeModal() {
-  document.getElementById('modal').classList.remove('open');
-  editId = null;
-  editTipo = null;
-}
+function closeModal() { document.getElementById('modal').classList.remove('open'); editId = null; editTipo = null; }
 
 function saveEdit() {
   const recs = getRecs(CM, editTipo);
   const r = recs.find(x => x.id == editId);
   if (!r) { closeModal(); return; }
-
   if (editTipo === 'carto') {
-    r.vereda = gv('e-vereda');
-    r.casa = gv('e-casa');
-    r.familia = gv('e-fam');
-    r.riesgo = document.getElementById('e-riesgo').value;
-    r.conv = document.getElementById('e-conv').value;
-    r.idFam = gv('e-idfam');
-    r.patologias = gv('e-patologias');
-    r.obs = gv('e-obs');
+    r.vereda = gv('e-vereda'); r.casa = gv('e-casa'); r.familia = gv('e-fam');
+    r.riesgo = document.getElementById('e-riesgo').value; r.conv = document.getElementById('e-conv').value;
+    r.idFam = gv('e-idfam'); r.patologias = gv('e-patologias'); r.obs = gv('e-obs');
   } else if (editTipo === 'recoleccion') {
-    r.codigo = gv('e-cod');
-    r.personas = gv('e-pers');
-    r.estrato = document.getElementById('e-est').value;
-    r.vivienda = document.getElementById('e-viv').value;
-    r.salud = document.getElementById('e-sal').value;
-    r.enfermedades = gv('e-enf');
-    r.obs = gv('e-obs');
+    r.codigo = gv('e-cod'); r.personas = gv('e-pers');
+    r.estrato = document.getElementById('e-est').value; r.vivienda = document.getElementById('e-viv').value;
+    r.salud = document.getElementById('e-sal').value; r.enfermedades = gv('e-enf'); r.obs = gv('e-obs');
   } else {
-    r.vereda = gv('e-ver');
-    r.auxiliar = gv('e-aux');
+    r.vereda = gv('e-ver'); r.auxiliar = gv('e-aux');
     r.novedad = document.getElementById('e-nov').value;
     if (!r.vivienda) r.vivienda = {};
-    r.vivienda.nivelRiesgo = document.getElementById('e-nriesgo').value;
-    r.vivienda.sisben = gv('e-sisben');
+    r.vivienda.nivelRiesgo = document.getElementById('e-nriesgo').value; r.vivienda.sisben = gv('e-sisben');
   }
-
-  r.synced = false;
-  r.editada = new Date().toLocaleString('es-CO');
+  r.synced = false; r.editada = new Date().toLocaleString('es-CO');
   setRecs(CM, editTipo, recs);
-
   const pendientes = getPend(CM, editTipo).filter(p => p.id !== r.id);
-  pendientes.push({ ...r, foto: r.foto ? '✅ Tiene foto' : 'Sin foto', integrantes: r.integrantes || [] });
+  pendientes.push({ ...r, foto: r.foto ? 'Tiene foto' : 'Sin foto', integrantes: r.integrantes || [] });
   setPend(CM, editTipo, pendientes);
-
-  closeModal();
-  renderRecs();
-  updateSync();
+  closeModal(); renderRecs(); updateSync();
   if (online) syncAll();
   toast('✅ Registro actualizado', 'ok');
 }
 
-
-// ── Exportar CSV ────────────────────────────────────────────
 function exportCSV() {
   const tipos = activeF === 'todos' ? TIPOS : [activeF];
   let todos = [];
-  tipos.forEach(t => {
-    getRecs(CM, t).forEach(r => { if (!r.tipo) r.tipo = t; todos.push(r); });
-  });
+  tipos.forEach(t => { getRecs(CM, t).forEach(r => { if (!r.tipo) r.tipo = t; todos.push(r); }); });
   todos.sort((a, b) => b.id - a.id);
   if (!todos.length) { toast('No hay registros para exportar', 'err'); return; }
-
   const filas = [['Fecha','Municipio','Tipo','Campo1','Campo2','Campo3','Campo4','Estado'].join(',')];
   todos.forEach(r => {
     let f1 = '', f2 = '', f3 = '', f4 = '';
-    if (r.tipo === 'carto')       { f1 = `Casa ${r.casa}`; f2 = `Fam ${r.familia}`; f3 = r.idFam || ''; f4 = r.riesgo || ''; }
+    if (r.tipo === 'carto') { f1 = `Casa ${r.casa}`; f2 = `Fam ${r.familia}`; f3 = r.idFam || ''; f4 = r.riesgo || ''; }
     if (r.tipo === 'recoleccion') { f1 = r.codigo || ''; f2 = `${r.personas} pers`; f3 = r.estrato || ''; f4 = r.salud || ''; }
-    if (r.tipo === 'macro')       { f1 = r.familia || ''; f2 = r.vereda || ''; f3 = r.microterritorio || ''; f4 = `${(r.integrantes || []).length} int.`; }
+    if (r.tipo === 'macro') { f1 = r.familia || ''; f2 = r.vereda || ''; f3 = r.microterritorio || ''; f4 = `${(r.integrantes || []).length} int.`; }
     filas.push([r.fecha, r.municipio, TLABELS[r.tipo], f1, f2, f3, f4, r.synced ? 'Sync' : 'Pendiente'].map(v => `"${v}"`).join(','));
   });
-
   const blob = new Blob(['\uFEFF' + filas.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1418,8 +1195,6 @@ function exportCSV() {
   toast('📊 Exportado', 'ok');
 }
 
-
-// ── Toast de notificaciones ─────────────────────────────────
 function toast(msg, tipo = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -1427,27 +1202,14 @@ function toast(msg, tipo = '') {
   setTimeout(() => { t.className = 'toast'; }, 3500);
 }
 
+document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
-// ── Cerrar modal al clic fuera ──────────────────────────────
-document.getElementById('modal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-
-
-// ── Service Worker (PWA) ────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  });
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
 }
 
-// Botón de instalación PWA
 let installPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  installPrompt = e;
-  showInstallBanner();
-});
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; showInstallBanner(); });
 
 function showInstallBanner() {
   if (document.getElementById('install-banner')) return;
@@ -1466,7 +1228,6 @@ async function doInstall() {
   installPrompt = null;
 }
 
-// ── NÚCLEO FAMILIAR ─────────────────────────────────────────
 function onNucleoChange(prefix) {
   const val = document.getElementById(prefix + '-nucleo')?.value;
   const wrap = document.getElementById(prefix + '-convivencia-wrap');
@@ -1474,7 +1235,6 @@ function onNucleoChange(prefix) {
   dibujarFamiliograma();
 }
 
-// ── FAMILIOGRAMA ────────────────────────────────────────────
 let familiaresCount = 0;
 
 function agregarFamiliar() {
@@ -1487,18 +1247,15 @@ function agregarFamiliar() {
     <span class="int-num">Familiar #${n}</span>
     ${n > 1 ? `<button class="btn-rm-int" onclick="removeFamiliar(${n})">✕</button>` : ''}
     <div class="frow3">
-      <div class="ff">
-        <label>Parentesco</label>
-        <select id="fg-f${n}-parentesco">
-          <option value="">— Seleccionar —</option>
-          <option value="pareja">Pareja</option>
-          <option value="padre_jefe">Padre del jefe del hogar</option>
-          <option value="madre_jefe">Madre del jefe del hogar</option>
-          <option value="padre_pareja">Padre de la pareja</option>
-          <option value="madre_pareja">Madre de la pareja</option>
-          <option value="hijo">Hijo o hija del jefe del hogar</option>
-        </select>
-      </div>
+      <div class="ff"><label>Parentesco</label><select id="fg-f${n}-parentesco">
+        <option value="">— Seleccionar —</option>
+        <option value="pareja">Pareja</option>
+        <option value="padre_jefe">Padre del jefe del hogar</option>
+        <option value="madre_jefe">Madre del jefe del hogar</option>
+        <option value="padre_pareja">Padre de la pareja</option>
+        <option value="madre_pareja">Madre de la pareja</option>
+        <option value="hijo">Hijo o hija del jefe del hogar</option>
+      </select></div>
       <div class="ff"><label>Nombre</label><input type="text" id="fg-f${n}-nombre" placeholder="Nombre completo"></div>
       <div class="ff"><label>Año de Nacimiento</label><input type="number" id="fg-f${n}-anio" placeholder="Ej: 1998" min="1900" max="2026"></div>
     </div>
@@ -1508,35 +1265,22 @@ function agregarFamiliar() {
     </div>
     <div class="ff"><label>Observación breve</label><input type="text" id="fg-f${n}-nota" placeholder="Ej: Cuidador principal, vive fuera, etc."></div>
     <div class="frow">
-      <div class="ff">
-        <label>¿Vive en el núcleo del hogar?</label>
-        <select id="fg-f${n}-nucleo" onchange="onNucleoChange('fg-f${n}')">
-          <option value="">—</option>
-          <option value="SI">Sí</option>
-          <option value="NO">No</option>
-        </select>
-      </div>
+      <div class="ff"><label>¿Vive en el núcleo del hogar?</label><select id="fg-f${n}-nucleo" onchange="onNucleoChange('fg-f${n}')">
+        <option value="">—</option><option value="SI">Sí</option><option value="NO">No</option>
+      </select></div>
       <div class="ff" id="fg-f${n}-convivencia-wrap" style="display:none">
         <label>Convivencia con otros del núcleo</label>
         <select id="fg-f${n}-convivencia" onchange="dibujarFamiliograma()">
-          <option value="">—</option>
-          <option value="armoniosa">Armoniosa</option>
-          <option value="con_conflictos">Con conflictos ocasionales</option>
-          <option value="muy_conflictiva">Muy conflictiva</option>
-          <option value="distante">Distante o indiferente</option>
+          <option value="">—</option><option value="armoniosa">Armoniosa</option><option value="con_conflictos">Con conflictos ocasionales</option><option value="muy_conflictiva">Muy conflictiva</option><option value="distante">Distante o indiferente</option>
         </select>
       </div>
-    </div>
-  `;
+    </div>`;
   document.getElementById('fg-miembros-container').appendChild(div);
   bindFamiliogramaEvents();
   dibujarFamiliograma();
 }
 
-function removeFamiliar(n) {
-  document.getElementById('familiar-' + n)?.remove();
-  dibujarFamiliograma();
-}
+function removeFamiliar(n) { document.getElementById('familiar-' + n)?.remove(); dibujarFamiliograma(); }
 
 function getFamiliogramaMiembros() {
   const gv2 = id => document.getElementById(id)?.value || '';
@@ -1544,14 +1288,10 @@ function getFamiliogramaMiembros() {
   document.querySelectorAll('[id^="familiar-"]').forEach(card => {
     const n = card.id.replace('familiar-', '');
     const m = {
-      parentesco: gv2(`fg-f${n}-parentesco`),
-      nombre: gv2(`fg-f${n}-nombre`),
-      anio: gv2(`fg-f${n}-anio`),
-      genero: gv2(`fg-f${n}-genero`),
-      estado: gv2(`fg-f${n}-estado`),
-      nota: gv2(`fg-f${n}-nota`),
-      nucleo: gv2(`fg-f${n}-nucleo`),
-      convivencia: gv2(`fg-f${n}-convivencia`)
+      parentesco: gv2(`fg-f${n}-parentesco`), nombre: gv2(`fg-f${n}-nombre`),
+      anio: gv2(`fg-f${n}-anio`), genero: gv2(`fg-f${n}-genero`),
+      estado: gv2(`fg-f${n}-estado`), nota: gv2(`fg-f${n}-nota`),
+      nucleo: gv2(`fg-f${n}-nucleo`), convivencia: gv2(`fg-f${n}-convivencia`)
     };
     if (m.parentesco || m.nombre || m.anio || m.estado || m.nota) miembros.push(m);
   });
@@ -1565,23 +1305,19 @@ function pickFirst(miembros, parentesco, fallbackGenero) {
 }
 
 function pickMany(miembros, parentesco, fallbackGenero) {
-  return miembros
-    .filter(m => m.parentesco === parentesco)
-    .map(m => ({ ...m, genero: m.genero || fallbackGenero }));
+  return miembros.filter(m => m.parentesco === parentesco).map(m => ({ ...m, genero: m.genero || fallbackGenero }));
 }
 
 function dibujarFamiliograma() {
   const canvas = document.getElementById('familiograma-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-
   const W = canvas.offsetWidth || 400;
   const H = 600;
   canvas.width = W;
   canvas.height = H;
   ctx.clearRect(0, 0, W, H);
   const PERSON_SIZE = 36;
-
   const colorM = '#005f73';
   const colorF = '#d11d5b';
   const colorText = '#1a2332';
@@ -1589,92 +1325,65 @@ function dibujarFamiliograma() {
   const frameStroke = '#cbd5e1';
   const frameFill = '#f8fafc';
 
-  function hasData(person) {
-    return Boolean(person.nombre || person.anio || person.estado);
-  }
-
-  function shortName(nombre) {
-    const parts = (nombre || '').trim().split(/\s+/).filter(Boolean);
-    return parts.slice(0, 2).join(' ').substring(0, 18);
-  }
+  function hasData(person) { return Boolean(person.nombre || person.anio || person.estado); }
+  function shortName(nombre) { const parts = (nombre || '').trim().split(/\s+/).filter(Boolean); return parts.slice(0, 2).join(' ').substring(0, 18); }
 
   function drawPerson(x, y, person, genero, isPrincipal) {
-  const size = PERSON_SIZE;
-  const estado = person?.estado || '';
-  const anio = person?.anio || '';
-  const nombre = person?.nombre || '';
-  const nucleo = person?.nucleo || '';
-  const convivencia = person?.convivencia || '';
-  const color = genero === 'F' ? colorF : colorM;
-  const convColor = convivencia === 'armoniosa' ? '#16a34a'
-    : convivencia === 'con_conflictos' ? '#f59e0b'
-    : convivencia === 'muy_conflictiva' ? '#dc2626'
-    : convivencia === 'distante' ? '#94a3b8' : null;
-
-  ctx.save();
-
-  if (nucleo === 'SI') {
-    ctx.fillStyle = 'rgba(10,147,150,0.10)';
-    ctx.beginPath(); ctx.arc(x, y, size / 2 + 10, 0, Math.PI * 2); ctx.fill();
+    const size = PERSON_SIZE;
+    const estado = person?.estado || '';
+    const anio = person?.anio || '';
+    const nombre = person?.nombre || '';
+    const nucleo = person?.nucleo || '';
+    const convivencia = person?.convivencia || '';
+    const color = genero === 'F' ? colorF : colorM;
+    const convColor = convivencia === 'armoniosa' ? '#16a34a' : convivencia === 'con_conflictos' ? '#f59e0b' : convivencia === 'muy_conflictiva' ? '#dc2626' : convivencia === 'distante' ? '#94a3b8' : null;
+    ctx.save();
+    if (nucleo === 'SI') { ctx.fillStyle = 'rgba(10,147,150,0.10)'; ctx.beginPath(); ctx.arc(x, y, size / 2 + 10, 0, Math.PI * 2); ctx.fill(); }
+    if (isPrincipal) { ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 14; ctx.fillStyle = '#fef08a'; ctx.strokeStyle = '#b45309'; ctx.lineWidth = 3; }
+    else { ctx.fillStyle = '#fff'; ctx.strokeStyle = color; ctx.lineWidth = 2; }
+    if (genero === 'F') { ctx.beginPath(); ctx.arc(x, y, size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.rect(x - size / 2, y - size / 2, size, size); ctx.fill(); ctx.stroke(); }
+    ctx.shadowColor = 'transparent';
+    if (convColor && nucleo === 'SI') {
+      ctx.strokeStyle = convColor; ctx.lineWidth = 2.5;
+      if (genero === 'F') { ctx.beginPath(); ctx.arc(x, y, size / 2 + 5, 0, Math.PI * 2); ctx.stroke(); }
+      else { ctx.beginPath(); ctx.rect(x-size/2-5, y-size/2-5, size+10, size+10); ctx.stroke(); }
+    }
+    if (estado === 'Fallecido/a') {
+      ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x-size/2+4, y-size/2+4); ctx.lineTo(x+size/2-4, y+size/2-4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+size/2-4, y-size/2+4); ctx.lineTo(x-size/2+4, y+size/2-4); ctx.stroke();
+    }
+    if (estado === 'Enfermedad crónica') {
+      ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2;
+      const off = nucleo === 'SI' ? 9 : 4;
+      if (genero === 'F') { ctx.beginPath(); ctx.arc(x, y, size/2+off, 0, Math.PI*2); ctx.stroke(); }
+      else { ctx.beginPath(); ctx.rect(x-size/2-off, y-size/2-off, size+off*2, size+off*2); ctx.stroke(); }
+    }
+    if (nucleo === 'NO') {
+      ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.setLineDash([3,2]);
+      ctx.beginPath(); ctx.arc(x, y, size/2+7, 0, Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+    if (anio) { ctx.font='10px DM Sans,sans-serif'; ctx.fillStyle='#64748b'; ctx.textAlign='center'; ctx.fillText(anio, x, y-18); }
+    if (nombre) {
+      ctx.font = isPrincipal ? 'bold 10px DM Sans,sans-serif' : 'bold 9px DM Sans,sans-serif';
+      ctx.fillStyle = isPrincipal ? '#78350f' : colorText;
+      ctx.textAlign = 'center';
+      ctx.fillText(shortName(nombre), x, y+22);
+    }
+    if (isPrincipal && (nombre || anio || estado)) {
+      ctx.font='bold 8px DM Sans,sans-serif'; ctx.fillStyle='#b45309'; ctx.textAlign='center';
+      ctx.fillText('★ JEFE DEL HOGAR', x, y+(nombre ? 34 : 22));
+    }
   }
 
-  if (isPrincipal) {
-    ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 14;
-    ctx.fillStyle = '#fef08a'; ctx.strokeStyle = '#b45309'; ctx.lineWidth = 3;
-  } else {
-    ctx.fillStyle = '#fff'; ctx.strokeStyle = color; ctx.lineWidth = 2;
-  }
-  if (genero === 'F') {
-    ctx.beginPath(); ctx.arc(x, y, size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  } else {
-    ctx.beginPath(); ctx.rect(x - size / 2, y - size / 2, size, size); ctx.fill(); ctx.stroke();
-  }
-  ctx.shadowColor = 'transparent';
-
-  if (convColor && nucleo === 'SI') {
-    ctx.strokeStyle = convColor; ctx.lineWidth = 2.5;
-    if (genero === 'F') { ctx.beginPath(); ctx.arc(x, y, size / 2 + 5, 0, Math.PI * 2); ctx.stroke(); }
-    else { ctx.beginPath(); ctx.rect(x-size/2-5, y-size/2-5, size+10, size+10); ctx.stroke(); }
-  }
-
-  if (estado === 'Fallecido/a') {
-    ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(x-size/2+4, y-size/2+4); ctx.lineTo(x+size/2-4, y+size/2-4); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x+size/2-4, y-size/2+4); ctx.lineTo(x-size/2+4, y+size/2-4); ctx.stroke();
-  }
-  if (estado === 'Enfermedad crónica') {
-    ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2;
-    const off = nucleo === 'SI' ? 9 : 4;
-    if (genero === 'F') { ctx.beginPath(); ctx.arc(x, y, size/2+off, 0, Math.PI*2); ctx.stroke(); }
-    else { ctx.beginPath(); ctx.rect(x-size/2-off, y-size/2-off, size+off*2, size+off*2); ctx.stroke(); }
-  }
-  if (nucleo === 'NO') {
-    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.setLineDash([3,2]);
-    ctx.beginPath(); ctx.arc(x, y, size/2+7, 0, Math.PI*2); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-  ctx.restore();
-
-  if (anio) { ctx.font='10px DM Sans,sans-serif'; ctx.fillStyle='#64748b'; ctx.textAlign='center'; ctx.fillText(anio, x, y-18); }
-  if (nombre) {
-    ctx.font = isPrincipal ? 'bold 10px DM Sans,sans-serif' : 'bold 9px DM Sans,sans-serif';
-    ctx.fillStyle = isPrincipal ? '#78350f' : colorText;
-    ctx.textAlign = 'center';
-    ctx.fillText(shortName(nombre), x, y+22);
-  }
-  if (isPrincipal && (nombre || anio || estado)) {
-    ctx.font='bold 8px DM Sans,sans-serif'; ctx.fillStyle='#b45309'; ctx.textAlign='center';
-    ctx.fillText('★ JEFE DEL HOGAR', x, y+(nombre ? 34 : 22));
-  }
-}
   function drawLine(x1, y1, x2, y2, style) {
     ctx.save();
     ctx.strokeStyle = colorLine;
     ctx.lineWidth = 1.5;
-    if (style === 'dashed') {
-      ctx.setLineDash([5, 3]);
-      ctx.strokeStyle = '#2563eb';
-    }
+    if (style === 'dashed') { ctx.setLineDash([5, 3]); ctx.strokeStyle = '#2563eb'; }
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
@@ -1770,7 +1479,7 @@ function dibujarFamiliograma() {
   }
 
   if (hasData(principal) && hasData(pareja)) drawCouple(principalX, parejaX, yCore, relacion);
-     principal.nucleo = document.getElementById('fg-principal-nucleo')?.value || '';
+  principal.nucleo = document.getElementById('fg-principal-nucleo')?.value || '';
   principal.convivencia = document.getElementById('fg-principal-convivencia')?.value || '';
   if (hasData(principal)) drawPerson(principalX, yCore, principal, principal.genero || 'M', true);
   if (hasData(pareja)) drawPerson(parejaX, yCore, pareja, pareja.genero || 'F', false);
@@ -1782,9 +1491,7 @@ function dibujarFamiliograma() {
     drawLine(coupleMidX, yCore, coupleMidX, dropY);
     const spacing = Math.max(46, Math.min(88, (W - 80) / Math.max(hijosConDatos.length, 2)));
     const startX = coupleMidX - (spacing * (hijosConDatos.length - 1)) / 2;
-    if (hijosConDatos.length > 1) {
-      drawLine(startX, dropY, startX + spacing * (hijosConDatos.length - 1), dropY);
-    }
+    if (hijosConDatos.length > 1) { drawLine(startX, dropY, startX + spacing * (hijosConDatos.length - 1), dropY); }
     hijosConDatos.forEach((h, idx) => {
       const hx = hijosConDatos.length === 1 ? coupleMidX : startX + spacing * idx;
       drawLine(hx, dropY, hx, yHijos - PERSON_SIZE / 2);
@@ -1792,131 +1499,74 @@ function dibujarFamiliograma() {
     });
   }
 
- (function drawLegend() {
-  const COLS   = 3;
-  const COL_W  = 180;
-  const ROW_H  = 26;
-  const PAD_X  = 16;
-  const PAD_Y  = 14;
-  const HEADER_H = 30;
-  const SYM_W  = 22;
-
-  const items = [
-    { label: 'Hombre',              type: 'square',   color: '#005f73' },
-    { label: 'Mujer',               type: 'circle',   color: '#d11d5b' },
-    { label: 'Jefe del hogar ★',    type: 'jefe',     color: '#b45309' },
-    { label: 'Fallecido/a',         type: 'cross',    color: '#64748b' },
-    { label: 'Enfermedad crónica',  type: 'double',   color: '#f97316' },
-    { label: 'En el núcleo',        type: 'nucleo',   color: '#0a9396' },
-    { label: 'Fuera del núcleo',    type: 'nonucleo', color: '#94a3b8' },
-    { label: 'Matrimonio / Unión',  type: 'line',     color: '#334155', dash: [] },
-    { label: 'Compromiso',          type: 'line',     color: '#2563eb', dash: [4,3] },
-    { label: 'Separados',           type: 'break',    color: '#dc2626' },
-    { label: 'Conviv. armoniosa',   type: 'convline', color: '#16a34a' },
-    { label: 'Conviv. conflictiva', type: 'convline', color: '#dc2626' },
-  ];
-
-  const ROWS   = Math.ceil(items.length / COLS);
-  const totalW = PAD_X * 2 + COL_W * COLS;
-  const totalH = HEADER_H + PAD_Y + ROWS * ROW_H + PAD_Y;
-  const LX     = Math.max(8, (W - totalW) / 2);
-  const LY     = H - totalH - 10;
-  const R      = 8;
-
-  ctx.save();
-  ctx.shadowColor   = 'rgba(0,0,0,0.14)';
-  ctx.shadowBlur    = 8;
-  ctx.shadowOffsetY = 2;
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath(); ctx.roundRect(LX, LY, totalW, totalH, R); ctx.fill();
-  ctx.shadowColor = 'transparent';
-  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.roundRect(LX, LY, totalW, totalH, R); ctx.stroke();
-  ctx.restore();
-
-  ctx.save();
-  ctx.fillStyle = '#003d4d';
-  ctx.beginPath(); ctx.roundRect(LX, LY, totalW, HEADER_H, [R, R, 0, 0]); ctx.fill();
-  ctx.fillStyle = '#d11d5b';
-  ctx.fillRect(LX, LY + HEADER_H - 2.5, totalW, 2.5);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '600 11px DM Sans, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('SIMBOLOGÍA', LX + PAD_X, LY + HEADER_H / 2);
-  ctx.restore();
-
-  items.forEach((item, idx) => {
-    const col    = idx % COLS;
-    const row    = Math.floor(idx / COLS);
-    const ix     = LX + PAD_X + col * COL_W;
-    const iy     = LY + HEADER_H + PAD_Y + row * ROW_H + ROW_H / 2;
-    const symCX  = ix + SYM_W / 2;
-    const S      = 7;
-
+  (function drawLegend() {
+    const COLS = 3, COL_W = 180, ROW_H = 26, PAD_X = 16, PAD_Y = 14, HEADER_H = 30, SYM_W = 22;
+    const items = [
+      { label: 'Hombre', type: 'square', color: '#005f73' },
+      { label: 'Mujer', type: 'circle', color: '#d11d5b' },
+      { label: 'Jefe del hogar', type: 'jefe', color: '#b45309' },
+      { label: 'Fallecido/a', type: 'cross', color: '#64748b' },
+      { label: 'Enfermedad crónica', type: 'double', color: '#f97316' },
+      { label: 'En el núcleo', type: 'nucleo', color: '#0a9396' },
+      { label: 'Fuera del núcleo', type: 'nonucleo', color: '#94a3b8' },
+      { label: 'Matrimonio / Unión', type: 'line', color: '#334155', dash: [] },
+      { label: 'Compromiso', type: 'line', color: '#2563eb', dash: [4,3] },
+      { label: 'Separados', type: 'break', color: '#dc2626' },
+      { label: 'Conviv. armoniosa', type: 'convline', color: '#16a34a' },
+      { label: 'Conviv. conflictiva', type: 'convline', color: '#dc2626' },
+    ];
+    const ROWS = Math.ceil(items.length / COLS);
+    const totalW = PAD_X * 2 + COL_W * COLS;
+    const totalH = HEADER_H + PAD_Y + ROWS * ROW_H + PAD_Y;
+    const LX = Math.max(8, (W - totalW) / 2);
+    const LY = H - totalH - 10;
+    const R = 8;
     ctx.save();
-
-    if (item.type === 'square') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke();
-    } else if (item.type === 'circle') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(symCX, iy, S, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    } else if (item.type === 'jefe') {
-      ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2; ctx.fillStyle = '#fef08a';
-      ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#b45309';
-      ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('★', symCX, iy + 0.5);
-    } else if (item.type === 'cross') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 1.5; ctx.fillStyle = '#f1f5f9';
-      ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke();
-      ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(symCX-S+3,iy-S+3); ctx.lineTo(symCX+S-3,iy+S-3); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(symCX+S-3,iy-S+3); ctx.lineTo(symCX-S+3,iy+S-3); ctx.stroke();
-    } else if (item.type === 'double') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 1.5; ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.rect(symCX-S-3, iy-S-3, S*2+6, S*2+6); ctx.stroke();
-    } else if (item.type === 'nucleo') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 1.5;
-      ctx.fillStyle = 'rgba(10,147,150,0.12)';
-      ctx.beginPath(); ctx.arc(symCX, iy, S+2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = item.color;
-      ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('●', symCX, iy + 0.5);
-    } else if (item.type === 'nonucleo') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 1.5;
-      ctx.setLineDash([3,2]);
-      ctx.beginPath(); ctx.arc(symCX, iy, S+2, 0, Math.PI*2); ctx.stroke();
-      ctx.setLineDash([]);
-    } else if (item.type === 'line') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 2;
-      ctx.setLineDash(item.dash || []);
-      ctx.beginPath(); ctx.moveTo(ix, iy); ctx.lineTo(ix + SYM_W, iy); ctx.stroke();
-      ctx.setLineDash([]);
-    } else if (item.type === 'break') {
-      ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(ix, iy); ctx.lineTo(ix+SYM_W, iy); ctx.stroke();
-      ctx.strokeStyle = item.color; ctx.lineWidth = 1.8;
-      const cx = ix + SYM_W / 2;
-      ctx.beginPath(); ctx.moveTo(cx-4,iy-5); ctx.lineTo(cx,iy+5); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(cx+1,iy-5); ctx.lineTo(cx+5,iy+5); ctx.stroke();
-    } else if (item.type === 'convline') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.arc(symCX, iy, S-1, 0, Math.PI*2); ctx.stroke();
-    }
-
+    ctx.shadowColor = 'rgba(0,0,0,0.14)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.roundRect(LX, LY, totalW, totalH, R); ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(LX, LY, totalW, totalH, R); ctx.stroke();
     ctx.restore();
-
-    ctx.fillStyle = '#1a2332';
-    ctx.font = '400 11px DM Sans, sans-serif';
+    ctx.save();
+    ctx.fillStyle = '#003d4d';
+    ctx.beginPath(); ctx.roundRect(LX, LY, totalW, HEADER_H, [R, R, 0, 0]); ctx.fill();
+    ctx.fillStyle = '#d11d5b';
+    ctx.fillRect(LX, LY + HEADER_H - 2.5, totalW, 2.5);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '600 11px DM Sans, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(item.label, ix + SYM_W + 6, iy);
-  });
-})();
-
+    ctx.fillText('SIMBOLOGÍA', LX + PAD_X, LY + HEADER_H / 2);
+    ctx.restore();
+    items.forEach((item, idx) => {
+      const col = idx % COLS, row = Math.floor(idx / COLS);
+      const ix = LX + PAD_X + col * COL_W;
+      const iy = LY + HEADER_H + PAD_Y + row * ROW_H + ROW_H / 2;
+      const symCX = ix + SYM_W / 2;
+      const S = 7;
+      ctx.save();
+      if (item.type === 'square') { ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke(); }
+      else if (item.type === 'circle') { ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(symCX, iy, S, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }
+      else if (item.type === 'jefe') { ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2; ctx.fillStyle = '#fef08a'; ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#b45309'; ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('★', symCX, iy + 0.5); }
+      else if (item.type === 'cross') { ctx.strokeStyle = item.color; ctx.lineWidth = 1.5; ctx.fillStyle = '#f1f5f9'; ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke(); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(symCX-S+3,iy-S+3); ctx.lineTo(symCX+S-3,iy+S-3); ctx.stroke(); ctx.beginPath(); ctx.moveTo(symCX+S-3,iy-S+3); ctx.lineTo(symCX-S+3,iy+S-3); ctx.stroke(); }
+      else if (item.type === 'double') { ctx.strokeStyle = item.color; ctx.lineWidth = 1.5; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.rect(symCX-S-3, iy-S-3, S*2+6, S*2+6); ctx.stroke(); }
+      else if (item.type === 'nucleo') { ctx.strokeStyle = item.color; ctx.lineWidth = 1.5; ctx.fillStyle = 'rgba(10,147,150,0.12)'; ctx.beginPath(); ctx.arc(symCX, iy, S+2, 0, Math.PI*2); ctx.fill(); ctx.stroke(); ctx.fillStyle = item.color; ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('●', symCX, iy + 0.5); }
+      else if (item.type === 'nonucleo') { ctx.strokeStyle = item.color; ctx.lineWidth = 1.5; ctx.setLineDash([3,2]); ctx.beginPath(); ctx.arc(symCX, iy, S+2, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]); }
+      else if (item.type === 'line') { ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.setLineDash(item.dash || []); ctx.beginPath(); ctx.moveTo(ix, iy); ctx.lineTo(ix + SYM_W, iy); ctx.stroke(); ctx.setLineDash([]); }
+      else if (item.type === 'break') { ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(ix, iy); ctx.lineTo(ix+SYM_W, iy); ctx.stroke(); ctx.strokeStyle = item.color; ctx.lineWidth = 1.8; const cx = ix + SYM_W / 2; ctx.beginPath(); ctx.moveTo(cx-4,iy-5); ctx.lineTo(cx,iy+5); ctx.stroke(); ctx.beginPath(); ctx.moveTo(cx+1,iy-5); ctx.lineTo(cx+5,iy+5); ctx.stroke(); }
+      else if (item.type === 'convline') { ctx.strokeStyle = item.color; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(symCX, iy, S-1, 0, Math.PI*2); ctx.stroke(); }
+      ctx.restore();
+      ctx.fillStyle = '#1a2332';
+      ctx.font = '400 11px DM Sans, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(item.label, ix + SYM_W + 6, iy);
+    });
+  })();
 }
 
 function descargarFamiliograma() {
@@ -1941,7 +1591,6 @@ function bindFamiliogramaEvents() {
   });
 }
 
-// ── APGAR FAMILIAR ───────────────────────────────────────────
 let apgarRowSeq = 0;
 
 function interpretApgarBand(total) {
@@ -1952,9 +1601,7 @@ function interpretApgarBand(total) {
 }
 
 function apgarPreguntaOptions() {
-  return `<option value="">—</option>
-<option value="0">0</option><option value="1">1</option><option value="2">2</option>
-<option value="3">3</option><option value="4">4</option><option value="5">5</option>`;
+  return `<option value="">—</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>`;
 }
 
 function calcApgarRow(n) {
@@ -1962,10 +1609,7 @@ function calcApgarRow(n) {
   let nAns = 0;
   for (let i = 1; i <= 5; i++) {
     const v = document.getElementById(`apgar-${n}-p${i}`)?.value;
-    if (v !== '' && v != null) {
-      sum += parseInt(v, 10) || 0;
-      nAns++;
-    }
+    if (v !== '' && v != null) { sum += parseInt(v, 10) || 0; nAns++; }
   }
   const tot = document.getElementById(`apgar-${n}-total`);
   const fn = document.getElementById(`apgar-${n}-func`);
@@ -1983,8 +1627,7 @@ function apgarAddRow() {
   const opts = apgarPreguntaOptions();
   const tr = document.createElement('tr');
   tr.dataset.n = String(n);
-  tr.innerHTML = `
-    <td>${n}</td>
+  tr.innerHTML = `<td>${n}</td>
     <td style="text-align:left"><input type="text" id="apgar-${n}-nombre" placeholder="Nombres"></td>
     <td><select id="apgar-${n}-sexo"><option value="">—</option><option value="M">M</option><option value="F">F</option><option value="NB">NB</option></select></td>
     <td><input type="number" id="apgar-${n}-edad" placeholder="Edad" min="0" max="120" style="max-width:64px"></td>
@@ -2008,19 +1651,15 @@ function apgarRemoveRow(n) {
 function initApgarFam() {
   const tb = document.getElementById('apgar-miembros-tbody');
   if (!tb || tb.querySelector('tr')) return;
-
   const miembros = getFamiliogramaMiembros ? getFamiliogramaMiembros() : [];
   const principal = {
     nombre: document.getElementById('fg-principal-nombre')?.value || '',
     genero: document.getElementById('fg-principal-genero')?.value || 'M',
-    anio:   document.getElementById('fg-principal-anio')?.value   || ''
+    anio: document.getElementById('fg-principal-anio')?.value || ''
   };
   const todos = [];
   if (principal.nombre) todos.push({ nombre: principal.nombre, genero: principal.genero, anio: principal.anio });
-  (miembros || []).forEach(function(m) {
-    if (m.nombre) todos.push({ nombre: m.nombre, genero: m.genero || '', anio: m.anio || '' });
-  });
-
+  (miembros || []).forEach(function(m) { if (m.nombre) todos.push({ nombre: m.nombre, genero: m.genero || '', anio: m.anio || '' }); });
   if (todos.length > 0) {
     todos.forEach(function(m) {
       apgarRowSeq++;
@@ -2030,8 +1669,7 @@ function initApgarFam() {
       const sexo = m.genero === 'F' ? 'F' : m.genero === 'M' ? 'M' : '';
       const tr = document.createElement('tr');
       tr.dataset.n = String(n);
-      tr.innerHTML = `
-        <td>${n}</td>
+      tr.innerHTML = `<td>${n}</td>
         <td style="text-align:left"><input type="text" id="apgar-${n}-nombre" placeholder="Nombres" value="${m.nombre}"></td>
         <td><select id="apgar-${n}-sexo"><option value="">—</option><option value="M"${sexo==='M'?' selected':''}>M</option><option value="F"${sexo==='F'?' selected':''}>F</option><option value="NB">NB</option></select></td>
         <td><input type="number" id="apgar-${n}-edad" placeholder="Edad" min="0" max="120" style="max-width:64px" value="${edadCalc}"></td>
@@ -2045,9 +1683,7 @@ function initApgarFam() {
         <td>${n > 1 ? `<button type="button" class="btn-rm-int" onclick="apgarRemoveRow(${n})" style="position:static">✕</button>` : ''}</td>`;
       tb.appendChild(tr);
     });
-  } else {
-    apgarAddRow();
-  }
+  } else { apgarAddRow(); }
 }
 
 function getApgarData() {
@@ -2058,24 +1694,16 @@ function getApgarData() {
     const g = id => document.getElementById(`apgar-${n}-${id}`)?.value || '';
     let sum = 0;
     let ok = true;
-    for (let i = 1; i <= 5; i++) {
-      const v = g(`p${i}`);
-      if (v === '') ok = false;
-      else sum += parseInt(v, 10) || 0;
-    }
+    for (let i = 1; i <= 5; i++) { const v = g(`p${i}`); if (v === '') ok = false; else sum += parseInt(v, 10) || 0; }
     miembros.push({
-      nombres: g('nombre'),
-      sexo: g('sexo'),
-      edad: g('edad'),
+      nombres: g('nombre'), sexo: g('sexo'), edad: g('edad'),
       p1: g('p1'), p2: g('p2'), p3: g('p3'), p4: g('p4'), p5: g('p5'),
-      total: ok ? sum : null,
-      interpretacion: ok ? interpretApgarBand(sum) : ''
+      total: ok ? sum : null, interpretacion: ok ? interpretApgarBand(sum) : ''
     });
   });
   return { miembros, analisis: document.getElementById('apgar-analisis')?.value || '' };
 }
 
-// ── ECOMAPA (cuestionario + canvas) ──────────────────────────
 const ECOMAPA_CATS = [
   { id: 'eco-vias', label: 'Vías de acceso', short: 'Vías acceso' },
   { id: 'eco-fam-ext', label: 'Familia extensa', short: 'Fam. extensa' },
@@ -2093,15 +1721,7 @@ const ECOMAPA_CATS = [
 ];
 
 function ecoValorTexto(val) {
-  const m = {
-    '-2': 'No aplica',
-    '1': 'Fuerte',
-    '2': 'Estresante',
-    '3': 'Moderada',
-    '4': 'Mod. estresante',
-    '5': 'Débil',
-    '6': 'Levem. estresante'
-  };
+  const m = { '-2': 'No aplica', '1': 'Fuerte', '2': 'Estresante', '3': 'Moderada', '4': 'Mod. estresante', '5': 'Débil', '6': 'Levem. estresante' };
   return m[String(val)] || '';
 }
 
@@ -2109,14 +1729,7 @@ function initEcomapaCuestionario() {
   const host = document.getElementById('eco-cuestionario');
   if (!host || host.dataset.ready === '1') return;
   host.dataset.ready = '1';
-  const opts = `<option value="">—</option>
-<option value="-2">−2 No aplica</option>
-<option value="1">1 Fuerte</option>
-<option value="2">2 Estresante</option>
-<option value="3">3 Moderada</option>
-<option value="4">4 Mod. estresante</option>
-<option value="5">5 Débil</option>
-<option value="6">6 Levem. estresante</option>`;
+  const opts = `<option value="">—</option><option value="-2">−2 No aplica</option><option value="1">1 Fuerte</option><option value="2">2 Estresante</option><option value="3">3 Moderada</option><option value="4">4 Mod. estresante</option><option value="5">5 Débil</option><option value="6">6 Levem. estresante</option>`;
   ECOMAPA_CATS.forEach(cat => {
     const div = document.createElement('div');
     div.className = 'ff';
@@ -2131,13 +1744,7 @@ function ecomapaRoundRect(ctx, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
   if (typeof ctx.roundRect === 'function') ctx.roundRect(x, y, w, h, rr);
-  else {
-    ctx.moveTo(x + rr, y);
-    ctx.arcTo(x + w, y, x + w, y + h, rr);
-    ctx.arcTo(x + w, y + h, x, y + h, rr);
-    ctx.arcTo(x, y + h, x, y, rr);
-    ctx.arcTo(x, y, x + w, y, rr);
-  }
+  else { ctx.moveTo(x + rr, y); ctx.arcTo(x + w, y, x + w, y + h, rr); ctx.arcTo(x + w, y + h, x, y + h, rr); ctx.arcTo(x, y + h, x, y, rr); ctx.arcTo(x, y, x + w, y, rr); }
   ctx.closePath();
 }
 
@@ -2154,9 +1761,7 @@ function dibujarEcomapa() {
   const cx = W / 2;
   const cy = H / 2;
   const R = Math.min(W, H) * 0.38;
-
-  const bw = 112;
-  const bh = 78;
+  const bw = 112, bh = 78;
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#005f73';
   ctx.lineWidth = 2.5;
@@ -2166,21 +1771,18 @@ function dibujarEcomapa() {
   ctx.font = '34px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('👨‍👩‍👧‍', cx, cy - 10);
+  ctx.fillText('👨‍‍👧👦', cx, cy - 10);
   ctx.font = '700 10px DM Sans, sans-serif';
   ctx.fillStyle = '#003d4d';
   ctx.fillText('FAMILIA', cx, cy + bh / 2 - 16);
-
   const n = ECOMAPA_CATS.length;
-  const tw = 96;
-  const th = 48;
+  const tw = 96, th = 48;
   ECOMAPA_CATS.forEach((cat, i) => {
     const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
     const x = cx + Math.cos(ang) * R;
     const y = cy + Math.sin(ang) * R;
     const val = document.getElementById(cat.id)?.value ?? '';
     const txt = val !== '' && val != null ? `${val} · ${ecoValorTexto(val)}` : '—';
-
     const lineStartX = cx + Math.cos(ang) * (bw / 2 + 4);
     const lineStartY = cy + Math.sin(ang) * (bh / 2 + 4);
     const lineEndX = x - Math.cos(ang) * (tw / 2 + 2);
@@ -2194,7 +1796,6 @@ function dibujarEcomapa() {
     ctx.lineTo(lineEndX, lineEndY);
     ctx.stroke();
     ctx.restore();
-
     ctx.fillStyle = '#fff';
     ctx.strokeStyle = val !== '' ? '#0891b2' : '#cbd5e1';
     ctx.lineWidth = val !== '' ? 1.8 : 1.2;
@@ -2224,14 +1825,10 @@ function descargarEcomapa() {
 
 function getEcomapaData() {
   const o = { obs: document.getElementById('eco-obs')?.value || '', valores: {} };
-  ECOMAPA_CATS.forEach(c => {
-    o.valores[c.id] = document.getElementById(c.id)?.value || '';
-    o[c.id] = o.valores[c.id];
-  });
+  ECOMAPA_CATS.forEach(c => { o.valores[c.id] = document.getElementById(c.id)?.value || ''; o[c.id] = o.valores[c.id]; });
   return o;
 }
 
-// ── ZARIT (22 ítems, 0–4) ─────────────────────────────────────
 const ZARIT_ITEMS = [
   '¿Cree que su familiar solicita más ayuda de la que realmente necesita?',
   '¿Cree que debido al tiempo que dedica a su familiar ya no dispone de tiempo suficiente para usted?',
@@ -2265,8 +1862,7 @@ function initZarit() {
     const div = document.createElement('div');
     div.className = 'ff';
     div.style.marginBottom = '12px';
-    div.innerHTML = `
-      <label style="text-transform:none;letter-spacing:0;font-size:.82rem;font-weight:600;color:var(--text)">${n}. ${q}</label>
+    div.innerHTML = `<label style="text-transform:none;letter-spacing:0;font-size:.82rem;font-weight:600;color:var(--text)">${n}. ${q}</label>
       <select id="zarit-${n}" onchange="calcZarit()" style="margin-top:5px">
         <option value="">— Seleccionar —</option>
         <option value="0">0 – Nunca</option>
@@ -2287,10 +1883,10 @@ function calcZarit() {
   }
   document.getElementById('zarit-puntaje').textContent = total;
   let interp = '';
-  if (total <= 20) interp = '✅ Carga ausente o leve (0–20)';
-  else if (total <= 40) interp = '⚠️ Carga leve a moderada (21–40)';
-  else if (total <= 60) interp = '🔶 Carga moderada a relevante (41–60)';
-  else interp = '🔴 Carga severa (61–88) — Valorar apoyo';
+  if (total <= 20) interp = 'Carga ausente o leve (0-20)';
+  else if (total <= 40) interp = 'Carga leve a moderada (21-40)';
+  else if (total <= 60) interp = 'Carga moderada a relevante (41-60)';
+  else interp = 'Carga severa (61-88) - Valorar apoyo';
   document.getElementById('zarit-interpretacion').textContent = interp;
 }
 
@@ -2302,53 +1898,47 @@ function toggleSub(id) {
   block.classList.toggle('open', !isOpen);
   body.style.display = isOpen ? 'none' : 'block';
   if (!isOpen && id === 'zarit') initZarit();
-  if (!isOpen && id === 'familiograma') {
-    bindFamiliogramaEvents();
-    setTimeout(dibujarFamiliograma, 100);
-  }
+  if (!isOpen && id === 'familiograma') { bindFamiliogramaEvents(); setTimeout(dibujarFamiliograma, 100); }
   if (!isOpen && id === 'apgar-familiar') initApgarFam();
-  if (!isOpen && id === 'ecomapa') {
-    initEcomapaCuestionario();
-    setTimeout(dibujarEcomapa, 80);
-  }
+  if (!isOpen && id === 'ecomapa') { initEcomapaCuestionario(); setTimeout(dibujarEcomapa, 80); }
 }
 
-// ── Collect all Recoleccion sub-data ──────────────────────────
+// CAPTURAR IMÁGENES EN ALTA CALIDAD (4× para mejor nitidez)
+function capturarCanvasHD(canvas) {
+  if (!canvas) return '';
+  const SCALE = 4;
+  const offscreen = document.createElement('canvas');
+  offscreen.width  = canvas.width  * SCALE;
+  offscreen.height = canvas.height * SCALE;
+  const ctx = offscreen.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.scale(SCALE, SCALE);
+  ctx.drawImage(canvas, 0, 0);
+  return offscreen.toDataURL('image/png', 0.9);
+}
+
 function getRecoleccionData() {
   const gv2 = id => document.getElementById(id)?.value || '';
-
   const miembros = getFamiliogramaMiembros();
-
   let zaritTotal = 0;
   for (let i = 1; i <= 22; i++) {
     const raw = document.getElementById('zarit-' + i)?.value;
     zaritTotal += raw === '' || raw == null ? 0 : (parseInt(raw, 10) || 0);
   }
-
-  function capturarCanvasHD(canvas) {
-    if (!canvas) return '';
-    const SCALE = 2.5;
-    const offscreen = document.createElement('canvas');
-    offscreen.width  = canvas.width  * SCALE;
-    offscreen.height = canvas.height * SCALE;
-    const ctx = offscreen.getContext('2d');
-    ctx.scale(SCALE, SCALE);
-    ctx.drawImage(canvas, 0, 0);
-    return offscreen.toDataURL('image/png');
-  }
-
   const fgCanvas  = document.getElementById('familiograma-canvas');
   const ecoCanvas = document.getElementById('ecomapa-canvas');
   const fgImagen  = capturarCanvasHD(fgCanvas);
   const ecoImagen = capturarCanvasHD(ecoCanvas);
-
   const ecoData = getEcomapaData();
   ecoData.imagenBase64 = ecoImagen;
-
   return {
     familiograma: {
       familia: gv2('fg-familia-nombre'),
       vereda: gv2('fg-vereda'),
+      // NUEVOS CAMPOS: Teléfono y Microterritorio
+      telefono: gv2('fg-telefono'),
+      microterritorio: gv2('fg-microterritorio'),
       principal: {
         nombre: gv2('fg-principal-nombre'),
         anio: gv2('fg-principal-anio'),
@@ -2375,7 +1965,6 @@ function getRecoleccionData() {
 }
 
 if (document.getElementById('apgar-miembros-tbody') && !document.querySelector('#apgar-miembros-tbody tr')) apgarAddRow();
-
 </script>
 </body>
 </html>
