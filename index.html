@@ -2258,11 +2258,23 @@ function getRecoleccionData() {
     zaritTotal += raw === '' || raw == null ? 0 : (parseInt(raw, 10) || 0);
   }
 
-  // Capturar imágenes de los canvas para los documentos Google
+  // Capturar imágenes de los canvas en ALTA RESOLUCIÓN (2×) para el documento
+  function capturarCanvasHD(canvas) {
+    if (!canvas) return '';
+    const SCALE = 2.5;
+    const offscreen = document.createElement('canvas');
+    offscreen.width  = canvas.width  * SCALE;
+    offscreen.height = canvas.height * SCALE;
+    const ctx = offscreen.getContext('2d');
+    ctx.scale(SCALE, SCALE);
+    ctx.drawImage(canvas, 0, 0);
+    return offscreen.toDataURL('image/png');
+  }
+
   const fgCanvas  = document.getElementById('familiograma-canvas');
   const ecoCanvas = document.getElementById('ecomapa-canvas');
-  const fgImagen  = fgCanvas  ? fgCanvas.toDataURL('image/png')  : '';
-  const ecoImagen = ecoCanvas ? ecoCanvas.toDataURL('image/png') : '';
+  const fgImagen  = capturarCanvasHD(fgCanvas);
+  const ecoImagen = capturarCanvasHD(ecoCanvas);
 
   const ecoData = getEcomapaData();
   ecoData.imagenBase64 = ecoImagen;
