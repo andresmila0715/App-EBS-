@@ -24,6 +24,7 @@
 const MUNIS = [
   'La Belleza',
   'Sucre',
+  'Enciso',
   // 'Landázuri',   // <-- para agregar un nuevo municipio:
   //                //     1) descomenta esta línea
   //                //     2) agrega su usuario abajo
@@ -50,6 +51,11 @@ const USERS = {
   'SUCRE': {
     password: 'Sucr32026',
     municipio: 'Sucre',
+    role: 'user'
+  },
+  'ENCISO': {
+    password: 'Encis02026',
+    municipio: 'Enciso',
     role: 'user'
   },
   // Para agregar un nuevo usuario de municipio:
@@ -97,6 +103,12 @@ const SHEETS_URLS = {
   },
 
   'Sucre': {
+    carto:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_CARTO/exec',
+    recoleccion: 'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_RECOLECCION/exec',
+    macro:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_MACRO/exec',
+  },
+
+    'Enciso': {
     carto:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_CARTO/exec',
     recoleccion: 'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_RECOLECCION/exec',
     macro:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_MACRO/exec',
