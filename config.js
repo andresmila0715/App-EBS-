@@ -109,9 +109,9 @@ const SHEETS_URLS = {
   },
 
     'Enciso': {
-    carto:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_CARTO/exec',
-    recoleccion: 'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_RECOLECCION/exec',
-    macro:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_MACRO/exec',
+    carto:       'https://script.google.com/macros/s/AKfycbwEqpgAikHpJNMGuJW1m8ZQEAdkFDEmd3GBpjg4DIgTvm5m9RBeXlfAhiTxt9QYiOtv/exec',
+    recoleccion: 'https://script.google.com/macros/s/AKfycbzDyWxFW8Wh804SnyNwUx6rxzv9t4PRKM6eIEV7XKIYLCiVTuObNu_u7zkyW9LrqjOd/exec',
+    macro:       'https://script.google.com/macros/s/AKfycbwpJwJ-RDjT5xv2E2UCLw2xcDAWewQO9heogU7TBK1dACTQlmX8AInZYg5reTCfWzMg/exec',
   },
 
   // Para agregar Landázuri:
