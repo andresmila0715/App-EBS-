@@ -157,7 +157,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .btn-pri:hover { transform: translateY(-1px); }
 
 /* ── INTEGRANTES ───────────────────────────────────────── */
-.int-card { background: #f8fafc; border: 1.5px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; position: relative; }
+.int-card, .familiar-card { background: #f8fafc; border: 1.5px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; position: relative; }
 .int-num { background: var(--primary); color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 7px; display: inline-block; margin-bottom: 10px; }
 .btn-rm-int { position: absolute; top: 11px; right: 11px; background: #fee2e2; color: #991b1b; border: none; border-radius: 6px; padding: 3px 9px; font-size: .72rem; font-weight: 600; cursor: pointer; }
 .btn-rm-int:hover { background: #fecaca; }
@@ -325,6 +325,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
         </div>
       </div>
       <div class="qbody">
+        <div class="ff"><label>Vereda / Sector</label><input type="text" id="c1-vereda" placeholder="Ej: Casco Urbano, Vereda Villa Hermosa..."></div>
         <div class="frow">
           <div class="ff"><label>Número de Casa</label><input type="number" id="c1-casa" placeholder="Ej: 101" min="1"></div>
           <div class="ff"><label>Número de Familia</label><input type="number" id="c1-familia" placeholder="Ej: 1" min="1"></div>
@@ -390,6 +391,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           <div class="sub-body" id="subbody-familiograma">
             <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px">Registre el nombre de la familia, los datos del jefe del hogar y anexe familiares con el parentesco indicado.</p>
             <div class="ff"><label>Familia</label><input type="text" id="fg-familia-nombre" placeholder="Nombre de la familia (aparece como título en el familiograma)"></div>
+            <div class="ff"><label>Vereda / Sector</label><input type="text" id="fg-vereda" placeholder="Ej: Casco Urbano, Vereda Villa Hermosa..."></div>
             <div class="sdiv">Jefe del hogar</div>
             <div class="frow3">
               <div class="ff"><label>Nombre completo</label><input type="text" id="fg-principal-nombre" placeholder="Ej: Arturo Romero González"></div>
@@ -991,7 +993,7 @@ function getIntData(n) {
 // ── Limpiar formularios ─────────────────────────────────────
 function clearF(tipo) {
   if (tipo === 'carto') {
-    ['c1-casa','c1-familia','c1-patologias','c1-obs','c1-idfam','c1-coord'].forEach(i => document.getElementById(i).value = '');
+    ['c1-casa','c1-familia','c1-vereda','c1-patologias','c1-obs','c1-idfam','c1-coord'].forEach(i => document.getElementById(i).value = '');
     ['c1-riesgo','c1-conv'].forEach(i => document.getElementById(i).value = '');
     document.getElementById('c1-foto').value = '';
     document.getElementById('c1-prev').style.display = 'none';
@@ -1046,6 +1048,7 @@ async function saveR(tipo) {
     if (!gv('c1-riesgo')) { toast('⚠️ Selecciona el riesgo', 'err'); return; }
     Object.assign(registro, {
       casa: gv('c1-casa'), familia: gv('c1-familia'),
+      vereda: gv('c1-vereda'),
       coord: gv('c1-coord'), riesgo: gv('c1-riesgo'),
       conv: gv('c1-conv'), patologias: gv('c1-patologias'), obs: gv('c1-obs'),
       idFam: gv('c1-idfam'),
@@ -1177,6 +1180,7 @@ function buildFields(r) {
     return `
       <div class="rfield"><strong>Casa</strong>${r.casa || '—'}</div>
       <div class="rfield"><strong>Familia</strong>${r.familia || '—'}</div>
+      <div class="rfield"><strong>Vereda</strong>${r.vereda || '—'}</div>
       <div class="rfield"><strong>Riesgo</strong>${r.riesgo || '—'}</div>
       <div class="rfield"><strong>Convenciones</strong>${r.conv || '—'}</div>
       <div class="rfield"><strong>Coordenada</strong>${r.coord || '—'}</div>
@@ -1240,6 +1244,7 @@ function openEdit(id, tipo) {
 
   if (tipo === 'carto') {
     body.innerHTML = `
+      <div class="ff"><label>Vereda / Sector</label><input type="text" id="e-vereda" value="${r.vereda || ''}"></div>
       <div class="frow">
         <div class="ff"><label>N° Casa</label><input type="number" id="e-casa" value="${r.casa || ''}"></div>
         <div class="ff"><label>N° Familia</label><input type="number" id="e-fam" value="${r.familia || ''}"></div>
@@ -1301,6 +1306,7 @@ function saveEdit() {
   if (!r) { closeModal(); return; }
 
   if (editTipo === 'carto') {
+    r.vereda = gv('e-vereda');
     r.casa = gv('e-casa');
     r.familia = gv('e-fam');
     r.riesgo = document.getElementById('e-riesgo').value;
@@ -1433,7 +1439,7 @@ function agregarFamiliar() {
   familiaresCount++;
   const n = familiaresCount;
   const div = document.createElement('div');
-  div.className = 'int-card';
+  div.className = 'familiar-card';
   div.id = 'familiar-' + n;
   div.innerHTML = `
     <span class="int-num">Familiar #${n}</span>
@@ -2322,6 +2328,7 @@ function getRecoleccionData() {
   return {
     familiograma: {
       familia: gv2('fg-familia-nombre'),
+      vereda: gv2('fg-vereda'),
       principal: {
         nombre: gv2('fg-principal-nombre'),
         anio: gv2('fg-principal-anio'),
