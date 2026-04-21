@@ -1974,7 +1974,47 @@ function apgarRemoveRow(n) {
 function initApgarFam() {
   const tb = document.getElementById('apgar-miembros-tbody');
   if (!tb || tb.querySelector('tr')) return;
-  apgarAddRow();
+
+  // Intentar pre-llenar con los integrantes del familiograma
+  const miembros = getFamiliogramaMiembros ? getFamiliogramaMiembros() : [];
+  const principal = {
+    nombre: document.getElementById('fg-principal-nombre')?.value || '',
+    genero: document.getElementById('fg-principal-genero')?.value || 'M',
+    anio:   document.getElementById('fg-principal-anio')?.value   || ''
+  };
+  const todos = [];
+  if (principal.nombre) todos.push({ nombre: principal.nombre, genero: principal.genero, anio: principal.anio });
+  (miembros || []).forEach(function(m) {
+    if (m.nombre) todos.push({ nombre: m.nombre, genero: m.genero || '', anio: m.anio || '' });
+  });
+
+  if (todos.length > 0) {
+    todos.forEach(function(m) {
+      apgarRowSeq++;
+      const n = apgarRowSeq;
+      const opts = apgarPreguntaOptions();
+      const edadCalc = m.anio ? (new Date().getFullYear() - parseInt(m.anio, 10)) : '';
+      const sexo = m.genero === 'F' ? 'F' : m.genero === 'M' ? 'M' : '';
+      const tr = document.createElement('tr');
+      tr.dataset.n = String(n);
+      tr.innerHTML = `
+        <td>${n}</td>
+        <td style="text-align:left"><input type="text" id="apgar-${n}-nombre" placeholder="Nombres" value="${m.nombre}"></td>
+        <td><select id="apgar-${n}-sexo"><option value="">—</option><option value="M"${sexo==='M'?' selected':''}>M</option><option value="F"${sexo==='F'?' selected':''}>F</option><option value="NB">NB</option></select></td>
+        <td><input type="number" id="apgar-${n}-edad" placeholder="Edad" min="0" max="120" style="max-width:64px" value="${edadCalc}"></td>
+        <td><select id="apgar-${n}-p1" onchange="calcApgarRow(${n})">${opts}</select></td>
+        <td><select id="apgar-${n}-p2" onchange="calcApgarRow(${n})">${opts}</select></td>
+        <td><select id="apgar-${n}-p3" onchange="calcApgarRow(${n})">${opts}</select></td>
+        <td><select id="apgar-${n}-p4" onchange="calcApgarRow(${n})">${opts}</select></td>
+        <td><select id="apgar-${n}-p5" onchange="calcApgarRow(${n})">${opts}</select></td>
+        <td class="apgar-total" id="apgar-${n}-total">—</td>
+        <td class="apgar-func" id="apgar-${n}-func">—</td>
+        <td>${n > 1 ? `<button type="button" class="btn-rm-int" onclick="apgarRemoveRow(${n})" style="position:static">✕</button>` : ''}</td>`;
+      tb.appendChild(tr);
+    });
+  } else {
+    apgarAddRow();
+  }
 }
 
 function getApgarData() {
@@ -2295,7 +2335,14 @@ function getRecoleccionData() {
       imagenBase64: fgImagen
     },
     apgar: getApgarData(),
-    zarit: { puntaje: zaritTotal, obs: gv2('zarit-obs') },
+    zarit: {
+      puntaje: zaritTotal,
+      obs: gv2('zarit-obs'),
+      respuestas: Array.from({length: 22}, (_, i) => {
+        const v = document.getElementById('zarit-' + (i+1))?.value;
+        return v !== '' && v != null ? parseInt(v, 10) : null;
+      })
+    },
     ecomapa: ecoData
   };
 }
