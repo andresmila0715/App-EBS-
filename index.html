@@ -1543,12 +1543,16 @@ function dibujarFamiliograma() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  const W = canvas.offsetWidth || 400;
-  const H = 600;
-  canvas.width = W;
-  canvas.height = H;
+  const DPR = 2; // Doble resolución interna
+  const W = (canvas.offsetWidth || 400);
+  const H = 700;
+  canvas.width  = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(DPR, DPR);
   ctx.clearRect(0, 0, W, H);
-  const PERSON_SIZE = 36;
+  const PERSON_SIZE = 52; // antes 36
 
   const colorM = '#005f73';
   const colorF = '#d11d5b';
@@ -1629,16 +1633,16 @@ function dibujarFamiliograma() {
   }
   ctx.restore();
 
-  if (anio) { ctx.font='10px DM Sans,sans-serif'; ctx.fillStyle='#64748b'; ctx.textAlign='center'; ctx.fillText(anio, x, y-18); }
+  if (anio) { ctx.font='13px DM Sans,sans-serif'; ctx.fillStyle='#64748b'; ctx.textAlign='center'; ctx.fillText(anio, x, y-28); }
   if (nombre) {
-    ctx.font = isPrincipal ? 'bold 10px DM Sans,sans-serif' : 'bold 9px DM Sans,sans-serif';
+    ctx.font = isPrincipal ? 'bold 13px DM Sans,sans-serif' : 'bold 12px DM Sans,sans-serif';
     ctx.fillStyle = isPrincipal ? '#78350f' : colorText;
     ctx.textAlign = 'center';
-    ctx.fillText(shortName(nombre), x, y+22);
+    ctx.fillText(shortName(nombre), x, y+32);
   }
   if (isPrincipal && (nombre || anio || estado)) {
-    ctx.font='bold 8px DM Sans,sans-serif'; ctx.fillStyle='#b45309'; ctx.textAlign='center';
-    ctx.fillText('★ JEFE DEL HOGAR', x, y+(nombre ? 34 : 22));
+    ctx.font='bold 10px DM Sans,sans-serif'; ctx.fillStyle='#b45309'; ctx.textAlign='center';
+    ctx.fillText('★ JEFE DEL HOGAR', x, y+(nombre ? 47 : 32));
   }
 }
   function drawLine(x1, y1, x2, y2, style) {
@@ -1704,31 +1708,31 @@ function dibujarFamiliograma() {
   const madrePareja = pickFirst(miembros, 'madre_pareja', 'F');
   const hijos = pickMany(miembros, 'hijo', 'M').filter(h => hasData(h));
 
-  const yPadres = 110;
-  const yCore = 270;
-  const yHijos = 430;
+  const yPadres = 120;
+  const yCore = 310;
+  const yHijos = 490;
   const padreJefeX = W * 0.16;
-  const madreJefeX = W * 0.28;
-  const padreParejaX = W * 0.72;
+  const madreJefeX = W * 0.30;
+  const padreParejaX = W * 0.70;
   const madreParejaX = W * 0.84;
-  const principalX = W * 0.42;
-  const parejaX = W * 0.58;
+  const principalX = W * 0.40;
+  const parejaX = W * 0.60;
 
   ctx.save();
   ctx.fillStyle = frameFill;
   ctx.strokeStyle = frameStroke;
   ctx.lineWidth = 1;
-  const topPad = tituloFamilia ? 44 : 8;
-  ctx.fillRect(8, topPad, W - 16, H - 65 - (topPad - 8));
-  ctx.strokeRect(8, topPad, W - 16, H - 65 - (topPad - 8));
+  const topPad = tituloFamilia ? 50 : 8;
+  ctx.fillRect(8, topPad, W - 16, H - 75 - (topPad - 8));
+  ctx.strokeRect(8, topPad, W - 16, H - 75 - (topPad - 8));
   ctx.restore();
 
   if (tituloFamilia) {
     ctx.save();
-    ctx.font = 'bold 13px DM Sans, sans-serif';
+    ctx.font = 'bold 16px DM Sans, sans-serif';
     ctx.fillStyle = '#003d4d';
     ctx.textAlign = 'center';
-    ctx.fillText(tituloFamilia.toUpperCase(), W / 2, 28);
+    ctx.fillText(tituloFamilia.toUpperCase(), W / 2, 34);
     ctx.restore();
   }
 
@@ -1753,9 +1757,9 @@ principal.convivencia = document.getElementById('fg-principal-convivencia')?.val
   const hijosConDatos = hijos.filter(h => hasData(h));
   if (hijosConDatos.length && (hasData(principal) || hasData(pareja))) {
     const coupleMidX = hasData(pareja) ? (principalX + parejaX) / 2 : principalX;
-    const dropY = yCore + 34;
+    const dropY = yCore + 42;
     drawLine(coupleMidX, yCore, coupleMidX, dropY);
-    const spacing = Math.max(46, Math.min(88, (W - 80) / Math.max(hijosConDatos.length, 2)));
+    const spacing = Math.max(56, Math.min(100, (W - 80) / Math.max(hijosConDatos.length, 2)));
     const startX = coupleMidX - (spacing * (hijosConDatos.length - 1)) / 2;
     if (hijosConDatos.length > 1) {
       drawLine(startX, dropY, startX + spacing * (hijosConDatos.length - 1), dropY);
@@ -1770,12 +1774,12 @@ principal.convivencia = document.getElementById('fg-principal-convivencia')?.val
   // ── LEYENDA ESTÉTICA ────────────────────────────────────
  (function drawLegend() {
   const COLS   = 3;
-  const COL_W  = 180;
-  const ROW_H  = 26;
+  const COL_W  = 190;
+  const ROW_H  = 30;
   const PAD_X  = 16;
   const PAD_Y  = 14;
-  const HEADER_H = 30;
-  const SYM_W  = 22;
+  const HEADER_H = 34;
+  const SYM_W  = 26;
 
   const items = [
     { label: 'Hombre',              type: 'square',   color: '#005f73' },
@@ -1820,7 +1824,7 @@ principal.convivencia = document.getElementById('fg-principal-convivencia')?.val
   ctx.fillRect(LX, LY + HEADER_H - 2.5, totalW, 2.5);
   // Texto header
   ctx.fillStyle = '#ffffff';
-  ctx.font = '600 11px DM Sans, sans-serif';
+  ctx.font = '600 13px DM Sans, sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillText('SIMBOLOGÍA', LX + PAD_X, LY + HEADER_H / 2);
@@ -1892,7 +1896,7 @@ principal.convivencia = document.getElementById('fg-principal-convivencia')?.val
 
     // Etiqueta del ítem
     ctx.fillStyle = '#1a2332';
-    ctx.font = '400 11px DM Sans, sans-serif';
+    ctx.font = '400 12px DM Sans, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(item.label, ix + SYM_W + 6, iy);
@@ -2128,39 +2132,40 @@ function dibujarEcomapa() {
   const canvas = document.getElementById('ecomapa-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
+  const DPR = 2;
   const W = Math.max(420, canvas.offsetWidth || 480);
-  // Taller canvas so peripheral nodes don't clip
-  const H = 620;
-  canvas.width = W;
-  canvas.height = H;
+  const H = 720;
+  canvas.width  = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(DPR, DPR);
   ctx.fillStyle = '#f8fafc';
   ctx.fillRect(0, 0, W, H);
   const cx = W / 2;
   const cy = H / 2;
-  // Increase orbit radius so boxes have room between them
-  const R = Math.min(W, H) * 0.38;
+  const R = Math.min(W, H) * 0.40;
 
-  // Central family box
-  const bw = 112;
-  const bh = 78;
+  // Caja central familia
+  const bw = 130;
+  const bh = 90;
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#005f73';
-  ctx.lineWidth = 2.5;
-  ecomapaRoundRect(ctx, cx - bw / 2, cy - bh / 2, bw, bh, 14);
+  ctx.lineWidth = 3;
+  ecomapaRoundRect(ctx, cx - bw / 2, cy - bh / 2, bw, bh, 16);
   ctx.fill();
   ctx.stroke();
-  ctx.font = '34px sans-serif';
+  ctx.font = '38px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('👨‍👩‍👧‍👦', cx, cy - 10);
-  ctx.font = '700 10px DM Sans, sans-serif';
+  ctx.fillText('👨‍👩‍👧‍👦', cx, cy - 12);
+  ctx.font = '700 12px DM Sans, sans-serif';
   ctx.fillStyle = '#003d4d';
-  ctx.fillText('FAMILIA', cx, cy + bh / 2 - 16);
+  ctx.fillText('FAMILIA', cx, cy + bh / 2 - 18);
 
   const n = ECOMAPA_CATS.length;
-  // Smaller boxes to prevent overlap with 13 nodes
-  const tw = 96;
-  const th = 48;
+  const tw = 112;
+  const th = 58;
   ECOMAPA_CATS.forEach((cat, i) => {
     const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
     const x = cx + Math.cos(ang) * R;
@@ -2168,7 +2173,6 @@ function dibujarEcomapa() {
     const val = document.getElementById(cat.id)?.value ?? '';
     const txt = val !== '' && val != null ? `${val} · ${ecoValorTexto(val)}` : '—';
 
-    // Draw connector line from family box edge to node box edge
     const lineStartX = cx + Math.cos(ang) * (bw / 2 + 4);
     const lineStartY = cy + Math.sin(ang) * (bh / 2 + 4);
     const lineEndX = x - Math.cos(ang) * (tw / 2 + 2);
@@ -2185,19 +2189,19 @@ function dibujarEcomapa() {
 
     ctx.fillStyle = '#fff';
     ctx.strokeStyle = val !== '' ? '#0891b2' : '#cbd5e1';
-    ctx.lineWidth = val !== '' ? 1.8 : 1.2;
-    ecomapaRoundRect(ctx, x - tw / 2, y - th / 2, tw, th, 9);
+    ctx.lineWidth = val !== '' ? 2.2 : 1.5;
+    ecomapaRoundRect(ctx, x - tw / 2, y - th / 2, tw, th, 10);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = '#1a2332';
-    ctx.font = '700 8px DM Sans, sans-serif';
+    ctx.font = '700 10px DM Sans, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const lab = cat.short;
-    ctx.fillText(lab.length > 14 ? lab.slice(0, 13) + '…' : lab, x, y - 11);
+    ctx.fillText(lab.length > 14 ? lab.slice(0, 13) + '…' : lab, x, y - 13);
     ctx.fillStyle = val !== '' ? '#005f73' : '#94a3b8';
-    ctx.font = '600 7px DM Sans, sans-serif';
-    ctx.fillText(txt.length > 18 ? txt.slice(0, 17) + '…' : txt, x, y + 5);
+    ctx.font = '600 9px DM Sans, sans-serif';
+    ctx.fillText(txt.length > 18 ? txt.slice(0, 17) + '…' : txt, x, y + 6);
   });
 }
 
