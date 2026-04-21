@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ebs-app-v19';
+const CACHE_NAME = 'ebs-app-v20';
 
 // Archivos que se guardan para funcionar sin internet
 const ASSETS = [
