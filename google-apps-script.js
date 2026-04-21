@@ -2,30 +2,20 @@
  * ============================================================
  *  EBS+ · GOOGLE APPS SCRIPT
  * ============================================================
- *  INSTRUCCIONES:
- *  1. Abre Google Sheets
- *  2. Extensiones > Apps Script > borra todo y pega esto
- *  3. Cambia TIPO_FORMULARIO según corresponda
- *  4. Implementar > Nueva implementación
+ *  1. Abre Google Sheets → Extensiones → Apps Script
+ *  2. Borra todo y pega esto
+ *  3. Implementar → Nueva implementación
  *     · Tipo: Aplicación web
  *     · Ejecutar como: Yo
- *     · Quién tiene acceso: Cualquier persona
- *  5. Copia la URL /exec y pégala en config.js
- *
- *  DOCUMENTOS QUE SE CREAN AUTOMÁTICAMENTE:
- *  · Doc 1 – Familiograma (imagen del canvas + tabla de integrantes)
- *  · Doc 2 – Ecomapa + APGAR Familiar + Zarit (tablas con formato institucional)
- *
- *  CARPETA DE GOOGLE DRIVE:
- *  Cambia NOMBRE_CARPETA para organizar los documentos.
- *  Si la carpeta no existe se crea automáticamente.
+ *     · Acceso: Cualquier persona
+ *  4. Copia la URL /exec y pégala en config.js
  * ============================================================
  */
 
 var TIPO_FORMULARIO  = 'recoleccion';  // 'carto' | 'recoleccion' | 'macro'
-var NOMBRE_MUNICIPIO = 'La Belleza';
-var NOMBRE_HOJA      = 'Datos';
-var NOMBRE_CARPETA   = 'EBS+ Instrumentos';   // carpeta en Google Drive
+var NOMBRE_MUNICIPIO = 'Enciso';
+var NOMBRE_HOJA      = 'Datos App';
+var NOMBRE_CARPETA   = 'EBS+ Instrumentos';
 
 // ── Punto de entrada ─────────────────────────────────────────
 function doPost(e) {
@@ -37,11 +27,9 @@ function doPost(e) {
     return respuesta(false, 'Error: ' + err.message);
   }
 }
-
-function doGet(e) {
+function doGet() {
   return respuesta(true, 'EBS+ activo · ' + NOMBRE_MUNICIPIO + ' · ' + TIPO_FORMULARIO);
 }
-
 function guardarDatos(datos) {
   var sheet = obtenerHoja();
   if      (TIPO_FORMULARIO === 'carto')       guardarCarto(sheet, datos);
@@ -52,335 +40,391 @@ function guardarDatos(datos) {
 // ── CARTOGRAFÍAS ─────────────────────────────────────────────
 function guardarCarto(sheet, d) {
   initEncabezados(sheet, [
-    'ID','Fecha','Municipio','N° Casa','N° Familia','ID Familia',
+    'ID','Fecha','Municipio','Vereda','N° Casa','N° Familia','ID Familia',
     'Coordenada','Riesgo','Convenciones','Observaciones','Foto'
   ]);
   sheet.appendRow([
     d.id||'', d.fecha||'', d.municipio||'',
+    d.vereda||'',
     d.casa||'', d.familia||'', d.idFam||'',
     d.coord||'', d.riesgo||'', d.conv||'',
     d.obs||'', d.foto ? '✅ Tiene foto' : 'Sin foto'
   ]);
 }
 
-// ── RECOLECCIÓN ──────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+//  RECOLECCIÓN
+// ════════════════════════════════════════════════════════════
 function guardarRecoleccion(sheet, d) {
   initEncabezados(sheet, [
-    'ID','Fecha','Municipio',
-    'FG Jefe Nombre','FG Jefe Año','FG Jefe Estado','FG Jefe Enf',
+    'ID','Fecha','Municipio','Vereda','Microterritorio','Teléfono',
+    // Familiograma
+    'FG Familia','FG Vereda','FG Jefe Nombre','FG Jefe Año','FG Jefe Estado','FG Jefe Enf',
     'FG Pareja Nombre','FG Pareja Año','FG Pareja Estado','FG Pareja Enf',
-    'FG Relación Pareja','FG Hijos Resumen','FG Observaciones',
-    'APGAR Resumen','Zarit Puntaje','Zarit Obs',
-    'Eco Vías Acceso','Eco Fam. Extensa','Eco Prog. Social',
-    'Eco Justicia','Eco Org. Comunit.','Eco Vecinos',
-    'Eco Espiritualidad','Eco Educación','Eco Trabajo',
-    'Eco JAC','Eco Recreación','Eco Salud','Eco Rec. Económicos',
-    'Doc Familiograma URL','Doc Instrumentos URL'
+    'FG Relación Pareja','FG Hijos','FG Observaciones',
+    // APGAR — 6 miembros × 9 campos
+    'APG M1 Nombre','APG M1 Sexo','APG M1 Edad','APG M1 P1','APG M1 P2','APG M1 P3','APG M1 P4','APG M1 P5','APG M1 Total',
+    'APG M2 Nombre','APG M2 Sexo','APG M2 Edad','APG M2 P1','APG M2 P2','APG M2 P3','APG M2 P4','APG M2 P5','APG M2 Total',
+    'APG M3 Nombre','APG M3 Sexo','APG M3 Edad','APG M3 P1','APG M3 P2','APG M3 P3','APG M3 P4','APG M3 P5','APG M3 Total',
+    'APG M4 Nombre','APG M4 Sexo','APG M4 Edad','APG M4 P1','APG M4 P2','APG M4 P3','APG M4 P4','APG M4 P5','APG M4 Total',
+    'APG M5 Nombre','APG M5 Sexo','APG M5 Edad','APG M5 P1','APG M5 P2','APG M5 P3','APG M5 P4','APG M5 P5','APG M5 Total',
+    'APG M6 Nombre','APG M6 Sexo','APG M6 Edad','APG M6 P1','APG M6 P2','APG M6 P3','APG M6 P4','APG M6 P5','APG M6 Total',
+    'APG Análisis',
+    // Zarit — 22 preguntas + resumen
+    'Zarit P1','Zarit P2','Zarit P3','Zarit P4','Zarit P5','Zarit P6','Zarit P7',
+    'Zarit P8','Zarit P9','Zarit P10','Zarit P11','Zarit P12','Zarit P13','Zarit P14',
+    'Zarit P15','Zarit P16','Zarit P17','Zarit P18','Zarit P19','Zarit P20','Zarit P21','Zarit P22',
+    'Zarit Total','Zarit Interpretación','Zarit Observaciones',
+    // Ecomapa — 13 sistemas + obs
+    'Eco Vías Acceso','Eco Fam. Extensa','Eco Prog. Social','Eco Justicia',
+    'Eco Org. Comunit.','Eco Vecinos','Eco Espiritualidad','Eco Educación',
+    'Eco Trabajo','Eco JAC','Eco Recreación','Eco Salud','Eco Rec. Económicos',
+    'Eco Observaciones',
+    'Doc URL'
   ]);
 
-  var sub  = d.subData        || {};
-  var fg   = sub.familiograma  || {};
-  var apg  = sub.apgar         || {};
-  var zar  = sub.zarit         || {};
-  var eco  = sub.ecomapa       || {};
+  var sub    = d.subData        || {};
+  var fg     = sub.familiograma  || {};
+  var apg    = sub.apgar         || {};
+  var zar    = sub.zarit         || {};
+  var eco    = sub.ecomapa       || {};
   var jefe   = fg.principal || fg.padre || {};
-  var pareja = fg.pareja    || fg.madre || {};
+  var pareja = pickPareja(fg);
 
-  var hijos = (fg.hijos||[]).map(function(h){
-    return (h.nombre||'?')+'('+(h.anio||'?')+','+(h.genero==='F'?'F':'M')+')';
+  var hijos = (fg.hijos || []).concat(
+    (fg.miembros||[]).filter(function(m){ return m.parentesco === 'hijo'; })
+  ).map(function(h){
+    return (h.nombre||'?') + ' (' + (h.anio||'?') + '/' + (h.genero||'?') + ')';
   }).join(' | ');
 
-  var apgarMiembros = apg.miembros || apg.rows || [];
-  var apgarResumen = Array.isArray(apgarMiembros) && apgarMiembros.length
-    ? apgarMiembros.map(function(r){ return (r.nombre||'?')+':'+(r.total||'?'); }).join(' | ')
-    : (apg.obs || '');
+  // APGAR — la app envía r.nombres (plural)
+  var apgarMiembros = apg.miembros || [];
+  var apgarCols = [];
+  for (var am = 0; am < 6; am++) {
+    var rm = apgarMiembros[am] || {};
+    apgarCols = apgarCols.concat([
+      rm.nombres || rm.nombre || '',
+      rm.sexo  || '',
+      rm.edad  || '',
+      valOrEmpty(rm.p1), valOrEmpty(rm.p2), valOrEmpty(rm.p3),
+      valOrEmpty(rm.p4), valOrEmpty(rm.p5),
+      rm.total !== null && rm.total !== undefined ? rm.total : ''
+    ]);
+  }
+  apgarCols.push(apg.analisis || '');
 
+  // Zarit — 22 respuestas individuales
+  var zaritResps  = zar.respuestas || [];
+  var zaritCols   = [];
+  for (var zi = 0; zi < 22; zi++) {
+    var zv = zaritResps[zi];
+    zaritCols.push(zv !== null && zv !== undefined ? zv : '');
+  }
+  var zaritPuntaje = zar.puntaje || 0;
+  var zaritInterp  = zaritPuntaje <= 46 ? 'No sobrecarga'
+                   : zaritPuntaje <= 55 ? 'Sobrecarga leve' : 'Sobrecarga intensa';
+  zaritCols = zaritCols.concat([zaritPuntaje, zaritInterp, zar.obs || '']);
+
+  // Ecomapa
   var ecoVals = eco.valores || eco || {};
+  var ECO_IDS = ['eco-vias','eco-fam-ext','eco-programas','eco-justicia','eco-org-com',
+                 'eco-vecinos','eco-espiritualidad','eco-educacion','eco-trabajo',
+                 'eco-jac','eco-recreacion','eco-salud','eco-recursos'];
+  var ecoCols = ECO_IDS.map(function(id){ return ecoVals[id] || ''; });
+  ecoCols.push(eco.obs || '');
 
-  // Crear documentos Google Docs
+  // Crear documento
   var carpeta = obtenerCarpeta();
-  var titulo  = (d.familia || d.id || 'Registro') + ' · ' + (d.fecha || '');
-  var urlFamiliograma = crearDocFamiliograma(carpeta, titulo, d, fg);
-  var urlInstrumentos = crearDocInstrumentos(carpeta, titulo, d, apg, zar, eco);
+  var urlDoc  = '';
+  try { urlDoc = crearDocInstrumentos(carpeta, d, fg, apg, zar, eco); } catch(e) { urlDoc = 'Error: ' + e.message; }
 
-  sheet.appendRow([
-    d.id||'', d.fecha||'', d.municipio||'',
-    jefe.nombre||'',   jefe.anio||'',   jefe.estado||'',   jefe.enf||'',
+  var fila = [
+    d.id||'', d.fecha||'', d.municipio||NOMBRE_MUNICIPIO,
+    d.vereda||'', d.microterritorio||'', d.telefono||'',
+    fg.familia||'',
+    fg.vereda||'',
+    jefe.nombre||'', jefe.anio||'', jefe.estado||'', jefe.enf||'',
     pareja.nombre||'', pareja.anio||'', pareja.estado||'', pareja.enf||'',
-    fg.relacion||fg.relacionPareja||'', hijos, fg.obs||'',
-    apgarResumen, zar.puntaje||0, zar.obs||'',
-    ecoVals['eco-vias']||'',           ecoVals['eco-fam-ext']||'',
-    ecoVals['eco-programas']||'',      ecoVals['eco-justicia']||'',
-    ecoVals['eco-org-com']||'',        ecoVals['eco-vecinos']||'',
-    ecoVals['eco-espiritualidad']||'', ecoVals['eco-educacion']||'',
-    ecoVals['eco-trabajo']||'',        ecoVals['eco-jac']||'',
-    ecoVals['eco-recreacion']||'',     ecoVals['eco-salud']||'',
-    ecoVals['eco-recursos']||'',
-    urlFamiliograma, urlInstrumentos
-  ]);
+    fg.relacion || fg.relacionPareja || '',
+    hijos, fg.obs||''
+  ].concat(apgarCols).concat(zaritCols).concat(ecoCols).concat([urlDoc]);
+
+  sheet.appendRow(fila);
 }
 
 // ════════════════════════════════════════════════════════════
-//  DOC 1 — FAMILIOGRAMA  (formato institucional ESE San Martín)
+//  DOC ÚNICO — 4 secciones en un solo documento
 // ════════════════════════════════════════════════════════════
-function crearDocFamiliograma(carpeta, titulo, d, fg) {
-  var doc  = DocumentApp.create('Familiograma · ' + titulo);
-  var body = doc.getBody();
-  body.setMarginTop(28).setMarginBottom(28).setMarginLeft(50).setMarginRight(50);
+function crearDocInstrumentos(carpeta, d, fg, apg, zar, eco) {
+  var jefe       = fg.principal || fg.padre || {};
+  var jefeNombre = jefe.nombre  || 'Sin nombre';
+  var famNombre  = fg.familia   || d.familia || d.id || 'Familia';
+  var nombreDoc  = jefeNombre + ' - ' + famNombre;
 
-  // ── Encabezado institucional (header del doc) ─────────────
-  var header = doc.addHeader();
-  var hPar   = header.appendParagraph(
-    'EQUIPOS BÁSICOS EN SALUD\nE.S.E SAN MARTÍN\nMUNICIPIO DE ' +
-    (d.municipio || NOMBRE_MUNICIPIO).toUpperCase()
-  );
-  hPar.setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
-  hPar.editAsText().setBold(true).setItalic(true).setFontSize(10);
-
-  // ── Título del formato ────────────────────────────────────
-  var titPar = body.appendParagraph(
-    'FORMATO DE FAMILIOGRAMA ECOMAPA, APGAR (LINEAMIENTOS RESOLUCIÓN 2788)'
-  );
-  titPar.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  titPar.editAsText().setBold(true).setFontSize(11);
-
-  // ── Tabla: DATOS DE IDENTIFICACIÓN ───────────────────────
-  var tblIdHdr = body.appendTable([['DATOS DE IDENTIFICACIÓN']]);
-  tblIdHdr.getRow(0).getCell(0).setBackgroundColor('#d9d9d9');
-  tblIdHdr.getRow(0).getCell(0).editAsText().setBold(true).setFontSize(9);
-  setTableBorders(tblIdHdr, '#000000');
-
-  var municipio    = d.municipio       || NOMBRE_MUNICIPIO;
-  var barrio       = fg.barrio         || d.vereda        || '';
-  var direccion    = fg.direccion      || d.direccion     || '';
-  var territorio   = fg.territorio     || d.territorio    || '';
-  var microterrit  = d.microterritorio || '';
-  var numFamilia   = d.familia         || d.id            || '';
-  var jefe         = fg.principal || fg.padre || {};
-  var jefeNombre   = jefe.nombre || '';
-  var visitaNombre = fg.quienRecibe || jefeNombre;
-  var telefono     = d.telefono || '';
-
-  var tblId = body.appendTable([
-    ['Municipio: ' + municipio,
-     'Barrio o Vereda: ' + barrio,
-     'Dirección: ' + direccion],
-    ['Territorio: ' + territorio,
-     'Microterritorio: ' + microterrit,
-     'Número De Familia: ' + numFamilia],
-    ['Nombre del jefe del Hogar: ' + jefeNombre, '', ''],
-    ['Nombre de quien recibe la visita:', visitaNombre, ''],
-    ['N° teléfono contacto familiar:', telefono, '']
-  ]);
-  setTableBorders(tblId, '#000000');
-  for (var r = 0; r < tblId.getNumRows(); r++) {
-    for (var c = 0; c < tblId.getRow(r).getNumCells(); c++) {
-      tblId.getRow(r).getCell(c).editAsText().setFontSize(9);
-    }
-  }
-  body.appendParagraph('');
-
-  // ── Título FAMILIOGRAMA ───────────────────────────────────
-  var fgTit = body.appendParagraph('FAMILIOGRAMA');
-  fgTit.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  fgTit.editAsText().setBold(true).setFontSize(14);
-  body.appendParagraph('');
-
-  // ── Imagen del canvas ─────────────────────────────────────
-  var imgData = fg.imagenBase64 || fg.imagen || '';
-  if (imgData) {
-    try {
-      var b64  = imgData.replace(/^data:image\/\w+;base64,/, '');
-      var blob = Utilities.newBlob(Utilities.base64Decode(b64), 'image/png', 'familiograma.png');
-      var ipar = body.appendParagraph('');
-      ipar.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-      ipar.appendInlineImage(blob).setWidth(480).setHeight(340);
-    } catch(e) {
-      body.appendParagraph('[Imagen del familiograma no disponible — abrir el acordeón antes de guardar]')
-          .editAsText().setItalic(true).setForegroundColor('#888888').setFontSize(9);
-    }
-  } else {
-    body.appendParagraph('[Imagen del familiograma no disponible — abrir el acordeón antes de guardar]')
-        .editAsText().setItalic(true).setForegroundColor('#888888').setFontSize(9);
-  }
-  body.appendParagraph('');
-
-  // ── Leyenda de símbolos + Tipo de familia ─────────────────
-  // Replicando la tabla del formato original de 6 columnas
-  var tblLey = body.appendTable([[
-    '□ Hombre\n⊠ Muerte\n○ Mujer\n★ Caso índice',
-    '── Matrimonio\n══ Separación\n┄┄ Unión Libre\n╪ Divorcio',
-    '≈≈ Rel. Esporádica\n○─□ Hermanos\n○ ○ Gemelas\n▲ Aborto / Embarazo',
-    '░░ Armonía\n══ Amistad Fuerte\n━━ Fusión\n∿∿ Hostil',
-    '▓▓ Estresante\n▓▓ Muy Estresante\n·-·- Rompimiento\n- - Distancia',
-    'TIPO DE FAMILIA:\n1. Nuclear biparental\n2. Nuclear monoparental\n3. Extenso biparental\n4. Extenso\n5. Compuesto biparental\n6. Compuesto monoparental\n7. Unipersonal'
-  ]]);
-  setTableBorders(tblLey, '#000000');
-  for (var c2 = 0; c2 < 6; c2++) {
-    tblLey.getRow(0).getCell(c2).editAsText().setFontSize(8);
-    if (c2 === 5) tblLey.getRow(0).getCell(c2).editAsText().setBold(true);
-  }
-  body.appendParagraph('');
-
-  // ── ANÁLISIS ──────────────────────────────────────────────
-  body.appendParagraph('ANÁLISIS').editAsText().setBold(true).setFontSize(10);
-  var analisis = fg.analisis || fg.obs || '';
-  var tblAn = body.appendTable([[analisis]]);
-  tblAn.getRow(0).getCell(0).setMinimumHeight(90);
-  setTableBorders(tblAn, '#000000');
-  tblAn.getRow(0).getCell(0).editAsText().setFontSize(10);
-
-  // ── Pie de página ─────────────────────────────────────────
-  var footer = doc.addFooter();
-  footer.appendParagraph(
-    'E.S.E San Martín  ·  Familiograma  ·  Resolución 2788  ·  Fecha: ' + (d.fecha||'')
-  ).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-   .editAsText().setFontSize(8).setForegroundColor('#888888');
-
-  moverACarpeta(doc, carpeta);
-  doc.saveAndClose();
-  return doc.getUrl();
-}
-
-// ════════════════════════════════════════════════════════════
-//  DOC 2 — ECOMAPA + APGAR FAMILIAR + ZARIT
-// ════════════════════════════════════════════════════════════
-function crearDocInstrumentos(carpeta, titulo, d, apg, zar, eco) {
-  var doc  = DocumentApp.create('Instrumentos · ' + titulo);
+  var doc  = DocumentApp.create(nombreDoc);
   var body = doc.getBody();
   body.setMarginTop(36).setMarginBottom(36).setMarginLeft(54).setMarginRight(54);
 
-  var header = doc.addHeader();
-  var hPar   = header.appendParagraph('E.S.E SAN MARTIN');
-  hPar.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  hPar.editAsText().setBold(true).setFontSize(11);
+  // ── Encabezado de página ──────────────────────────────────
+  var hdr = doc.addHeader();
+  var hdrPar = hdr.appendParagraph(
+    'EQUIPOS BÁSICOS EN SALUD  ·  E.S.E SAN MARTÍN  ·  MUNICIPIO DE ' +
+    (d.municipio || NOMBRE_MUNICIPIO).toUpperCase()
+  );
+  hdrPar.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  hdrPar.editAsText().setBold(true).setFontSize(9).setForegroundColor('#005f73');
 
-  // ──────────────────────────────────────────────────────────
-  //  SECCIÓN 1 — ECOMAPA
-  // ──────────────────────────────────────────────────────────
-  var titEco = body.appendParagraph('ECOMAPA');
-  titEco.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  titEco.editAsText().setBold(true).setFontSize(18).setForegroundColor('#005f73');
-  body.appendParagraph('');
+  // ════════════════════════════════════════════════════════
+  //  SECCIÓN 1: FAMILIOGRAMA
+  // ════════════════════════════════════════════════════════
+  var bannerFg = body.appendTable([['  FORMATO DE FAMILIOGRAMA · ECOMAPA · APGAR  (Resolución 2788)']]);
+  bannerFg.getRow(0).getCell(0)
+    .setBackgroundColor('#005f73')
+    .editAsText().setBold(true).setFontSize(11).setForegroundColor('#ffffff');
+  setTableBorders(bannerFg, '#005f73');
+  salto(body);
 
-  // Imagen del ecomapa
-  var ecoImg = eco.imagenBase64 || eco.imagen || '';
-  if (ecoImg) {
-    try {
-      var b64e = ecoImg.replace(/^data:image\/\w+;base64,/, '');
-      var blbe = Utilities.newBlob(Utilities.base64Decode(b64e), 'image/png', 'ecomapa.png');
-      var epar = body.appendParagraph('');
-      epar.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-      epar.appendInlineImage(blbe).setWidth(460).setHeight(380);
-    } catch(e) {
-      body.appendParagraph('[Imagen del ecomapa no disponible]')
-          .editAsText().setItalic(true).setForegroundColor('#888888');
+  // — Tabla de identificación —
+  var municipio   = d.municipio       || NOMBRE_MUNICIPIO;
+  var vereda      = fg.vereda         || d.vereda        || '';
+  var microterrit = d.microterritorio || '';
+  var numFam      = d.familia         || d.id            || '';
+  var tel         = d.telefono        || '';
+  var fecha       = d.fecha           || '';
+
+  var tblId = body.appendTable([
+    ['Municipio',   municipio,   'Vereda / Sector', vereda],
+    ['Microterritorio', microterrit, 'N° Familia', numFam],
+    ['Jefe del Hogar', jefeNombre, 'Teléfono', tel],
+    ['Fecha de Registro', fecha, '', '']
+  ]);
+  tblId.getRow(3).getCell(2).setColSpan ? null : null; // GAS no soporta colspan directamente
+  setTableBorders(tblId, '#000000');
+  // Estilo: celdas de etiqueta con fondo gris
+  for (var ri = 0; ri < tblId.getNumRows(); ri++) {
+    for (var ci = 0; ci < tblId.getRow(ri).getNumCells(); ci++) {
+      var cell = tblId.getRow(ri).getCell(ci);
+      if (ci % 2 === 0) {
+        cell.setBackgroundColor('#d9d9d9');
+        cell.editAsText().setBold(true).setFontSize(9);
+      } else {
+        cell.editAsText().setFontSize(9);
+      }
     }
   }
-  body.appendParagraph('');
 
-  // Tabla de valores del ecomapa
+  // — Datos del familiograma en tabla —
+  var pareja = pickPareja(fg);
+  var hijosList = (fg.hijos || []).concat(
+    (fg.miembros||[]).filter(function(m){ return m.parentesco === 'hijo'; })
+  );
+  var hijosTexto = hijosList.length > 0
+    ? hijosList.map(function(h){ return (h.nombre||'?')+' ('+(h.anio||'?')+')'; }).join(', ')
+    : '—';
+
+  salto(body);
+  var tblMiembros = body.appendTable([
+    ['INTEGRANTE','NOMBRE','AÑO NAC.','ESTADO DE SALUD','ENFERMEDAD'],
+    ['Jefe del Hogar ★', jefeNombre, jefe.anio||'—', jefe.estado||'—', jefe.enf||'—'],
+    ['Pareja', pareja.nombre||'—', pareja.anio||'—', pareja.estado||'—', pareja.enf||'—']
+  ]);
+  // Agregar hijos
+  hijosList.forEach(function(h, idx) {
+    tblMiembros.appendTableRow().appendTableCell('Hijo/a #'+(idx+1))
+      .getParentRow().appendTableCell(h.nombre||'—')
+      .getParentRow().appendTableCell(h.anio||'—')
+      .getParentRow().appendTableCell(h.estado||'—')
+      .getParentRow().appendTableCell(h.enf||'—');
+  });
+  // Otros miembros del familiograma
+  (fg.miembros||[]).filter(function(m){ return m.parentesco !== 'hijo'; }).forEach(function(m) {
+    var parLabel = { pareja:'Pareja', padre_jefe:'Padre del Jefe', madre_jefe:'Madre del Jefe',
+      padre_pareja:'Padre de la Pareja', madre_pareja:'Madre de la Pareja' };
+    tblMiembros.appendTableRow().appendTableCell(parLabel[m.parentesco] || m.parentesco || '—')
+      .getParentRow().appendTableCell(m.nombre||'—')
+      .getParentRow().appendTableCell(m.anio||'—')
+      .getParentRow().appendTableCell(m.estado||'—')
+      .getParentRow().appendTableCell(m.nota||'—');
+  });
+  styleDataTable(tblMiembros, true);
+  // Marcar jefe con fondo dorado
+  tblMiembros.getRow(1).getCell(0).setBackgroundColor('#fef3c7');
+  tblMiembros.getRow(1).getCell(0).editAsText().setBold(true).setFontSize(9);
+
+  if (fg.relacionPareja) {
+    salto(body);
+    body.appendParagraph('Tipo de relación de pareja: ' + fg.relacionPareja)
+        .editAsText().setFontSize(9).setItalic(true);
+  }
+
+  salto(body);
+  seccionTitulo(body, 'FAMILIOGRAMA', 13, true);
+  insertarImagen(body, fg.imagenBase64||fg.imagen||'', 480, 320,
+    '[Imagen del familiograma — abrir el acordeón antes de guardar para generarla]');
+  salto(body);
+  body.appendParagraph('Observaciones / Análisis').editAsText().setBold(true).setFontSize(10);
+  cajaNota(body, fg.analisis || fg.obs || '', 90);
+
+  // ════════════════════════════════════════════════════════
+  //  SECCIÓN 2: ECOMAPA
+  // ════════════════════════════════════════════════════════
+  paginaNueva(body);
+  var bannerEco = body.appendTable([['  ECOMAPA FAMILIAR']]);
+  bannerEco.getRow(0).getCell(0)
+    .setBackgroundColor('#0e7490')
+    .editAsText().setBold(true).setFontSize(13).setForegroundColor('#ffffff');
+  setTableBorders(bannerEco, '#0e7490');
+  salto(body);
+
+  // Encabezado de identificación resumido
+  var tblEcoId = body.appendTable([
+    ['Familia', famNombre, 'Vereda', vereda],
+    ['Municipio', municipio, 'Fecha', fecha]
+  ]);
+  for (var re = 0; re < tblEcoId.getNumRows(); re++) {
+    for (var ce = 0; ce < tblEcoId.getRow(re).getNumCells(); ce++) {
+      var cellE = tblEcoId.getRow(re).getCell(ce);
+      if (ce % 2 === 0) {
+        cellE.setBackgroundColor('#e0f2fe');
+        cellE.editAsText().setBold(true).setFontSize(9);
+      } else {
+        cellE.editAsText().setFontSize(9);
+      }
+    }
+  }
+  setTableBorders(tblEcoId, '#000000');
+  salto(body);
+
+  seccionTitulo(body, 'DIAGRAMA DEL ECOMAPA', 11, true);
+  insertarImagen(body, eco.imagenBase64||eco.imagen||'', 480, 380,
+    '[Imagen del ecomapa — abrir el acordeón antes de guardar para generarla]');
+  salto(body);
+
   var ecoVals = eco.valores || eco || {};
   var ECO_CATS = [
-    ['eco-vias',           'Vías de acceso'],
-    ['eco-fam-ext',        'Familia extensa'],
-    ['eco-programas',      'Programas sociales y comunitarios'],
-    ['eco-justicia',       'Protección en justicia'],
-    ['eco-org-com',        'Organización comunitaria'],
-    ['eco-vecinos',        'Vecinos'],
-    ['eco-espiritualidad', 'Espiritualidad'],
-    ['eco-educacion',      'Educación'],
-    ['eco-trabajo',        'Trabajo'],
-    ['eco-jac',            'Junta de acción comunal'],
-    ['eco-recreacion',     'Recreación y esparcimiento'],
-    ['eco-salud',          'Servicios de salud'],
-    ['eco-recursos',       'Recursos económicos']
+    ['eco-vias','Vías de acceso'],['eco-fam-ext','Familia extensa'],
+    ['eco-programas','Programas sociales y comunitarios'],
+    ['eco-justicia','Protección en justicia'],
+    ['eco-org-com','Organización comunitaria'],
+    ['eco-vecinos','Vecinos'],['eco-espiritualidad','Espiritualidad'],
+    ['eco-educacion','Educación'],['eco-trabajo','Trabajo'],
+    ['eco-jac','Junta de acción comunal'],
+    ['eco-recreacion','Recreación y esparcimiento'],
+    ['eco-salud','Servicios de salud'],
+    ['eco-recursos','Recursos económicos']
   ];
-  var ECO_TEXTO = {
-    '-2':'No aplica','1':'Fuerte','2':'Estresante',
-    '3':'Moderada','4':'Mod. estresante','5':'Débil','6':'Lev. estresante'
-  };
-  var ecoRows = [['Sistema / Recurso', 'Valor', 'Interpretación']].concat(
+  var ECO_TX = {'-2':'No aplica','1':'Fuerte','2':'Estresante','3':'Moderada',
+                '4':'Mod. estresante','5':'Débil','6':'Lev. estresante'};
+
+  var ecoRows = [['Sistema / Recurso','Valor','Interpretación']].concat(
     ECO_CATS.map(function(p){
-      var v = String(ecoVals[p[0]] || '');
-      return [p[1], v||'—', v ? (ECO_TEXTO[v]||v) : '—'];
+      var v = String(ecoVals[p[0]]||'');
+      return [p[1], v||'—', v ? (ECO_TX[v]||v) : '—'];
     })
   );
   var tblEco = body.appendTable(ecoRows);
   styleDataTable(tblEco, true);
-
   if (eco.obs) {
-    body.appendParagraph('');
-    body.appendParagraph('Observaciones del Ecomapa:').editAsText().setBold(true).setFontSize(10);
-    body.appendParagraph(eco.obs).editAsText().setFontSize(10);
+    salto(body);
+    body.appendParagraph('Observaciones:').editAsText().setBold(true).setFontSize(9);
+    cajaNota(body, eco.obs, 50);
   }
-  body.appendParagraph('');
-  body.appendParagraph('−2=No aplica  ·  1=Fuerte  ·  2=Estresante  ·  3=Moderada  ·  4=Mod. estresante  ·  5=Débil  ·  6=Lev. estresante')
-      .editAsText().setFontSize(8).setItalic(true).setForegroundColor('#555555');
 
-  // ──────────────────────────────────────────────────────────
-  //  SECCIÓN 2 — APGAR FAMILIAR
-  // ──────────────────────────────────────────────────────────
-  body.appendPageBreak();
-  var titApgar = body.appendParagraph('APGAR FAMILIAR');
-  titApgar.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  titApgar.editAsText().setBold(true).setFontSize(18).setForegroundColor('#005f73');
-  body.appendParagraph('');
+  // ════════════════════════════════════════════════════════
+  //  SECCIÓN 3: APGAR
+  // ════════════════════════════════════════════════════════
+  paginaNueva(body);
+  var bannerApg = body.appendTable([['  APGAR FAMILIAR']]);
+  bannerApg.getRow(0).getCell(0)
+    .setBackgroundColor('#065f46')
+    .editAsText().setBold(true).setFontSize(13).setForegroundColor('#ffffff');
+  setTableBorders(bannerApg, '#065f46');
+  salto(body);
 
-  // Bloque de interpretación (igual al formato institucional)
+  // Encabezado
+  var tblApgId = body.appendTable([
+    ['Familia', famNombre, 'Vereda', vereda],
+    ['Municipio', municipio, 'Fecha', fecha]
+  ]);
+  for (var ra = 0; ra < tblApgId.getNumRows(); ra++) {
+    for (var ca = 0; ca < tblApgId.getRow(ra).getNumCells(); ca++) {
+      var cellA = tblApgId.getRow(ra).getCell(ca);
+      if (ca % 2 === 0) {
+        cellA.setBackgroundColor('#d1fae5');
+        cellA.editAsText().setBold(true).setFontSize(9);
+      } else {
+        cellA.editAsText().setFontSize(9);
+      }
+    }
+  }
+  setTableBorders(tblApgId, '#000000');
+  salto(body);
+
   var tblInterp = body.appendTable([[
-    'Interpretación del puntaje:\n' +
-    '• Función familiar normal: 21–25 pts\n' +
-    '• Función familiar leve: 16–20 pts\n' +
-    '• Disfunción moderada: 11–15 pts\n' +
-    '• Disfunción severa: 0–10 pts'
+    'Escala de puntuación por pregunta: 0=Nunca  1=Casi nunca  2=Algunas veces  3=Casi siempre  4=Siempre\n' +
+    'Interpretación del total: Normal (21–25) · Disfunción leve (16–20) · Disfunción moderada (11–15) · Disfunción severa (0–10)'
   ]]);
-  setTableBorders(tblInterp, '#005f73');
-  tblInterp.getRow(0).getCell(0).editAsText().setFontSize(9);
-  body.appendParagraph('');
+  setTableBorders(tblInterp, '#065f46');
+  tblInterp.getRow(0).getCell(0).setBackgroundColor('#ecfdf5').editAsText().setFontSize(9);
+  salto(body);
 
-  // Tabla de miembros con puntuaciones
-  var apgarMiembros = apg.miembros || apg.rows || [];
-  var apgarHdrs = ['COD','Nombres y Apellidos','Sexo','Edad','P1','P2','P3','P4','P5','Total'];
-  var apgarRows = [];
-  if (Array.isArray(apgarMiembros) && apgarMiembros.length > 0) {
-    apgarMiembros.forEach(function(r, i){
-      apgarRows.push([
-        String(i+1), r.nombre||'', r.sexo||'', r.edad||'',
-        String(r.p1||r.preg1||''), String(r.p2||r.preg2||''),
-        String(r.p3||r.preg3||''), String(r.p4||r.preg4||''),
-        String(r.p5||r.preg5||''), String(r.total||'')
-      ]);
-    });
-  } else {
-    for (var i = 0; i < 6; i++) apgarRows.push(['','','','','','','','','','']);
-  }
+  var apgarMbs = apg.miembros || [];
+  var apgarHdrs = ['#','Nombres y Apellidos','Sexo','Edad','P1','P2','P3','P4','P5','Total','Interpretación'];
+  var apgarRows = apgarMbs.length > 0
+    ? apgarMbs.map(function(r, i){
+        var tot = (r.total !== null && r.total !== undefined) ? parseInt(r.total) : null;
+        var interp = tot !== null ? (
+          tot >= 21 ? 'Normal' : tot >= 16 ? 'Dis. leve' : tot >= 11 ? 'Dis. moderada' : 'Dis. severa'
+        ) : '—';
+        return [String(i+1),
+          r.nombres||r.nombre||'', r.sexo||'', String(r.edad||''),
+          valOrEmpty(r.p1), valOrEmpty(r.p2), valOrEmpty(r.p3),
+          valOrEmpty(r.p4), valOrEmpty(r.p5),
+          tot !== null ? String(tot) : '—', interp];
+      })
+    : [['','','','','','','','','','',''],['','','','','','','','','','',''],
+       ['','','','','','','','','','',''],['','','','','','','','','','','']];
+
   var tblApgar = body.appendTable([apgarHdrs].concat(apgarRows));
   styleDataTable(tblApgar, true);
+  salto(body);
+  body.appendParagraph('Análisis del APGAR Familiar').editAsText().setBold(true).setFontSize(10);
+  cajaNota(body, apg.analisis || '', 80);
 
-  body.appendParagraph('');
-  body.appendParagraph('0=NUNCA  1=CASI NUNCA  2=ALGUNAS VECES  3=CASI SIEMPRE  4=SIEMPRE')
-      .editAsText().setFontSize(8).setBold(true);
-  body.appendParagraph('');
-  body.appendParagraph('ANÁLISIS').editAsText().setBold(true).setFontSize(10);
-  var tblAn = body.appendTable([[apg.obs || apg.analisis || '']]);
-  tblAn.getRow(0).getCell(0).setMinimumHeight(60);
-  setTableBorders(tblAn, '#cccccc');
+  // ════════════════════════════════════════════════════════
+  //  SECCIÓN 4: ZARIT
+  // ════════════════════════════════════════════════════════
+  paginaNueva(body);
+  var bannerZar = body.appendTable([['  INSTRUMENTO DE SOBRECARGA DEL CUIDADOR — ESCALA ZARIT']]);
+  bannerZar.getRow(0).getCell(0)
+    .setBackgroundColor('#7c3aed')
+    .editAsText().setBold(true).setFontSize(13).setForegroundColor('#ffffff');
+  setTableBorders(bannerZar, '#7c3aed');
+  salto(body);
 
-  // ──────────────────────────────────────────────────────────
-  //  SECCIÓN 3 — INSTRUMENTO ZARIT
-  // ──────────────────────────────────────────────────────────
-  body.appendPageBreak();
-  var titZarit = body.appendParagraph('APLICACIÓN DEL INSTRUMENTO ZARIT');
-  titZarit.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  titZarit.editAsText().setBold(true).setFontSize(14).setForegroundColor('#005f73');
-  body.appendParagraph('');
+  // Encabezado identificación
+  var tblZarId = body.appendTable([
+    ['Familia', famNombre, 'Vereda', vereda],
+    ['Municipio', municipio, 'Fecha', fecha]
+  ]);
+  for (var rz = 0; rz < tblZarId.getNumRows(); rz++) {
+    for (var cz = 0; cz < tblZarId.getRow(rz).getNumCells(); cz++) {
+      var cellZ = tblZarId.getRow(rz).getCell(cz);
+      if (cz % 2 === 0) {
+        cellZ.setBackgroundColor('#ede9fe');
+        cellZ.editAsText().setBold(true).setFontSize(9);
+      } else {
+        cellZ.editAsText().setFontSize(9);
+      }
+    }
+  }
+  setTableBorders(tblZarId, '#000000');
+  salto(body);
+
   body.appendParagraph(
-    'A continuación se presenta una lista de afirmaciones. Indique la frecuencia: ' +
-    '0=Nunca · 1=Rara vez · 2=Algunas veces · 3=Bastantes veces · 4=Casi siempre. ' +
-    'La puntuación global oscila entre 0 y 88 puntos.'
+    'Frecuencia: 0=Nunca · 1=Rara vez · 2=Algunas veces · 3=Bastantes veces · 4=Casi siempre  |  Puntuación total: 0–88'
   ).editAsText().setFontSize(9).setItalic(true);
-  body.appendParagraph('');
+  salto(body);
 
   var ZARIT_PREGS = [
     '¿Cree que su familiar solicita más ayuda de la que realmente necesita?',
@@ -406,60 +450,68 @@ function crearDocInstrumentos(carpeta, titulo, d, apg, zar, eco) {
     '¿Cree que podría cuidar mejor de su familiar?',
     'Globalmente, ¿qué grado de carga experimenta por el hecho de cuidar a su familiar?'
   ];
-  var zaritResps = zar.respuestas || zar.items || [];
-  var zaritRows  = [['N°','PREGUNTA','0','1','2','3','4']].concat(
+  var zaritResps = zar.respuestas || [];
+  var zaritRows2 = [['N°','PREGUNTA','0','1','2','3','4']].concat(
     ZARIT_PREGS.map(function(preg, i){
-      var val = (zaritResps[i] !== undefined) ? String(zaritResps[i]) : '';
+      var val = (zaritResps[i] !== null && zaritResps[i] !== undefined) ? String(zaritResps[i]) : '';
       return [String(i+1), preg,
         val==='0'?'✓':'', val==='1'?'✓':'', val==='2'?'✓':'',
         val==='3'?'✓':'', val==='4'?'✓':''];
     })
   );
-  var tblZarit = body.appendTable(zaritRows);
+  var tblZarit = body.appendTable(zaritRows2);
   styleZaritTable(tblZarit);
+  salto(body);
+  var puntaje = zar.puntaje || 0;
+  var interp  = puntaje <= 46 ? 'No sobrecarga' : puntaje <= 55 ? 'Sobrecarga leve' : 'Sobrecarga intensa';
 
-  body.appendParagraph('');
-  var puntaje   = zar.puntaje || 0;
-  var interp    = puntaje <= 46 ? 'No sobrecarga' : puntaje <= 55 ? 'Sobrecarga leve' : 'Sobrecarga intensa';
-  body.appendParagraph('Puntaje total: ' + puntaje + '    Interpretación: ' + interp)
-      .editAsText().setBold(true).setFontSize(10);
-  body.appendParagraph('');
-  body.appendParagraph('INTERPRETACIÓN DE LOS RESULTADOS').editAsText().setBold(true).setFontSize(10);
-  var tblIntZ = body.appendTable([[zar.obs || zar.interpretacion || '']]);
-  tblIntZ.getRow(0).getCell(0).setMinimumHeight(60);
-  setTableBorders(tblIntZ, '#cccccc');
+  var tblResult = body.appendTable([['Puntaje total: ' + puntaje + '     Interpretación: ' + interp]]);
+  var bgRes = puntaje <= 46 ? '#d1fae5' : puntaje <= 55 ? '#fef3c7' : '#fee2e2';
+  tblResult.getRow(0).getCell(0)
+    .setBackgroundColor(bgRes)
+    .editAsText().setBold(true).setFontSize(11).setForegroundColor('#1e1e1e');
+  setTableBorders(tblResult, '#7c3aed');
 
-  // Pie de página
-  var footer = doc.addFooter();
-  footer.appendParagraph('E.S.E San Martín  ·  Ecomapa + APGAR + Zarit  ·  ' + (d.fecha||''))
-        .setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-        .editAsText().setFontSize(8).setForegroundColor('#888888');
+  salto(body);
+  body.appendParagraph('Interpretación de los resultados y observaciones').editAsText().setBold(true).setFontSize(10);
+  cajaNota(body, zar.obs || '', 80);
 
+  // ── Pie de página ─────────────────────────────────────────
+  var ftr = doc.addFooter();
+  var ftrPar = ftr.appendParagraph(
+    'E.S.E San Martín  ·  Instrumentos de Recolección  ·  ' +
+    famNombre + '  ·  ' + (d.fecha||'')
+  );
+  ftrPar.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  ftrPar.editAsText().setFontSize(8).setForegroundColor('#888888');
+
+  // Mover a carpeta (método robusto)
   moverACarpeta(doc, carpeta);
   doc.saveAndClose();
   return doc.getUrl();
 }
 
-// ── MACRO — una fila por integrante ─────────────────────────
+// ── MACRO ────────────────────────────────────────────────────
 function guardarMacro(sheet, d) {
   initEncabezados(sheet, [
     'ID','Fecha Registro','Municipio',
     'Fecha Visita','Vereda / Sector','Microterritorio','Auxiliar a Cargo',
     'Novedad','Familia','N° Casa','Teléfono',
-    'Cargado','Seguimiento Telefónico Laboratorios','Seguimiento Médico',
+    'Cargado','Seg. Tel. Laboratorios','Seguimiento Médico',
     'Acueducto','Pozo / Alcantarillado','Unidad Sanitaria','Ducha',
     'Cocina','Manejo de Residuos','Paredes','Piso','Techo',
-    'Electricidad','Riesgo en el Entorno','Nivel de Riesgo Vivienda',
+    'Electricidad','Riesgo Entorno','Nivel Riesgo Vivienda',
     'Ingresos Económicos','SISBEN',
-    'N° Integrante','Nombre Integrante','Tipo Documento','N° Documento','Edad',
+    'N° Integrante','Nombre','Tipo Doc','N° Doc','Edad',
     'Curso de Vida','Género','Orientación Sexual','Migrante',
-    'Enfermedades Detectadas','De Novo','Adherencia',
-    'Discapacidad','Tipo Discapacidad','Certificación Discapacidad','Cuidador',
+    'Enfermedades','De Novo','Adherencia',
+    'Discapacidad','Tipo Discapacidad','Cert. Discapacidad','Cuidador',
     'EPS','Alertas','Profesional Requerido',
-    'Víctima Conflicto Armado','Víctima Violencia Intrafamiliar',
-    'Nivel Educativo','Contacto Integrante'
+    'Víctima Conflicto','Víctima VIF',
+    'Nivel Educativo','Teléfono Integrante'
   ]);
-  var viv  = d.vivienda   || {};
+
+  var viv  = d.vivienda    || {};
   var ints = d.integrantes || [];
   var base = [
     d.id||'', d.fecha||'', d.municipio||'',
@@ -476,8 +528,7 @@ function guardarMacro(sheet, d) {
   } else {
     ints.forEach(function(int, idx) {
       sheet.appendRow(base.concat([
-        idx+1,
-        int.nombre||'', int.tipodoc||'', int.numdoc||'', int.edad||'',
+        idx+1, int.nombre||'', int.tipodoc||'', int.numdoc||'', int.edad||'',
         int.cursovida||'', int.genero||'', int.orientacion||'', int.migrante||'',
         int.enfermedades||'', int.denovo||'', int.adherencia||'',
         int.discapacidad||'', int.tipodiscap||'', int.certdiscap||'', int.cuidador||'',
@@ -490,15 +541,53 @@ function guardarMacro(sheet, d) {
 }
 
 // ════════════════════════════════════════════════════════════
-//  ESTILOS DE TABLAS
+//  HELPERS DE DOCUMENTO
 // ════════════════════════════════════════════════════════════
-function styleIdentTable(tbl) {
-  setTableBorders(tbl, '#cccccc');
-  for (var r = 0; r < tbl.getNumRows(); r++) {
-    var row = tbl.getRow(r);
-    row.getCell(0).editAsText().setBold(true).setFontSize(9).setForegroundColor('#005f73');
-    if (row.getNumCells() > 1) row.getCell(1).editAsText().setFontSize(9);
+
+// Salto de página robusto — appendPageBreak no existe en GAS
+function paginaNueva(body) {
+  body.appendParagraph('').appendPageBreak();
+}
+
+function salto(body) { body.appendParagraph(''); }
+
+function seccionTitulo(body, texto, size, color) {
+  var p = body.appendParagraph(texto);
+  p.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  var t = p.editAsText().setBold(true).setFontSize(size);
+  if (color) t.setForegroundColor('#005f73');
+}
+
+function cajaNota(body, texto, minH) {
+  var tbl = body.appendTable([[texto || '']]);
+  tbl.getRow(0).getCell(0).setMinimumHeight(minH || 60);
+  setTableBorders(tbl, '#000000');
+  tbl.getRow(0).getCell(0).editAsText().setFontSize(10);
+}
+
+function nota(body, label, texto) {
+  body.appendParagraph(label + texto).editAsText().setFontSize(10);
+}
+
+function estiloCeldas(tbl, size) {
+  for (var r = 0; r < tbl.getNumRows(); r++)
+    for (var c = 0; c < tbl.getRow(r).getNumCells(); c++)
+      tbl.getRow(r).getCell(c).editAsText().setFontSize(size || 9);
+}
+
+function insertarImagen(body, base64, w, h, fallback) {
+  if (base64) {
+    try {
+      var clean = base64.replace(/^data:image\/\w+;base64,/, '');
+      var blob  = Utilities.newBlob(Utilities.base64Decode(clean), 'image/png', 'img.png');
+      var par   = body.appendParagraph('');
+      par.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+      par.appendInlineImage(blob).setWidth(w).setHeight(h);
+      return;
+    } catch(e) { /* cae al fallback */ }
   }
+  body.appendParagraph(fallback || '[Imagen no disponible]')
+      .editAsText().setItalic(true).setForegroundColor('#888888').setFontSize(9);
 }
 
 function styleDataTable(tbl, hasHeader) {
@@ -511,7 +600,7 @@ function styleDataTable(tbl, hasHeader) {
     }
   }
   for (var r = hasHeader ? 1 : 0; r < tbl.getNumRows(); r++) {
-    var bg = (r % 2 === 0) ? '#f0f9ff' : '#ffffff';
+    var bg = r % 2 === 0 ? '#f0f9ff' : '#ffffff';
     for (var c2 = 0; c2 < tbl.getRow(r).getNumCells(); c2++) {
       tbl.getRow(r).getCell(c2).setBackgroundColor(bg);
       tbl.getRow(r).getCell(c2).editAsText().setFontSize(9);
@@ -546,6 +635,18 @@ function setTableBorders(tbl, color) {
 // ════════════════════════════════════════════════════════════
 //  UTILIDADES GENERALES
 // ════════════════════════════════════════════════════════════
+
+function valOrEmpty(v) {
+  return (v !== null && v !== undefined && v !== '') ? String(v) : '';
+}
+
+function pickPareja(fg) {
+  if (fg.pareja && (fg.pareja.nombre || fg.pareja.anio)) return fg.pareja;
+  if (fg.madre  && (fg.madre.nombre  || fg.madre.anio))  return fg.madre;
+  var par = (fg.miembros||[]).filter(function(m){ return m.parentesco === 'pareja'; })[0];
+  return par || {};
+}
+
 function initEncabezados(sheet, cols) {
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(cols);
@@ -570,10 +671,14 @@ function obtenerCarpeta() {
   return DriveApp.createFolder(NOMBRE_CARPETA);
 }
 
+// Método robusto: elimina de TODOS los parents actuales, luego agrega a carpeta destino
 function moverACarpeta(doc, carpeta) {
-  var file = DriveApp.getFileById(doc.getId());
+  var file    = DriveApp.getFileById(doc.getId());
+  var parents = file.getParents();
+  while (parents.hasNext()) {
+    parents.next().removeFile(file);
+  }
   carpeta.addFile(file);
-  DriveApp.getRootFolder().removeFile(file);
 }
 
 function respuesta(ok, msg) {
