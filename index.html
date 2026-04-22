@@ -1565,7 +1565,7 @@ function dibujarFamiliograma() {
   const W = (canvas.offsetWidth || 400);
 
   // Zonas fijas — la leyenda va SIEMPRE debajo de todo
-  const LEGEND_H    = 200; // altura reservada para leyenda
+  const LEGEND_H    = 260; // 2 cols × 6 filas × 34px + header + padding
   const yPadres     = 130;
   const yCore       = 310;
   const yHijos      = 500;
@@ -1779,15 +1779,19 @@ function dibujarFamiliograma() {
     });
   }
 
+  // Fondo blanco del canvas (evita fondo negro en el documento)
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
   // ── LEYENDA — siempre debajo del marco de personas ───────
   (function drawLegend() {
-    const COLS    = 3;
-    const COL_W   = Math.floor((W - 32) / COLS);
-    const ROW_H   = 32;
-    const PAD_X   = 14;
-    const PAD_Y   = 12;
-    const HDR_H   = 36;
-    const SYM_W   = 26;
+    const COLS   = 2;                              // 2 columnas → nunca se pisan
+    const PAD_X  = 16;
+    const PAD_Y  = 14;
+    const HDR_H  = 38;
+    const SYM_W  = 28;
+    const ROW_H  = 34;
+    const COL_W  = Math.floor((W - 16 - PAD_X * 2) / COLS); // ancho real por columna
 
     const items = [
       { label: 'Hombre',              type: 'square',   color: '#005f73' },
@@ -1804,29 +1808,29 @@ function dibujarFamiliograma() {
       { label: 'Conviv. conflictiva', type: 'convline', color: '#dc2626' },
     ];
 
-    const ROWS  = Math.ceil(items.length / COLS);
-    const boxW  = W - 16;
-    const boxH  = HDR_H + PAD_Y + ROWS*ROW_H + PAD_Y;
-    const LX    = 8;
-    // Leyenda empieza justo después del marco de personas con margen
-    const LY    = yHijos + HIJO_LABEL + 18;
+    const ROWS = Math.ceil(items.length / COLS);
+    const boxW = W - 16;
+    const boxH = HDR_H + PAD_Y + ROWS * ROW_H + PAD_Y;
+    const LX   = 8;
+    const LY   = yHijos + HIJO_LABEL + 18;
 
+    // Fondo
     ctx.save();
-    ctx.shadowColor='rgba(0,0,0,0.12)'; ctx.shadowBlur=8; ctx.shadowOffsetY=2;
+    ctx.shadowColor='rgba(0,0,0,0.10)'; ctx.shadowBlur=6; ctx.shadowOffsetY=2;
     ctx.fillStyle='#ffffff';
     if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(LX,LY,boxW,boxH,10); ctx.fill(); }
-    else { ctx.fillRect(LX,LY,boxW,boxH); }
+    else ctx.fillRect(LX,LY,boxW,boxH);
     ctx.shadowColor='transparent';
     ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1;
     if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(LX,LY,boxW,boxH,10); ctx.stroke(); }
-    else { ctx.strokeRect(LX,LY,boxW,boxH); }
+    else ctx.strokeRect(LX,LY,boxW,boxH);
     ctx.restore();
 
     // Header
     ctx.save();
     ctx.fillStyle='#003d4d';
     if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(LX,LY,boxW,HDR_H,[10,10,0,0]); ctx.fill(); }
-    else { ctx.fillRect(LX,LY,boxW,HDR_H); }
+    else ctx.fillRect(LX,LY,boxW,HDR_H);
     ctx.fillStyle='#d11d5b'; ctx.fillRect(LX, LY+HDR_H-3, boxW, 3);
     ctx.fillStyle='#ffffff'; ctx.font='600 14px DM Sans,sans-serif';
     ctx.textAlign='left'; ctx.textBaseline='middle';
@@ -1837,8 +1841,8 @@ function dibujarFamiliograma() {
       const col   = idx % COLS;
       const row   = Math.floor(idx / COLS);
       const ix    = LX + PAD_X + col * COL_W;
-      const iy    = LY + HDR_H + PAD_Y + row*ROW_H + ROW_H/2;
-      const symCX = ix + SYM_W/2;
+      const iy    = LY + HDR_H + PAD_Y + row * ROW_H + ROW_H / 2;
+      const symCX = ix + SYM_W / 2;
       const S     = 8;
 
       ctx.save();
@@ -1889,7 +1893,13 @@ function dibujarFamiliograma() {
 
       ctx.fillStyle='#1a2332'; ctx.font='400 12px DM Sans,sans-serif';
       ctx.textAlign='left'; ctx.textBaseline='middle';
-      ctx.fillText(item.label, ix+SYM_W+7, iy);
+      // Truncar solo si aún así no cabe (seguridad extra)
+      const maxLabelW = COL_W - SYM_W - 12;
+      ctx.save();
+      ctx.rect(ix + SYM_W + 6, iy - ROW_H/2, maxLabelW, ROW_H);
+      ctx.clip();
+      ctx.fillText(item.label, ix+SYM_W+8, iy);
+      ctx.restore();
     });
   })();
 }
@@ -2129,12 +2139,12 @@ function dibujarEcomapa() {
   canvas.style.width  = W + 'px';
   canvas.style.height = H + 'px';
   ctx.scale(DPR, DPR);
-  ctx.fillStyle = '#f0f9ff';
+  ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, H);
 
   const cx = W / 2;
   const cy = H / 2 - 10;
-  const R  = Math.min(W * 0.42, H * 0.40);
+  const R  = Math.min(W * 0.46, H * 0.44);
 
   // Caja central
   const bw = 140, bh = 96;
@@ -2151,8 +2161,8 @@ function dibujarEcomapa() {
 
   // Nodos periféricos
   const n   = ECOMAPA_CATS.length;
-  const tw  = 122;
-  const th  = 64;
+  const tw  = 132;
+  const th  = 68;
 
   ECOMAPA_CATS.forEach((cat, i) => {
     const ang = -Math.PI/2 + (2*Math.PI*i)/n;
