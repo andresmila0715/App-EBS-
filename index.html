@@ -1561,17 +1561,25 @@ function dibujarFamiliograma() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  const DPR = 2; // Doble resolución interna
+  const DPR = 2;
   const W = (canvas.offsetWidth || 400);
-  const H = 700;
+
+  // Zonas fijas — la leyenda va SIEMPRE debajo de todo
+  const LEGEND_H    = 200; // altura reservada para leyenda
+  const yPadres     = 130;
+  const yCore       = 310;
+  const yHijos      = 500;
+  const HIJO_LABEL  = 60;  // espacio bajo hijos para nombre + año
+  const H = yHijos + HIJO_LABEL + 20 + LEGEND_H; // ≈ 910px
+
   canvas.width  = W * DPR;
   canvas.height = H * DPR;
   canvas.style.width  = W + 'px';
   canvas.style.height = H + 'px';
   ctx.scale(DPR, DPR);
   ctx.clearRect(0, 0, W, H);
-  const PERSON_SIZE = 52; // antes 36
 
+  const PERSON_SIZE = 52;
   const colorM = '#005f73';
   const colorF = '#d11d5b';
   const colorText = '#1a2332';
@@ -1579,348 +1587,311 @@ function dibujarFamiliograma() {
   const frameStroke = '#cbd5e1';
   const frameFill = '#f8fafc';
 
+  const padreJefeX   = W * 0.16;
+  const madreJefeX   = W * 0.30;
+  const padreParejaX = W * 0.70;
+  const madreParejaX = W * 0.84;
+  const principalX   = W * 0.40;
+  const parejaX      = W * 0.60;
+
   function hasData(person) {
     return Boolean(person.nombre || person.anio || person.estado);
   }
-
   function shortName(nombre) {
     const parts = (nombre || '').trim().split(/\s+/).filter(Boolean);
     return parts.slice(0, 2).join(' ').substring(0, 18);
   }
 
   function drawPerson(x, y, person, genero, isPrincipal) {
-  const size = PERSON_SIZE;
-  const estado = person?.estado || '';
-  const anio = person?.anio || '';
-  const nombre = person?.nombre || '';
-  const nucleo = person?.nucleo || '';
-  const convivencia = person?.convivencia || '';
-  const color = genero === 'F' ? colorF : colorM;
-  const convColor = convivencia === 'armoniosa' ? '#16a34a'
-    : convivencia === 'con_conflictos' ? '#f59e0b'
-    : convivencia === 'muy_conflictiva' ? '#dc2626'
-    : convivencia === 'distante' ? '#94a3b8' : null;
+    const size = PERSON_SIZE;
+    const estado      = person?.estado      || '';
+    const anio        = person?.anio        || '';
+    const nombre      = person?.nombre      || '';
+    const nucleo      = person?.nucleo      || '';
+    const convivencia = person?.convivencia || '';
+    const color = genero === 'F' ? colorF : colorM;
+    const convColor = convivencia === 'armoniosa'      ? '#16a34a'
+      : convivencia === 'con_conflictos'               ? '#f59e0b'
+      : convivencia === 'muy_conflictiva'              ? '#dc2626'
+      : convivencia === 'distante'                     ? '#94a3b8' : null;
 
-  ctx.save();
+    ctx.save();
+    if (nucleo === 'SI') {
+      ctx.fillStyle = 'rgba(10,147,150,0.10)';
+      ctx.beginPath(); ctx.arc(x, y, size/2+12, 0, Math.PI*2); ctx.fill();
+    }
+    if (isPrincipal) {
+      ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 16;
+      ctx.fillStyle = '#fef08a'; ctx.strokeStyle = '#b45309'; ctx.lineWidth = 3.5;
+    } else {
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    }
+    if (genero === 'F') {
+      ctx.beginPath(); ctx.arc(x, y, size/2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.rect(x-size/2, y-size/2, size, size); ctx.fill(); ctx.stroke();
+    }
+    ctx.shadowColor = 'transparent';
+    if (convColor && nucleo === 'SI') {
+      ctx.strokeStyle = convColor; ctx.lineWidth = 3;
+      if (genero === 'F') { ctx.beginPath(); ctx.arc(x, y, size/2+6, 0, Math.PI*2); ctx.stroke(); }
+      else { ctx.beginPath(); ctx.rect(x-size/2-6, y-size/2-6, size+12, size+12); ctx.stroke(); }
+    }
+    if (estado === 'Fallecido/a') {
+      ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x-size/2+5, y-size/2+5); ctx.lineTo(x+size/2-5, y+size/2-5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+size/2-5, y-size/2+5); ctx.lineTo(x-size/2+5, y+size/2-5); ctx.stroke();
+    }
+    if (estado === 'Enfermedad crónica') {
+      ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2.5;
+      const off = nucleo === 'SI' ? 10 : 5;
+      if (genero === 'F') { ctx.beginPath(); ctx.arc(x, y, size/2+off, 0, Math.PI*2); ctx.stroke(); }
+      else { ctx.beginPath(); ctx.rect(x-size/2-off, y-size/2-off, size+off*2, size+off*2); ctx.stroke(); }
+    }
+    if (nucleo === 'NO') {
+      ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.8; ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.arc(x, y, size/2+8, 0, Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
 
-  // Halo verde agua para miembros del núcleo
-  if (nucleo === 'SI') {
-    ctx.fillStyle = 'rgba(10,147,150,0.10)';
-    ctx.beginPath(); ctx.arc(x, y, size / 2 + 10, 0, Math.PI * 2); ctx.fill();
+    // Año arriba
+    if (anio) {
+      ctx.font = '600 13px DM Sans,sans-serif';
+      ctx.fillStyle = '#475569';
+      ctx.textAlign = 'center';
+      ctx.fillText(anio, x, y - size/2 - 8);
+    }
+    // Nombre abajo
+    if (nombre) {
+      ctx.font = isPrincipal ? 'bold 14px DM Sans,sans-serif' : 'bold 13px DM Sans,sans-serif';
+      ctx.fillStyle = isPrincipal ? '#78350f' : colorText;
+      ctx.textAlign = 'center';
+      ctx.fillText(shortName(nombre), x, y + size/2 + 16);
+    }
+    // Etiqueta jefe
+    if (isPrincipal && (nombre || anio || estado)) {
+      ctx.font = 'bold 11px DM Sans,sans-serif';
+      ctx.fillStyle = '#b45309';
+      ctx.textAlign = 'center';
+      ctx.fillText('★ JEFE DEL HOGAR', x, y + size/2 + (nombre ? 33 : 16));
+    }
   }
 
-  // Símbolo — jefe del hogar con glow dorado
-  if (isPrincipal) {
-    ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 14;
-    ctx.fillStyle = '#fef08a'; ctx.strokeStyle = '#b45309'; ctx.lineWidth = 3;
-  } else {
-    ctx.fillStyle = '#fff'; ctx.strokeStyle = color; ctx.lineWidth = 2;
-  }
-  if (genero === 'F') {
-    ctx.beginPath(); ctx.arc(x, y, size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  } else {
-    ctx.beginPath(); ctx.rect(x - size / 2, y - size / 2, size, size); ctx.fill(); ctx.stroke();
-  }
-  ctx.shadowColor = 'transparent';
-
-  // Anillo de convivencia
-  if (convColor && nucleo === 'SI') {
-    ctx.strokeStyle = convColor; ctx.lineWidth = 2.5;
-    if (genero === 'F') { ctx.beginPath(); ctx.arc(x, y, size / 2 + 5, 0, Math.PI * 2); ctx.stroke(); }
-    else { ctx.beginPath(); ctx.rect(x-size/2-5, y-size/2-5, size+10, size+10); ctx.stroke(); }
-  }
-
-  // Fallecido
-  if (estado === 'Fallecido/a') {
-    ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(x-size/2+4, y-size/2+4); ctx.lineTo(x+size/2-4, y+size/2-4); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x+size/2-4, y-size/2+4); ctx.lineTo(x-size/2+4, y+size/2-4); ctx.stroke();
-  }
-  // Enfermedad crónica
-  if (estado === 'Enfermedad crónica') {
-    ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2;
-    const off = nucleo === 'SI' ? 9 : 4;
-    if (genero === 'F') { ctx.beginPath(); ctx.arc(x, y, size/2+off, 0, Math.PI*2); ctx.stroke(); }
-    else { ctx.beginPath(); ctx.rect(x-size/2-off, y-size/2-off, size+off*2, size+off*2); ctx.stroke(); }
-  }
-  // Fuera del núcleo: anillo gris punteado
-  if (nucleo === 'NO') {
-    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.setLineDash([3,2]);
-    ctx.beginPath(); ctx.arc(x, y, size/2+7, 0, Math.PI*2); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-  ctx.restore();
-
-  if (anio) { ctx.font='13px DM Sans,sans-serif'; ctx.fillStyle='#64748b'; ctx.textAlign='center'; ctx.fillText(anio, x, y-28); }
-  if (nombre) {
-    ctx.font = isPrincipal ? 'bold 13px DM Sans,sans-serif' : 'bold 12px DM Sans,sans-serif';
-    ctx.fillStyle = isPrincipal ? '#78350f' : colorText;
-    ctx.textAlign = 'center';
-    ctx.fillText(shortName(nombre), x, y+32);
-  }
-  if (isPrincipal && (nombre || anio || estado)) {
-    ctx.font='bold 10px DM Sans,sans-serif'; ctx.fillStyle='#b45309'; ctx.textAlign='center';
-    ctx.fillText('★ JEFE DEL HOGAR', x, y+(nombre ? 47 : 32));
-  }
-}
   function drawLine(x1, y1, x2, y2, style) {
     ctx.save();
-    ctx.strokeStyle = colorLine;
-    ctx.lineWidth = 1.5;
-    if (style === 'dashed') {
-      ctx.setLineDash([5, 3]);
-      ctx.strokeStyle = '#2563eb';
-    }
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
+    ctx.strokeStyle = colorLine; ctx.lineWidth = 1.8;
+    if (style === 'dashed') { ctx.setLineDash([6,4]); ctx.strokeStyle = '#2563eb'; }
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     ctx.restore();
   }
 
   function drawCouple(p1x, p2x, y, relationType) {
-    const lineStyle = relationType === 'comprometidos' ? 'dashed' : 'solid';
-    drawLine(p1x + PERSON_SIZE / 2, y, p2x - PERSON_SIZE / 2, y, lineStyle);
+    drawLine(p1x+PERSON_SIZE/2, y, p2x-PERSON_SIZE/2, y, relationType==='comprometidos'?'dashed':'solid');
     if (relationType === 'separados') {
-      const cx = (p1x + p2x) / 2;
-      ctx.save();
-      ctx.strokeStyle = '#dc2626';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx - 5, y - 7);
-      ctx.lineTo(cx + 3, y + 7);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(cx + 2, y - 7);
-      ctx.lineTo(cx + 10, y + 7);
-      ctx.stroke();
+      const cx = (p1x+p2x)/2;
+      ctx.save(); ctx.strokeStyle='#dc2626'; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.moveTo(cx-5,y-8); ctx.lineTo(cx+3,y+8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx+3,y-8); ctx.lineTo(cx+11,y+8); ctx.stroke();
       ctx.restore();
     }
   }
 
-  function drawParentChildLink(p1, x1, p2, x2, yParents, childX, childY) {
+  function drawParentChildLink(p1,x1,p2,x2,yP,childX,childY) {
     let fromX = null;
-    if (hasData(p1) && hasData(p2)) fromX = (x1 + x2) / 2;
-    else if (hasData(p1)) fromX = x1;
-    else if (hasData(p2)) fromX = x2;
-    if (fromX === null) return;
-    // Start exactly at the relationship line to avoid visual gaps.
-    drawLine(fromX, yParents, childX, childY - PERSON_SIZE / 2);
+    if (hasData(p1)&&hasData(p2)) fromX=(x1+x2)/2;
+    else if (hasData(p1)) fromX=x1;
+    else if (hasData(p2)) fromX=x2;
+    if (fromX===null) return;
+    drawLine(fromX, yP, childX, childY-PERSON_SIZE/2);
   }
 
+  // ── Datos ────────────────────────────────────────────────
   const miembros = getFamiliogramaMiembros();
   const relacion = document.getElementById('fg-relacion')?.value || '';
   const tituloFamilia = (document.getElementById('fg-familia-nombre')?.value || '').trim();
   const principal = {
-    nombre: document.getElementById('fg-principal-nombre')?.value || '',
-    anio: document.getElementById('fg-principal-anio')?.value || '',
-    estado: document.getElementById('fg-principal-estado')?.value || '',
-    genero: document.getElementById('fg-principal-genero')?.value || 'M',
-    enf: document.getElementById('fg-principal-enf')?.value || '',
+    nombre:     document.getElementById('fg-principal-nombre')?.value || '',
+    anio:       document.getElementById('fg-principal-anio')?.value   || '',
+    estado:     document.getElementById('fg-principal-estado')?.value || '',
+    genero:     document.getElementById('fg-principal-genero')?.value || 'M',
+    enf:        document.getElementById('fg-principal-enf')?.value    || '',
+    nucleo:     document.getElementById('fg-principal-nucleo')?.value || '',
+    convivencia:document.getElementById('fg-principal-convivencia')?.value || '',
     parentesco: 'principal'
   };
-  const pareja = pickFirst(miembros, 'pareja', principal.genero === 'F' ? 'M' : 'F');
-  const padreJefe = pickFirst(miembros, 'padre_jefe', 'M');
-  const madreJefe = pickFirst(miembros, 'madre_jefe', 'F');
+  const pareja      = pickFirst(miembros, 'pareja',       principal.genero==='F'?'M':'F');
+  const padreJefe   = pickFirst(miembros, 'padre_jefe',   'M');
+  const madreJefe   = pickFirst(miembros, 'madre_jefe',   'F');
   const padrePareja = pickFirst(miembros, 'padre_pareja', 'M');
   const madrePareja = pickFirst(miembros, 'madre_pareja', 'F');
   const hijos = pickMany(miembros, 'hijo', 'M').filter(h => hasData(h));
 
-  const yPadres = 120;
-  const yCore = 310;
-  const yHijos = 490;
-  const padreJefeX = W * 0.16;
-  const madreJefeX = W * 0.30;
-  const padreParejaX = W * 0.70;
-  const madreParejaX = W * 0.84;
-  const principalX = W * 0.40;
-  const parejaX = W * 0.60;
-
+  // ── Marco principal (excluye zona de leyenda) ────────────
+  const topPad = tituloFamilia ? 52 : 10;
   ctx.save();
-  ctx.fillStyle = frameFill;
-  ctx.strokeStyle = frameStroke;
-  ctx.lineWidth = 1;
-  const topPad = tituloFamilia ? 50 : 8;
-  ctx.fillRect(8, topPad, W - 16, H - 75 - (topPad - 8));
-  ctx.strokeRect(8, topPad, W - 16, H - 75 - (topPad - 8));
+  ctx.fillStyle = frameFill; ctx.strokeStyle = frameStroke; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(8, topPad, W-16, yHijos+HIJO_LABEL+10-topPad, 10);
+  else ctx.rect(8, topPad, W-16, yHijos+HIJO_LABEL+10-topPad);
+  ctx.fill(); ctx.stroke();
   ctx.restore();
 
   if (tituloFamilia) {
     ctx.save();
-    ctx.font = 'bold 16px DM Sans, sans-serif';
-    ctx.fillStyle = '#003d4d';
-    ctx.textAlign = 'center';
-    ctx.fillText(tituloFamilia.toUpperCase(), W / 2, 34);
+    ctx.font = 'bold 17px DM Sans, sans-serif';
+    ctx.fillStyle = '#003d4d'; ctx.textAlign = 'center';
+    ctx.fillText(tituloFamilia.toUpperCase(), W/2, 36);
     ctx.restore();
   }
 
-  if (hasData(padreJefe) && hasData(madreJefe)) drawCouple(padreJefeX, madreJefeX, yPadres, 'matrimonio');
-  if (hasData(padreJefe)) drawPerson(padreJefeX, yPadres, padreJefe, 'M', false);
-  if (hasData(madreJefe)) drawPerson(madreJefeX, yPadres, madreJefe, 'F', false);
+  // ── Dibujar personas y líneas ────────────────────────────
+  if (hasData(padreJefe)&&hasData(madreJefe)) drawCouple(padreJefeX, madreJefeX, yPadres, 'matrimonio');
+  if (hasData(padreJefe))   drawPerson(padreJefeX,   yPadres, padreJefe,   'M', false);
+  if (hasData(madreJefe))   drawPerson(madreJefeX,   yPadres, madreJefe,   'F', false);
   drawParentChildLink(padreJefe, padreJefeX, madreJefe, madreJefeX, yPadres, principalX, yCore);
 
   if (hasData(pareja)) {
-    if (hasData(padrePareja) && hasData(madrePareja)) drawCouple(padreParejaX, madreParejaX, yPadres, 'matrimonio');
+    if (hasData(padrePareja)&&hasData(madrePareja)) drawCouple(padreParejaX, madreParejaX, yPadres, 'matrimonio');
     if (hasData(padrePareja)) drawPerson(padreParejaX, yPadres, padrePareja, 'M', false);
     if (hasData(madrePareja)) drawPerson(madreParejaX, yPadres, madrePareja, 'F', false);
     drawParentChildLink(padrePareja, padreParejaX, madrePareja, madreParejaX, yPadres, parejaX, yCore);
   }
 
-  if (hasData(principal) && hasData(pareja)) drawCouple(principalX, parejaX, yCore, relacion);
-     principal.nucleo = document.getElementById('fg-principal-nucleo')?.value || '';
-principal.convivencia = document.getElementById('fg-principal-convivencia')?.value || '';
-  if (hasData(principal)) drawPerson(principalX, yCore, principal, principal.genero || 'M', true);
-  if (hasData(pareja)) drawPerson(parejaX, yCore, pareja, pareja.genero || 'F', false);
+  if (hasData(principal)&&hasData(pareja)) drawCouple(principalX, parejaX, yCore, relacion);
+  if (hasData(principal)) drawPerson(principalX, yCore, principal, principal.genero||'M', true);
+  if (hasData(pareja))    drawPerson(parejaX,    yCore, pareja,    pareja.genero||'F',    false);
 
+  // ── Hijos ────────────────────────────────────────────────
   const hijosConDatos = hijos.filter(h => hasData(h));
-  if (hijosConDatos.length && (hasData(principal) || hasData(pareja))) {
-    const coupleMidX = hasData(pareja) ? (principalX + parejaX) / 2 : principalX;
-    const dropY = yCore + 42;
-    drawLine(coupleMidX, yCore, coupleMidX, dropY);
-    const spacing = Math.max(56, Math.min(100, (W - 80) / Math.max(hijosConDatos.length, 2)));
-    const startX = coupleMidX - (spacing * (hijosConDatos.length - 1)) / 2;
-    if (hijosConDatos.length > 1) {
-      drawLine(startX, dropY, startX + spacing * (hijosConDatos.length - 1), dropY);
-    }
+  if (hijosConDatos.length && (hasData(principal)||hasData(pareja))) {
+    const coupleMidX = hasData(pareja) ? (principalX+parejaX)/2 : principalX;
+    const dropY = yCore + PERSON_SIZE/2 + 20;
+    drawLine(coupleMidX, yCore+PERSON_SIZE/2, coupleMidX, dropY);
+    const maxSpacing = (W - 100) / Math.max(hijosConDatos.length, 1);
+    const spacing = Math.max(60, Math.min(110, maxSpacing));
+    const startX = coupleMidX - (spacing*(hijosConDatos.length-1))/2;
+    if (hijosConDatos.length > 1) drawLine(startX, dropY, startX+spacing*(hijosConDatos.length-1), dropY);
     hijosConDatos.forEach((h, idx) => {
-      const hx = hijosConDatos.length === 1 ? coupleMidX : startX + spacing * idx;
-      drawLine(hx, dropY, hx, yHijos - PERSON_SIZE / 2);
+      const hx = hijosConDatos.length===1 ? coupleMidX : startX+spacing*idx;
+      drawLine(hx, dropY, hx, yHijos-PERSON_SIZE/2);
       drawPerson(hx, yHijos, h, h.genero, false);
     });
   }
 
-  // ── LEYENDA ESTÉTICA ────────────────────────────────────
- (function drawLegend() {
-  const COLS   = 3;
-  const COL_W  = 190;
-  const ROW_H  = 30;
-  const PAD_X  = 16;
-  const PAD_Y  = 14;
-  const HEADER_H = 34;
-  const SYM_W  = 26;
+  // ── LEYENDA — siempre debajo del marco de personas ───────
+  (function drawLegend() {
+    const COLS    = 3;
+    const COL_W   = Math.floor((W - 32) / COLS);
+    const ROW_H   = 32;
+    const PAD_X   = 14;
+    const PAD_Y   = 12;
+    const HDR_H   = 36;
+    const SYM_W   = 26;
 
-  const items = [
-    { label: 'Hombre',              type: 'square',   color: '#005f73' },
-    { label: 'Mujer',               type: 'circle',   color: '#d11d5b' },
-    { label: 'Jefe del hogar ★',    type: 'jefe',     color: '#b45309' },
-    { label: 'Fallecido/a',         type: 'cross',    color: '#64748b' },
-    { label: 'Enfermedad crónica',  type: 'double',   color: '#f97316' },
-    { label: 'En el núcleo',        type: 'nucleo',   color: '#0a9396' },
-    { label: 'Fuera del núcleo',    type: 'nonucleo', color: '#94a3b8' },
-    { label: 'Matrimonio / Unión',  type: 'line',     color: '#334155', dash: [] },
-    { label: 'Compromiso',          type: 'line',     color: '#2563eb', dash: [4,3] },
-    { label: 'Separados',           type: 'break',    color: '#dc2626' },
-    { label: 'Conviv. armoniosa',   type: 'convline', color: '#16a34a' },
-    { label: 'Conviv. conflictiva', type: 'convline', color: '#dc2626' },
-  ];
+    const items = [
+      { label: 'Hombre',              type: 'square',   color: '#005f73' },
+      { label: 'Mujer',               type: 'circle',   color: '#d11d5b' },
+      { label: 'Jefe del hogar ★',    type: 'jefe',     color: '#b45309' },
+      { label: 'Fallecido/a',         type: 'cross',    color: '#64748b' },
+      { label: 'Enfermedad crónica',  type: 'double',   color: '#f97316' },
+      { label: 'En el núcleo',        type: 'nucleo',   color: '#0a9396' },
+      { label: 'Fuera del núcleo',    type: 'nonucleo', color: '#94a3b8' },
+      { label: 'Matrimonio / Unión',  type: 'line',     color: '#334155', dash: [] },
+      { label: 'Compromiso',          type: 'line',     color: '#2563eb', dash: [4,3] },
+      { label: 'Separados',           type: 'break',    color: '#dc2626' },
+      { label: 'Conviv. armoniosa',   type: 'convline', color: '#16a34a' },
+      { label: 'Conviv. conflictiva', type: 'convline', color: '#dc2626' },
+    ];
 
-  const ROWS   = Math.ceil(items.length / COLS);
-  const totalW = PAD_X * 2 + COL_W * COLS;
-  const totalH = HEADER_H + PAD_Y + ROWS * ROW_H + PAD_Y;
-  const LX     = Math.max(8, (W - totalW) / 2);
-  const LY     = H - totalH - 10;
-  const R      = 8;
-
-  // Sombra y fondo
-  ctx.save();
-  ctx.shadowColor   = 'rgba(0,0,0,0.14)';
-  ctx.shadowBlur    = 8;
-  ctx.shadowOffsetY = 2;
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath(); ctx.roundRect(LX, LY, totalW, totalH, R); ctx.fill();
-  ctx.shadowColor = 'transparent';
-  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.roundRect(LX, LY, totalW, totalH, R); ctx.stroke();
-  ctx.restore();
-
-  // Header fondo
-  ctx.save();
-  ctx.fillStyle = '#003d4d';
-  ctx.beginPath(); ctx.roundRect(LX, LY, totalW, HEADER_H, [R, R, 0, 0]); ctx.fill();
-  // Línea acento
-  ctx.fillStyle = '#d11d5b';
-  ctx.fillRect(LX, LY + HEADER_H - 2.5, totalW, 2.5);
-  // Texto header
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '600 13px DM Sans, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('SIMBOLOGÍA', LX + PAD_X, LY + HEADER_H / 2);
-  ctx.restore();
-
-  // Items
-  items.forEach((item, idx) => {
-    const col    = idx % COLS;
-    const row    = Math.floor(idx / COLS);
-    const ix     = LX + PAD_X + col * COL_W;
-    const iy     = LY + HEADER_H + PAD_Y + row * ROW_H + ROW_H / 2;
-    const symCX  = ix + SYM_W / 2;
-    const S      = 7;
+    const ROWS  = Math.ceil(items.length / COLS);
+    const boxW  = W - 16;
+    const boxH  = HDR_H + PAD_Y + ROWS*ROW_H + PAD_Y;
+    const LX    = 8;
+    // Leyenda empieza justo después del marco de personas con margen
+    const LY    = yHijos + HIJO_LABEL + 18;
 
     ctx.save();
-
-    if (item.type === 'square') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke();
-    } else if (item.type === 'circle') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(symCX, iy, S, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    } else if (item.type === 'jefe') {
-      ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2; ctx.fillStyle = '#fef08a';
-      ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#b45309';
-      ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('★', symCX, iy + 0.5);
-    } else if (item.type === 'cross') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 1.5; ctx.fillStyle = '#f1f5f9';
-      ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke();
-      ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(symCX-S+3,iy-S+3); ctx.lineTo(symCX+S-3,iy+S-3); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(symCX+S-3,iy-S+3); ctx.lineTo(symCX-S+3,iy+S-3); ctx.stroke();
-    } else if (item.type === 'double') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 1.5; ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.rect(symCX-S, iy-S, S*2, S*2); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.rect(symCX-S-3, iy-S-3, S*2+6, S*2+6); ctx.stroke();
-    } else if (item.type === 'nucleo') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 1.5;
-      ctx.fillStyle = 'rgba(10,147,150,0.12)';
-      ctx.beginPath(); ctx.arc(symCX, iy, S+2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = item.color;
-      ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('●', symCX, iy + 0.5);
-    } else if (item.type === 'nonucleo') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 1.5;
-      ctx.setLineDash([3,2]);
-      ctx.beginPath(); ctx.arc(symCX, iy, S+2, 0, Math.PI*2); ctx.stroke();
-      ctx.setLineDash([]);
-    } else if (item.type === 'line') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 2;
-      ctx.setLineDash(item.dash || []);
-      ctx.beginPath(); ctx.moveTo(ix, iy); ctx.lineTo(ix + SYM_W, iy); ctx.stroke();
-      ctx.setLineDash([]);
-    } else if (item.type === 'break') {
-      ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(ix, iy); ctx.lineTo(ix+SYM_W, iy); ctx.stroke();
-      ctx.strokeStyle = item.color; ctx.lineWidth = 1.8;
-      const cx = ix + SYM_W / 2;
-      ctx.beginPath(); ctx.moveTo(cx-4,iy-5); ctx.lineTo(cx,iy+5); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(cx+1,iy-5); ctx.lineTo(cx+5,iy+5); ctx.stroke();
-    } else if (item.type === 'convline') {
-      ctx.strokeStyle = item.color; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.arc(symCX, iy, S-1, 0, Math.PI*2); ctx.stroke();
-    }
-
+    ctx.shadowColor='rgba(0,0,0,0.12)'; ctx.shadowBlur=8; ctx.shadowOffsetY=2;
+    ctx.fillStyle='#ffffff';
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(LX,LY,boxW,boxH,10); ctx.fill(); }
+    else { ctx.fillRect(LX,LY,boxW,boxH); }
+    ctx.shadowColor='transparent';
+    ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1;
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(LX,LY,boxW,boxH,10); ctx.stroke(); }
+    else { ctx.strokeRect(LX,LY,boxW,boxH); }
     ctx.restore();
 
-    // Etiqueta del ítem
-    ctx.fillStyle = '#1a2332';
-    ctx.font = '400 12px DM Sans, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(item.label, ix + SYM_W + 6, iy);
-  });
-})();
+    // Header
+    ctx.save();
+    ctx.fillStyle='#003d4d';
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(LX,LY,boxW,HDR_H,[10,10,0,0]); ctx.fill(); }
+    else { ctx.fillRect(LX,LY,boxW,HDR_H); }
+    ctx.fillStyle='#d11d5b'; ctx.fillRect(LX, LY+HDR_H-3, boxW, 3);
+    ctx.fillStyle='#ffffff'; ctx.font='600 14px DM Sans,sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('SIMBOLOGÍA', LX+PAD_X, LY+HDR_H/2);
+    ctx.restore();
 
+    items.forEach((item, idx) => {
+      const col   = idx % COLS;
+      const row   = Math.floor(idx / COLS);
+      const ix    = LX + PAD_X + col * COL_W;
+      const iy    = LY + HDR_H + PAD_Y + row*ROW_H + ROW_H/2;
+      const symCX = ix + SYM_W/2;
+      const S     = 8;
+
+      ctx.save();
+      if (item.type==='square') {
+        ctx.strokeStyle=item.color; ctx.lineWidth=2; ctx.fillStyle='#fff';
+        ctx.beginPath(); ctx.rect(symCX-S,iy-S,S*2,S*2); ctx.fill(); ctx.stroke();
+      } else if (item.type==='circle') {
+        ctx.strokeStyle=item.color; ctx.lineWidth=2; ctx.fillStyle='#fff';
+        ctx.beginPath(); ctx.arc(symCX,iy,S,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      } else if (item.type==='jefe') {
+        ctx.strokeStyle='#b45309'; ctx.lineWidth=2; ctx.fillStyle='#fef08a';
+        ctx.beginPath(); ctx.rect(symCX-S,iy-S,S*2,S*2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle='#b45309'; ctx.font='9px sans-serif';
+        ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('★',symCX,iy+0.5);
+      } else if (item.type==='cross') {
+        ctx.strokeStyle=item.color; ctx.lineWidth=1.5; ctx.fillStyle='#f1f5f9';
+        ctx.beginPath(); ctx.rect(symCX-S,iy-S,S*2,S*2); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.8;
+        ctx.beginPath(); ctx.moveTo(symCX-S+3,iy-S+3); ctx.lineTo(symCX+S-3,iy+S-3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(symCX+S-3,iy-S+3); ctx.lineTo(symCX-S+3,iy+S-3); ctx.stroke();
+      } else if (item.type==='double') {
+        ctx.strokeStyle=item.color; ctx.lineWidth=1.5; ctx.fillStyle='#fff';
+        ctx.beginPath(); ctx.rect(symCX-S,iy-S,S*2,S*2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.rect(symCX-S-3,iy-S-3,S*2+6,S*2+6); ctx.stroke();
+      } else if (item.type==='nucleo') {
+        ctx.strokeStyle=item.color; ctx.lineWidth=1.5; ctx.fillStyle='rgba(10,147,150,0.12)';
+        ctx.beginPath(); ctx.arc(symCX,iy,S+2,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle=item.color; ctx.font='9px sans-serif';
+        ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('●',symCX,iy+0.5);
+      } else if (item.type==='nonucleo') {
+        ctx.strokeStyle=item.color; ctx.lineWidth=1.5; ctx.setLineDash([3,2]);
+        ctx.beginPath(); ctx.arc(symCX,iy,S+2,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+      } else if (item.type==='line') {
+        ctx.strokeStyle=item.color; ctx.lineWidth=2; ctx.setLineDash(item.dash||[]);
+        ctx.beginPath(); ctx.moveTo(ix,iy); ctx.lineTo(ix+SYM_W,iy); ctx.stroke(); ctx.setLineDash([]);
+      } else if (item.type==='break') {
+        ctx.strokeStyle='#334155'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(ix,iy); ctx.lineTo(ix+SYM_W,iy); ctx.stroke();
+        ctx.strokeStyle=item.color; ctx.lineWidth=2;
+        const cx2=ix+SYM_W/2;
+        ctx.beginPath(); ctx.moveTo(cx2-5,iy-6); ctx.lineTo(cx2-1,iy+6); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx2+1,iy-6); ctx.lineTo(cx2+5,iy+6); ctx.stroke();
+      } else if (item.type==='convline') {
+        ctx.strokeStyle=item.color; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.arc(symCX,iy,S-1,0,Math.PI*2); ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.fillStyle='#1a2332'; ctx.font='400 12px DM Sans,sans-serif';
+      ctx.textAlign='left'; ctx.textBaseline='middle';
+      ctx.fillText(item.label, ix+SYM_W+7, iy);
+    });
+  })();
 }
 
 function descargarFamiliograma() {
@@ -2151,78 +2122,101 @@ function dibujarEcomapa() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const DPR = 2;
-  const W = Math.max(420, canvas.offsetWidth || 480);
-  const H = 720;
+  const W = Math.max(460, canvas.offsetWidth || 500);
+  const H = 780;
   canvas.width  = W * DPR;
   canvas.height = H * DPR;
   canvas.style.width  = W + 'px';
   canvas.style.height = H + 'px';
   ctx.scale(DPR, DPR);
-  ctx.fillStyle = '#f8fafc';
+  ctx.fillStyle = '#f0f9ff';
   ctx.fillRect(0, 0, W, H);
+
   const cx = W / 2;
-  const cy = H / 2;
-  const R = Math.min(W, H) * 0.40;
+  const cy = H / 2 - 10;
+  const R  = Math.min(W * 0.42, H * 0.40);
 
-  // Caja central familia
-  const bw = 130;
-  const bh = 90;
-  ctx.fillStyle = '#ffffff';
-  ctx.strokeStyle = '#005f73';
-  ctx.lineWidth = 3;
-  ecomapaRoundRect(ctx, cx - bw / 2, cy - bh / 2, bw, bh, 16);
-  ctx.fill();
-  ctx.stroke();
-  ctx.font = '38px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('👨‍👩‍👧‍👦', cx, cy - 12);
-  ctx.font = '700 12px DM Sans, sans-serif';
-  ctx.fillStyle = '#003d4d';
-  ctx.fillText('FAMILIA', cx, cy + bh / 2 - 18);
+  // Caja central
+  const bw = 140, bh = 96;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,95,115,0.25)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 4;
+  ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#005f73'; ctx.lineWidth = 3;
+  ecomapaRoundRect(ctx, cx-bw/2, cy-bh/2, bw, bh, 18);
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+  ctx.font = '40px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('👨‍👩‍👧‍👦', cx, cy - 14);
+  ctx.font = '700 13px DM Sans, sans-serif'; ctx.fillStyle = '#003d4d';
+  ctx.fillText('FAMILIA', cx, cy + bh/2 - 20);
 
-  const n = ECOMAPA_CATS.length;
-  const tw = 112;
-  const th = 58;
+  // Nodos periféricos
+  const n   = ECOMAPA_CATS.length;
+  const tw  = 122;
+  const th  = 64;
+
   ECOMAPA_CATS.forEach((cat, i) => {
-    const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
-    const x = cx + Math.cos(ang) * R;
-    const y = cy + Math.sin(ang) * R;
+    const ang = -Math.PI/2 + (2*Math.PI*i)/n;
+    const x   = cx + Math.cos(ang) * R;
+    const y   = cy + Math.sin(ang) * R;
     const val = document.getElementById(cat.id)?.value ?? '';
-    const txt = val !== '' && val != null ? `${val} · ${ecoValorTexto(val)}` : '—';
+    const valTxt = val !== '' ? ecoValorTexto(val) : '';
 
-    const lineStartX = cx + Math.cos(ang) * (bw / 2 + 4);
-    const lineStartY = cy + Math.sin(ang) * (bh / 2 + 4);
-    const lineEndX = x - Math.cos(ang) * (tw / 2 + 2);
-    const lineEndY = y - Math.sin(ang) * (th / 2 + 2);
+    // Línea conectora
+    const lsx = cx + Math.cos(ang) * (bw/2 + 5);
+    const lsy = cy + Math.sin(ang) * (bh/2 + 5);
+    const lex = x  - Math.cos(ang) * (tw/2 + 3);
+    const ley = y  - Math.sin(ang) * (th/2 + 3);
     ctx.save();
     ctx.strokeStyle = val !== '' ? '#0891b2' : '#cbd5e1';
-    ctx.lineWidth = val !== '' ? 1.8 : 1.2;
-    ctx.setLineDash(val !== '' ? [] : [4, 3]);
-    ctx.beginPath();
-    ctx.moveTo(lineStartX, lineStartY);
-    ctx.lineTo(lineEndX, lineEndY);
-    ctx.stroke();
+    ctx.lineWidth   = val !== '' ? 2.5 : 1.5;
+    ctx.setLineDash(val !== '' ? [] : [5,4]);
+    ctx.beginPath(); ctx.moveTo(lsx,lsy); ctx.lineTo(lex,ley); ctx.stroke();
     ctx.restore();
 
-    ctx.fillStyle = '#fff';
+    // Caja del nodo
+    ctx.save();
+    if (val !== '') {
+      ctx.shadowColor='rgba(8,145,178,0.18)'; ctx.shadowBlur=8; ctx.shadowOffsetY=2;
+    }
+    ctx.fillStyle   = val !== '' ? '#e0f7fa' : '#ffffff';
     ctx.strokeStyle = val !== '' ? '#0891b2' : '#cbd5e1';
-    ctx.lineWidth = val !== '' ? 2.2 : 1.5;
-    ecomapaRoundRect(ctx, x - tw / 2, y - th / 2, tw, th, 10);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#1a2332';
-    ctx.font = '700 10px DM Sans, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.lineWidth   = val !== '' ? 2.2 : 1.5;
+    ecomapaRoundRect(ctx, x-tw/2, y-th/2, tw, th, 12);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // Etiqueta — nombre del sistema (puede ir en 2 líneas)
+    ctx.fillStyle = '#0f172a';
+    ctx.font = '700 11px DM Sans, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const lab = cat.short;
-    ctx.fillText(lab.length > 14 ? lab.slice(0, 13) + '…' : lab, x, y - 13);
-    ctx.fillStyle = val !== '' ? '#005f73' : '#94a3b8';
-    ctx.font = '600 9px DM Sans, sans-serif';
-    ctx.fillText(txt.length > 18 ? txt.slice(0, 17) + '…' : txt, x, y + 6);
+    // Partir en 2 líneas si es largo
+    const words = lab.split(' ');
+    if (words.length > 1 && lab.length > 12) {
+      const mid = Math.ceil(words.length / 2);
+      const line1 = words.slice(0, mid).join(' ');
+      const line2 = words.slice(mid).join(' ');
+      ctx.fillText(line1, x, y - 20);
+      ctx.fillText(line2, x, y - 8);
+    } else {
+      ctx.fillText(lab, x, y - 14);
+    }
+
+    // Valor
+    if (val !== '') {
+      ctx.fillStyle = '#005f73';
+      ctx.font = '700 12px DM Sans, sans-serif';
+      ctx.fillText(val, x - 18, y + 10);
+      ctx.fillStyle = '#0e7490';
+      ctx.font = '600 10px DM Sans, sans-serif';
+      ctx.fillText(valTxt.length > 14 ? valTxt.slice(0,13)+'…' : valTxt, x + 10, y + 10);
+    } else {
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 11px DM Sans, sans-serif';
+      ctx.fillText('—', x, y + 10);
+    }
   });
 }
-
 function descargarEcomapa() {
   const canvas = document.getElementById('ecomapa-canvas');
   if (!canvas) return;
