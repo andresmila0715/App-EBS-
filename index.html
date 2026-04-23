@@ -88,6 +88,20 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .tab-panel { display: none; padding: 16px; animation: fadeUp .3s ease; }
 .tab-panel.active { display: block; }
 
+/* ── Panel de Configuración ─────────────────────────────── */
+.cfg-section { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+.cfg-section-title { font-size: .95rem; font-weight: 700; color: var(--primary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.cfg-desc { font-size: .8rem; color: var(--text-muted); margin-bottom: 14px; }
+.cfg-badge { font-size: .68rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.cfg-badge-global { background: #dbeafe; color: #1d4ed8; }
+.cfg-badge-muni   { background: #dcfce7; color: #15803d; }
+.cfg-logo-wrap { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.cfg-logo-preview { width: 170px; height: 90px; border: 2px dashed var(--border); border-radius: 10px; background: #f8fafc; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+.cfg-logo-placeholder { font-size: .78rem; color: var(--text-muted); }
+.cfg-logo-actions { display: flex; flex-direction: column; gap: 8px; }
+.cfg-upload-btn { cursor: pointer; display: inline-block; text-align: center; }
+.cfg-info { background: #f0f9ff; border-color: var(--primary-light); }
+
 /* ── SELECTOR DE MUNICIPIO (BOSS) ──────────────────────── */
 .muni-sel { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
 .muni-btn { padding: 7px 18px; border-radius: 20px; border: 2px solid var(--border); background: var(--surface); color: var(--text-muted); font-family: var(--font-body); font-size: .83rem; font-weight: 600; cursor: pointer; transition: all .2s; }
@@ -306,6 +320,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
   <div class="app-tabs">
     <button class="tab-btn active" onclick="showTab('nuevo')" id="tab-nuevo">＋ Nuevo</button>
     <button class="tab-btn" onclick="showTab('registros')" id="tab-registros">📋 Registros</button>
+    <button class="tab-btn" onclick="showTab('config')" id="tab-config">⚙️ Config</button>
   </div>
 
 
@@ -398,18 +413,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
             <input type="text" id="r-microterritorio" placeholder="Ej: MT-26 SAN FERNANDO">
           </div>
         </div>
-        <div class="frow">
-          <div class="ff">
-            <label>Logo Hospital <span style="font-size:.75rem;color:var(--text-muted)">(aparece a la izquierda del título)</span></label>
-            <input type="file" id="r-logo-hospital" accept="image/*" onchange="previewLogo(this,'r-logo-hospital-prev')">
-            <img id="r-logo-hospital-prev" src="" alt="" style="display:none;max-height:60px;margin-top:6px;border-radius:6px;border:1px solid var(--border)">
+        <!-- Logos: se configuran en la pestaña ⚙️ Config, se aplican automáticamente -->
+        <div style="background:#f0f9ff;border:1px solid var(--primary-light);border-radius:10px;padding:10px 14px;margin-bottom:4px;display:flex;align-items:center;gap:10px">
+          <div style="display:flex;gap:8px;align-items:center;flex:1;flex-wrap:wrap">
+            <span style="font-size:.78rem;color:var(--primary);font-weight:600">Logos del encabezado:</span>
+            <span style="font-size:.75rem;color:var(--text-muted)" id="r-logos-status">cargando…</span>
           </div>
-          <div class="ff">
-            <label>Logo EBS <span style="font-size:.75rem;color:var(--text-muted)">(aparece a la derecha del título)</span></label>
-            <input type="file" id="r-logo-ebs" accept="image/*" onchange="previewLogo(this,'r-logo-ebs-prev')">
-            <img id="r-logo-ebs-prev" src="" alt="" style="display:none;max-height:60px;margin-top:6px;border-radius:6px;border:1px solid var(--border)">
-          </div>
+          <button type="button" class="btn-sec" style="font-size:.75rem;padding:4px 10px;white-space:nowrap" onclick="showTab('config')">⚙️ Configurar</button>
         </div>
+        <!-- Elementos ocultos requeridos por la lógica de logos -->
+        <img id="r-logo-hospital-prev" src="" alt="" style="display:none">
+        <img id="r-logo-ebs-prev" src="" alt="" style="display:none">
 
         <!-- SUB-ACORDEÓN: FAMILIOGRAMA -->
         <div class="sub-block" id="sub-familiograma">
@@ -671,6 +685,67 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
     <div class="rlist" id="rlist"></div>
   </div>
 
+  <!-- ── TAB: CONFIGURACIÓN ────────────────────────────── -->
+  <div class="tab-panel" id="panel-config">
+
+    <!-- Logo EBS (global) -->
+    <div class="cfg-section">
+      <div class="cfg-section-title">🏥 Logo EBS+ <span class="cfg-badge cfg-badge-global">Global</span></div>
+      <p class="cfg-desc">Se usa en todos los municipios. Súbelo una sola vez.</p>
+      <div class="cfg-logo-wrap">
+        <div class="cfg-logo-preview" id="cfg-ebs-preview-wrap">
+          <img id="cfg-ebs-prev" src="" alt="Logo EBS" style="display:none;max-height:80px;max-width:160px;object-fit:contain">
+          <span class="cfg-logo-placeholder" id="cfg-ebs-placeholder">Sin logo</span>
+        </div>
+        <div class="cfg-logo-actions">
+          <label class="btn-pri cfg-upload-btn">
+            📁 Seleccionar imagen
+            <input type="file" accept="image/*" style="display:none" onchange="cfgUploadLogo(this,'ebs')">
+          </label>
+          <button class="btn-sec" onclick="cfgDeleteLogo('ebs')" id="cfg-ebs-del" style="display:none">🗑 Quitar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logo Hospital (por municipio) -->
+    <div class="cfg-section">
+      <div class="cfg-section-title">🏨 Logo Hospital <span class="cfg-badge cfg-badge-muni">Por municipio</span></div>
+      <p class="cfg-desc">Cada municipio tiene su propio logo. El municipio activo es <strong id="cfg-muni-label">—</strong>.</p>
+
+      <!-- Selector de municipio (solo BOSS) -->
+      <div id="cfg-muni-selector" style="display:none;margin-bottom:12px">
+        <label style="font-size:.8rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Municipio a configurar</label>
+        <div class="ftabs" id="cfg-muni-tabs"></div>
+      </div>
+
+      <div class="cfg-logo-wrap">
+        <div class="cfg-logo-preview">
+          <img id="cfg-hosp-prev" src="" alt="Logo Hospital" style="display:none;max-height:80px;max-width:160px;object-fit:contain">
+          <span class="cfg-logo-placeholder" id="cfg-hosp-placeholder">Sin logo</span>
+        </div>
+        <div class="cfg-logo-actions">
+          <label class="btn-pri cfg-upload-btn">
+            📁 Seleccionar imagen
+            <input type="file" accept="image/*" style="display:none" onchange="cfgUploadLogo(this,'hospital')">
+          </label>
+          <button class="btn-sec" onclick="cfgDeleteLogo('hospital')" id="cfg-hosp-del" style="display:none">🗑 Quitar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="cfg-section cfg-info">
+      <div class="cfg-section-title">ℹ️ Información</div>
+      <ul style="font-size:.82rem;color:var(--text-muted);padding-left:18px;line-height:1.8">
+        <li>Los logos se guardan en este dispositivo y se usan automáticamente en cada formulario.</li>
+        <li>Formatos aceptados: PNG, JPG, WEBP.</li>
+        <li>Tamaño recomendado: menor a 200KB para mejor rendimiento.</li>
+        <li>Para cambiar un logo simplemente sube uno nuevo.</li>
+      </ul>
+    </div>
+
+  </div>
+
 </div> <!-- /screen-app -->
 
 
@@ -726,6 +801,72 @@ let activeF = 'todos';
 let online = navigator.onLine;
 let intCount = 0;
 
+// ── Claves localStorage para logos ──────────────────────────
+const logoKeyHospital = () => `ebs_logo_hospital_${CM || 'default'}`;
+const logoKeyEbs      = () => `ebs_logo_ebs`;
+
+// ── Guardar logo en memoria + localStorage ───────────────────
+function saveLogoToStorage(prevId, dataUrl) {
+  logoData[prevId] = dataUrl;
+  try {
+    const key = prevId === 'r-logo-ebs-prev' ? logoKeyEbs() : logoKeyHospital();
+    if (dataUrl) localStorage.setItem(key, dataUrl);
+    else         localStorage.removeItem(key);
+  } catch(e) {
+    console.warn('No se pudo guardar logo en localStorage:', e);
+  }
+}
+
+// ── Restaurar logos desde localStorage (al abrir o cambiar municipio) ──
+function updateLogosStatus() {
+  const el = document.getElementById('r-logos-status');
+  if (!el) return;
+  const tieneHosp = !!(logoData['r-logo-hospital-prev']);
+  const tieneEbs  = !!(logoData['r-logo-ebs-prev']);
+  if (tieneHosp && tieneEbs) {
+    el.textContent = '✅ Hospital y EBS listos';
+    el.style.color = '#15803d';
+  } else if (tieneHosp) {
+    el.textContent = '⚠️ Falta logo EBS';
+    el.style.color = '#b45309';
+  } else if (tieneEbs) {
+    el.textContent = '⚠️ Falta logo hospital';
+    el.style.color = '#b45309';
+  } else {
+    el.textContent = 'Sin logos configurados — el documento usará solo texto';
+    el.style.color = 'var(--text-muted)';
+  }
+}
+
+function restoreLogos() {
+  // Logo hospital (por municipio)
+  const hospData = localStorage.getItem(logoKeyHospital());
+  const hospPrev = document.getElementById('r-logo-hospital-prev');
+  if (hospData && hospPrev) {
+    hospPrev.src = hospData;
+    hospPrev.style.display = 'block';
+    logoData['r-logo-hospital-prev'] = hospData;
+  } else if (hospPrev) {
+    hospPrev.src = '';
+    hospPrev.style.display = 'none';
+    logoData['r-logo-hospital-prev'] = null;
+  }
+
+  // Logo EBS (global)
+  const ebsData = localStorage.getItem(logoKeyEbs());
+  const ebsPrev = document.getElementById('r-logo-ebs-prev');
+  if (ebsData && ebsPrev) {
+    ebsPrev.src = ebsData;
+    ebsPrev.style.display = 'block';
+    logoData['r-logo-ebs-prev'] = ebsData;
+  } else if (ebsPrev) {
+    ebsPrev.src = '';
+    ebsPrev.style.display = 'none';
+    logoData['r-logo-ebs-prev'] = null;
+  }
+  updateLogosStatus();
+}
+
 // ── Vista previa de logos ────────────────────────────────────
 function previewLogo(input, prevId) {
   const file = input.files[0];
@@ -734,7 +875,7 @@ function previewLogo(input, prevId) {
   reader.onload = e => {
     const prev = document.getElementById(prevId);
     if (prev) { prev.src = e.target.result; prev.style.display = 'block'; }
-    logoData[prevId] = e.target.result;
+    saveLogoToStorage(prevId, e.target.result);
   };
   reader.readAsDataURL(file);
 }
@@ -899,6 +1040,7 @@ function initApp() {
   agregarFamiliar();
   bindFamiliogramaEvents();
   dibujarFamiliograma();
+  restoreLogos();
 }
 
 function selMuni(m) {
@@ -907,6 +1049,7 @@ function selMuni(m) {
   setMuniUI();
   renderRecs();
   updateSync();
+  restoreLogos(); // Carga el logo del hospital del municipio seleccionado
 }
 
 function setMuniUI() {
@@ -1050,12 +1193,10 @@ function clearF(tipo) {
     document.getElementById('c1-cst').textContent = 'Presiona 📍 para ubicar';
     fotoData['c1-prev'] = null;
   } else if (tipo === 'recoleccion') {
-    // Limpiar campos institucionales
+    // Limpiar campos institucionales (texto)
     ['r-hospital','r-microterritorio'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
-    ['r-logo-hospital','r-logo-ebs'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
-    ['r-logo-hospital-prev','r-logo-ebs-prev'].forEach(i => { const el = document.getElementById(i); if(el){ el.src=''; el.style.display='none'; } });
-    logoData['r-logo-hospital-prev'] = null;
-    logoData['r-logo-ebs-prev'] = null;
+    // Restaurar logos desde localStorage (persisten entre formularios)
+    restoreLogos();
     document.querySelectorAll('#sub-familiograma input, #sub-familiograma select, #sub-familiograma textarea').forEach(el => el.value = '');
     document.querySelectorAll('#sub-zarit select, #sub-zarit textarea').forEach(el => el.value = '');
     document.getElementById('apgar-miembros-tbody').innerHTML = '';
@@ -2423,6 +2564,131 @@ function getRecoleccionData() {
 }
 
 if (document.getElementById('apgar-miembros-tbody') && !document.querySelector('#apgar-miembros-tbody tr')) apgarAddRow();
+
+
+// ════════════════════════════════════════════════════════════
+//  PANEL DE CONFIGURACIÓN — LOGOS
+// ════════════════════════════════════════════════════════════
+
+// Municipio activo en el panel de config (puede diferir de CM si es BOSS)
+let cfgMuni = null;
+
+function initConfigPanel() {
+  // Municipio activo para config
+  cfgMuni = CM;
+
+  // Mostrar nombre municipio activo
+  const muniLabel = document.getElementById('cfg-muni-label');
+  if (muniLabel) muniLabel.textContent = cfgMuni || '—';
+
+  // Si es BOSS: mostrar selector de municipios
+  const selector = document.getElementById('cfg-muni-selector');
+  if (selector) {
+    if (CU && CU.role === 'boss') {
+      selector.style.display = 'block';
+      const tabs = document.getElementById('cfg-muni-tabs');
+      if (tabs) {
+        tabs.innerHTML = MUNIS.map(m =>
+          `<button class="fbtn${m === cfgMuni ? ' active' : ''}" onclick="cfgSelMuni('${m}')">${m}</button>`
+        ).join('');
+      }
+    } else {
+      selector.style.display = 'none';
+    }
+  }
+
+  // Cargar previews actuales
+  cfgRefreshPreviews();
+}
+
+function cfgSelMuni(m) {
+  cfgMuni = m;
+  const muniLabel = document.getElementById('cfg-muni-label');
+  if (muniLabel) muniLabel.textContent = m;
+  document.querySelectorAll('#cfg-muni-tabs .fbtn').forEach(b =>
+    b.classList.toggle('active', b.textContent === m)
+  );
+  cfgRefreshPreviews();
+}
+
+function cfgRefreshPreviews() {
+  // Logo EBS (global)
+  const ebsData = localStorage.getItem(logoKeyEbs());
+  const ebsPrev = document.getElementById('cfg-ebs-prev');
+  const ebsPlaceholder = document.getElementById('cfg-ebs-placeholder');
+  const ebsDel = document.getElementById('cfg-ebs-del');
+  if (ebsData) {
+    if (ebsPrev) { ebsPrev.src = ebsData; ebsPrev.style.display = 'block'; }
+    if (ebsPlaceholder) ebsPlaceholder.style.display = 'none';
+    if (ebsDel) ebsDel.style.display = 'inline-block';
+  } else {
+    if (ebsPrev) { ebsPrev.src = ''; ebsPrev.style.display = 'none'; }
+    if (ebsPlaceholder) ebsPlaceholder.style.display = 'block';
+    if (ebsDel) ebsDel.style.display = 'none';
+  }
+
+  // Logo Hospital (por municipio activo en config)
+  const hospKey  = `ebs_logo_hospital_${cfgMuni || 'default'}`;
+  const hospData = localStorage.getItem(hospKey);
+  const hospPrev = document.getElementById('cfg-hosp-prev');
+  const hospPlaceholder = document.getElementById('cfg-hosp-placeholder');
+  const hospDel = document.getElementById('cfg-hosp-del');
+  if (hospData) {
+    if (hospPrev) { hospPrev.src = hospData; hospPrev.style.display = 'block'; }
+    if (hospPlaceholder) hospPlaceholder.style.display = 'none';
+    if (hospDel) hospDel.style.display = 'inline-block';
+  } else {
+    if (hospPrev) { hospPrev.src = ''; hospPrev.style.display = 'none'; }
+    if (hospPlaceholder) hospPlaceholder.style.display = 'block';
+    if (hospDel) hospDel.style.display = 'none';
+  }
+}
+
+function cfgUploadLogo(input, tipo) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 500 * 1024) {
+    toast('⚠️ La imagen es muy grande (máx. 500KB)', 'err');
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    try {
+      if (tipo === 'ebs') {
+        localStorage.setItem(logoKeyEbs(), dataUrl);
+        logoData['r-logo-ebs-prev'] = dataUrl;
+      } else {
+        const key = `ebs_logo_hospital_${cfgMuni || 'default'}`;
+        localStorage.setItem(key, dataUrl);
+        // Si el municipio del config es el activo, actualizar logoData también
+        if (cfgMuni === CM) logoData['r-logo-hospital-prev'] = dataUrl;
+      }
+      cfgRefreshPreviews();
+      toast('✅ Logo guardado correctamente', 'ok');
+    } catch(err) {
+      toast('⚠️ No se pudo guardar: ' + err.message, 'err');
+    }
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function cfgDeleteLogo(tipo) {
+  if (!confirm('¿Quitar este logo?')) return;
+  if (tipo === 'ebs') {
+    localStorage.removeItem(logoKeyEbs());
+    logoData['r-logo-ebs-prev'] = null;
+  } else {
+    const key = `ebs_logo_hospital_${cfgMuni || 'default'}`;
+    localStorage.removeItem(key);
+    if (cfgMuni === CM) logoData['r-logo-hospital-prev'] = null;
+  }
+  cfgRefreshPreviews();
+  toast('🗑️ Logo eliminado', 'ok');
+}
+
 
 </script>
 </body>
