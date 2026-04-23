@@ -968,6 +968,29 @@ async function syncAll() {
     }
   }
 
+  // Sincronizar eliminaciones pendientes offline
+  for (const m of munis) {
+    for (const t of TIPOS) {
+      const delKey = `ebs_del_${m}_${t}`;
+      const elims = JSON.parse(localStorage.getItem(delKey) || '[]');
+      if (!elims.length) continue;
+      const url = getSheetUrl(m, t);
+      if (!url) continue;
+      const fallidos = [];
+      for (const el of elims) {
+        try {
+          await fetch(url, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accion: 'eliminar', id: el.id, tipo: t })
+          });
+        } catch { fallidos.push(el); }
+      }
+      if (fallidos.length) localStorage.setItem(delKey, JSON.stringify(fallidos));
+      else localStorage.removeItem(delKey);
+    }
+  }
+
   updateSync();
   renderRecs();
 
@@ -1041,6 +1064,9 @@ function initApp() {
   bindFamiliogramaEvents();
   dibujarFamiliograma();
   restoreLogos();
+  // Pestaña Config solo visible para BOSS
+  const tabConfig = document.getElementById('tab-config');
+  if (tabConfig) tabConfig.style.display = CU.role === 'boss' ? '' : 'none';
 }
 
 function selMuni(m) {
@@ -1427,13 +1453,37 @@ function togRec(id) {
   document.getElementById('rc-' + id)?.classList.toggle('open');
 }
 
-function delRec(id, tipo) {
+async function delRec(id, tipo) {
   if (!confirm('¿Eliminar este registro?')) return;
+
+  // Borrar localmente
   setRecs(CM, tipo, getRecs(CM, tipo).filter(r => r.id != id));
   setPend(CM, tipo, getPend(CM, tipo).filter(r => r.id != id));
   updateSync();
   renderRecs();
-  toast('🗑️ Registro eliminado');
+  toast('🗑️ Eliminado localmente…');
+
+  // Enviar al servidor para borrar fila y documento
+  const url = getSheetUrl(CM, tipo);
+  if (url && online) {
+    try {
+      await fetch(url, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'eliminar', id, tipo })
+      });
+      toast('🗑️ Registro eliminado del servidor', 'ok');
+    } catch(err) {
+      toast('⚠️ Eliminado localmente. Sin señal para borrar del servidor.', 'warn');
+    }
+  } else if (url && !online) {
+    toast('🗑️ Eliminado aquí. Se borrará del servidor al reconectar.', 'warn');
+    // Guardar en cola de eliminaciones pendientes
+    const elims = JSON.parse(localStorage.getItem(`ebs_del_${CM}_${tipo}`) || '[]');
+    elims.push({ id, tipo, municipio: CM });
+    localStorage.setItem(`ebs_del_${CM}_${tipo}`, JSON.stringify(elims));
+  }
 }
 
 
@@ -1505,7 +1555,7 @@ function closeModal() {
   editTipo = null;
 }
 
-function saveEdit() {
+async function saveEdit() {
   const recs = getRecs(CM, editTipo);
   const r = recs.find(x => x.id == editId);
   if (!r) { closeModal(); return; }
@@ -1547,8 +1597,27 @@ function saveEdit() {
   closeModal();
   renderRecs();
   updateSync();
-  if (online) syncAll();
-  toast('✅ Registro actualizado', 'ok');
+
+  // Enviar actualización al servidor con accion: 'actualizar'
+  const url = getSheetUrl(CM, editTipo);
+  if (url && online) {
+    const paraSheets = { ...r, accion: 'actualizar', foto: r.foto ? '✅ Tiene foto' : 'Sin foto' };
+    try {
+      await fetch(url, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paraSheets)
+      });
+      toast('✅ Actualizado y sincronizado', 'ok');
+    } catch(err) {
+      toast('✅ Guardado localmente. Se sincronizará con señal.', 'warn');
+      syncAll();
+    }
+  } else {
+    if (online) syncAll();
+    toast('✅ Registro actualizado', 'ok');
+  }
 }
 
 
@@ -2644,7 +2713,7 @@ function cfgRefreshPreviews() {
   }
 }
 
-function cfgUploadLogo(input, tipo) {
+async function cfgUploadLogo(input, tipo) {
   const file = input.files[0];
   if (!file) return;
   if (file.size > 500 * 1024) {
@@ -2653,23 +2722,49 @@ function cfgUploadLogo(input, tipo) {
     return;
   }
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
     const dataUrl = e.target.result;
+    const municipio = tipo === 'ebs' ? 'global' : (cfgMuni || CM);
+
+    // Guardar en localStorage para uso inmediato local
     try {
       if (tipo === 'ebs') {
         localStorage.setItem(logoKeyEbs(), dataUrl);
         logoData['r-logo-ebs-prev'] = dataUrl;
       } else {
-        const key = `ebs_logo_hospital_${cfgMuni || 'default'}`;
-        localStorage.setItem(key, dataUrl);
-        // Si el municipio del config es el activo, actualizar logoData también
+        localStorage.setItem(`ebs_logo_hospital_${municipio}`, dataUrl);
         if (cfgMuni === CM) logoData['r-logo-hospital-prev'] = dataUrl;
       }
-      cfgRefreshPreviews();
-      toast('✅ Logo guardado correctamente', 'ok');
     } catch(err) {
-      toast('⚠️ No se pudo guardar: ' + err.message, 'err');
+      console.warn('localStorage logo error:', err);
     }
+
+    // Enviar al servidor (Drive) para que todos los dispositivos lo usen
+    toast('⏳ Subiendo logo al servidor…', 'ok');
+    const url = getSheetUrl(municipio === 'global' ? CM : municipio, 'recoleccion');
+    if (url) {
+      try {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accion: 'guardarLogo',
+            municipio: municipio,
+            tipo,
+            base64: dataUrl
+          })
+        });
+        toast('✅ Logo guardado y sincronizado', 'ok');
+      } catch(err) {
+        toast('⚠️ Logo guardado localmente. Se sincronizará con señal.', 'warn');
+      }
+    } else {
+      toast('✅ Logo guardado en este dispositivo', 'ok');
+    }
+
+    cfgRefreshPreviews();
+    updateLogosStatus();
     input.value = '';
   };
   reader.readAsDataURL(file);
@@ -2686,6 +2781,7 @@ function cfgDeleteLogo(tipo) {
     if (cfgMuni === CM) logoData['r-logo-hospital-prev'] = null;
   }
   cfgRefreshPreviews();
+  updateLogosStatus();
   toast('🗑️ Logo eliminado', 'ok');
 }
 
