@@ -1564,15 +1564,11 @@ async function saveEdit() {
   r.editada = new Date().toLocaleString('es-CO');
   setRecs(CM, editTipo, recs);
 
-  const pendientes = getPend(CM, editTipo).filter(p => p.id !== r.id);
-  pendientes.push({ ...r, foto: r.foto ? '✅ Tiene foto' : 'Sin foto', integrantes: r.integrantes || [] });
-  setPend(CM, editTipo, pendientes);
-
   closeModal();
   renderRecs();
   updateSync();
 
-  // Enviar actualización al servidor con accion: 'actualizar'
+  // Enviar accion:actualizar directo — NO agregar a pendientes para evitar doble envío
   const url = getSheetUrl(CM, editTipo);
   if (url && online) {
     const paraSheets = { ...r, accion: 'actualizar', foto: r.foto ? '✅ Tiene foto' : 'Sin foto' };
@@ -1583,14 +1579,22 @@ async function saveEdit() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paraSheets)
       });
+      r.synced = true;
+      setRecs(CM, editTipo, recs);
       toast('✅ Actualizado y sincronizado', 'ok');
     } catch(err) {
-      toast('✅ Guardado localmente. Se sincronizará con señal.', 'warn');
-      syncAll();
+      // Si falla, encolar como pendiente para que syncAll lo reintente
+      const pendientes = getPend(CM, editTipo).filter(p => p.id !== r.id);
+      pendientes.push({ ...r, accion: 'actualizar', foto: r.foto ? '✅ Tiene foto' : 'Sin foto' });
+      setPend(CM, editTipo, pendientes);
+      toast('⚠️ Guardado localmente. Se actualizará con señal.', 'warn');
     }
-  } else {
-    if (online) syncAll();
-    toast('✅ Registro actualizado', 'ok');
+  } else if (!online) {
+    // Sin señal: encolar como pendiente de actualización
+    const pendientes = getPend(CM, editTipo).filter(p => p.id !== r.id);
+    pendientes.push({ ...r, accion: 'actualizar', foto: r.foto ? '✅ Tiene foto' : 'Sin foto' });
+    setPend(CM, editTipo, pendientes);
+    toast('⚠️ Guardado localmente. Se actualizará al reconectar.', 'warn');
   }
 }
 
@@ -2617,6 +2621,12 @@ if (document.getElementById('apgar-miembros-tbody') && !document.querySelector('
 let cfgMuni = null;
 
 function initConfigPanel() {
+  // Solo BOSS puede acceder — redirigir si no
+  if (!CU || CU.role !== 'boss') {
+    showTab('nuevo');
+    return;
+  }
+
   // Municipio activo para config
   cfgMuni = CM;
 
@@ -2624,19 +2634,15 @@ function initConfigPanel() {
   const muniLabel = document.getElementById('cfg-muni-label');
   if (muniLabel) muniLabel.textContent = cfgMuni || '—';
 
-  // Si es BOSS: mostrar selector de municipios
+  // Mostrar selector de municipios
   const selector = document.getElementById('cfg-muni-selector');
   if (selector) {
-    if (CU && CU.role === 'boss') {
-      selector.style.display = 'block';
-      const tabs = document.getElementById('cfg-muni-tabs');
-      if (tabs) {
-        tabs.innerHTML = MUNIS.map(m =>
-          `<button class="fbtn${m === cfgMuni ? ' active' : ''}" onclick="cfgSelMuni('${m}')">${m}</button>`
-        ).join('');
-      }
-    } else {
-      selector.style.display = 'none';
+    selector.style.display = 'block';
+    const tabs = document.getElementById('cfg-muni-tabs');
+    if (tabs) {
+      tabs.innerHTML = MUNIS.map(m =>
+        `<button class="fbtn${m === cfgMuni ? ' active' : ''}" onclick="cfgSelMuni('${m}')">${m}</button>`
+      ).join('');
     }
   }
 
@@ -2713,28 +2719,42 @@ async function cfgUploadLogo(input, tipo) {
       console.warn('localStorage logo error:', err);
     }
 
-    // Enviar al servidor (Drive) para que todos los dispositivos lo usen
+    // Enviar al servidor (Drive)
     toast('⏳ Subiendo logo al servidor…', 'ok');
-    const url = getSheetUrl(municipio === 'global' ? CM : municipio, 'recoleccion');
-    if (url) {
-      try {
-        await fetch(url, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            accion: 'guardarLogo',
-            municipio: municipio,
-            tipo,
-            base64: dataUrl
-          })
-        });
-        toast('✅ Logo guardado y sincronizado', 'ok');
-      } catch(err) {
-        toast('⚠️ Logo guardado localmente. Se sincronizará con señal.', 'warn');
+
+    if (tipo === 'ebs') {
+      // Logo EBS es global: enviarlo a TODOS los municipios para que cada Drive lo tenga
+      let ok = 0;
+      for (const m of MUNIS) {
+        const u = getSheetUrl(m, 'recoleccion');
+        if (!u) continue;
+        try {
+          await fetch(u, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accion: 'guardarLogo', municipio: 'global', tipo: 'ebs', base64: dataUrl })
+          });
+          ok++;
+        } catch(e) { console.warn('No se pudo enviar logo EBS a ' + m); }
       }
+      toast(ok > 0 ? '✅ Logo EBS sincronizado en todos los municipios' : '⚠️ Guardado solo localmente.', ok > 0 ? 'ok' : 'warn');
     } else {
-      toast('✅ Logo guardado en este dispositivo', 'ok');
+      // Logo hospital: solo al script del municipio seleccionado
+      const u = getSheetUrl(cfgMuni || CM, 'recoleccion');
+      if (u) {
+        try {
+          await fetch(u, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accion: 'guardarLogo', municipio: cfgMuni || CM, tipo: 'hospital', base64: dataUrl })
+          });
+          toast('✅ Logo de ' + (cfgMuni || CM) + ' guardado y sincronizado', 'ok');
+        } catch(err) {
+          toast('⚠️ Guardado localmente. Se sincronizará con señal.', 'warn');
+        }
+      } else {
+        toast('⚠️ No hay URL configurada para ' + (cfgMuni || CM), 'err');
+      }
     }
 
     cfgRefreshPreviews();
