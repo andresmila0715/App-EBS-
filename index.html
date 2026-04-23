@@ -1093,6 +1093,7 @@ function showTab(t) {
   document.getElementById('tab-' + t).classList.add('active');
   document.getElementById('panel-' + t).classList.add('active');
   if (t === 'registros') renderRecs();
+  if (t === 'config') initConfigPanel();
 }
 
 function toggleQ(id) {
