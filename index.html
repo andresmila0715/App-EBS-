@@ -387,6 +387,30 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       </div>
       <div class="qbody">
 
+        <!-- CAMPOS INSTITUCIONALES (antes del familiograma) -->
+        <div class="frow">
+          <div class="ff" style="flex:2">
+            <label>Nombre del Hospital</label>
+            <input type="text" id="r-hospital" placeholder="Ej: E.S.E San Martín">
+          </div>
+          <div class="ff">
+            <label>Microterritorio</label>
+            <input type="text" id="r-microterritorio" placeholder="Ej: MT-26 SAN FERNANDO">
+          </div>
+        </div>
+        <div class="frow">
+          <div class="ff">
+            <label>Logo Hospital <span style="font-size:.75rem;color:var(--text-muted)">(aparece a la izquierda del título)</span></label>
+            <input type="file" id="r-logo-hospital" accept="image/*" onchange="previewLogo(this,'r-logo-hospital-prev')">
+            <img id="r-logo-hospital-prev" src="" alt="" style="display:none;max-height:60px;margin-top:6px;border-radius:6px;border:1px solid var(--border)">
+          </div>
+          <div class="ff">
+            <label>Logo EBS <span style="font-size:.75rem;color:var(--text-muted)">(aparece a la derecha del título)</span></label>
+            <input type="file" id="r-logo-ebs" accept="image/*" onchange="previewLogo(this,'r-logo-ebs-prev')">
+            <img id="r-logo-ebs-prev" src="" alt="" style="display:none;max-height:60px;margin-top:6px;border-radius:6px;border:1px solid var(--border)">
+          </div>
+        </div>
+
         <!-- SUB-ACORDEÓN: FAMILIOGRAMA -->
         <div class="sub-block" id="sub-familiograma">
           <div class="sub-head" onclick="toggleSub('familiograma')">
@@ -439,6 +463,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
     </select>
   </div>
 </div>
+
+            <div class="ff" style="margin-top:10px">
+              <label>Teléfono del Jefe del Hogar</label>
+              <input type="tel" id="fg-principal-telefono" placeholder="Ej: 3001234567">
+            </div>
 
             <div class="sdiv">Familiares Anexados</div>
             <div id="fg-miembros-container"></div>
@@ -692,9 +721,23 @@ let CM = null;        // Municipio actual
 let editId = null;
 let editTipo = null;
 let fotoData = {};    // Almacena fotos en base64 por id de preview
+let logoData = {};    // Almacena logos en base64 (hospital y EBS)
 let activeF = 'todos';
 let online = navigator.onLine;
 let intCount = 0;
+
+// ── Vista previa de logos ────────────────────────────────────
+function previewLogo(input, prevId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById(prevId);
+    if (prev) { prev.src = e.target.result; prev.style.display = 'block'; }
+    logoData[prevId] = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
 
 // ── Almacenamiento local (localStorage) ────────────────────
@@ -1007,6 +1050,12 @@ function clearF(tipo) {
     document.getElementById('c1-cst').textContent = 'Presiona 📍 para ubicar';
     fotoData['c1-prev'] = null;
   } else if (tipo === 'recoleccion') {
+    // Limpiar campos institucionales
+    ['r-hospital','r-microterritorio'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+    ['r-logo-hospital','r-logo-ebs'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+    ['r-logo-hospital-prev','r-logo-ebs-prev'].forEach(i => { const el = document.getElementById(i); if(el){ el.src=''; el.style.display='none'; } });
+    logoData['r-logo-hospital-prev'] = null;
+    logoData['r-logo-ebs-prev'] = null;
     document.querySelectorAll('#sub-familiograma input, #sub-familiograma select, #sub-familiograma textarea').forEach(el => el.value = '');
     document.querySelectorAll('#sub-zarit select, #sub-zarit textarea').forEach(el => el.value = '');
     document.getElementById('apgar-miembros-tbody').innerHTML = '';
@@ -1061,7 +1110,15 @@ async function saveR(tipo) {
 
   } else if (tipo === 'recoleccion') {
     const subData = getRecoleccionData();
-    Object.assign(registro, { subData });
+    // Promover campos clave al nivel raíz para que el Apps Script los lea como d.xxx
+    Object.assign(registro, {
+      subData,
+      hospital:        subData.hospital        || '',
+      microterritorio: subData.microterritorio  || '',
+      logoHospital:    subData.logoHospital     || '',
+      logoEbs:         subData.logoEbs          || '',
+      telefono:        subData.familiograma?.principal?.telefono || ''
+    });
 
   } else if (tipo === 'macro') {
     if (!gv('m-vereda')) { toast('⚠️ La vereda es obligatoria', 'err'); return; }
@@ -2320,15 +2377,22 @@ function getRecoleccionData() {
   ecoData.imagenBase64 = ecoImagen;
 
   return {
+    // Campos institucionales nuevos
+    hospital:      gv2('r-hospital'),
+    microterritorio: gv2('r-microterritorio'),
+    logoHospital:  logoData['r-logo-hospital-prev'] || '',
+    logoEbs:       logoData['r-logo-ebs-prev'] || '',
+
     familiograma: {
       familia: gv2('fg-familia-nombre'),
       vereda: gv2('fg-vereda'),
       principal: {
-        nombre: gv2('fg-principal-nombre'),
-        anio: gv2('fg-principal-anio'),
-        genero: gv2('fg-principal-genero'),
-        estado: gv2('fg-principal-estado'),
-        enf: gv2('fg-principal-enf')
+        nombre:   gv2('fg-principal-nombre'),
+        anio:     gv2('fg-principal-anio'),
+        genero:   gv2('fg-principal-genero'),
+        estado:   gv2('fg-principal-estado'),
+        enf:      gv2('fg-principal-enf'),
+        telefono: gv2('fg-principal-telefono')
       },
       relacionPareja: gv2('fg-relacion'),
       miembros,
