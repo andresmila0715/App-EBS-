@@ -2218,32 +2218,42 @@ function dibujarEcomapa() {
     ctx.fill(); ctx.stroke();
     ctx.restore();
 
+    // Etiqueta: hasta 2 líneas en la mitad superior de la caja
     ctx.fillStyle = '#0f172a';
     ctx.font = '700 11px DM Sans, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const lab = cat.short;
     const words = lab.split(' ');
+    const labelY = val !== '' ? y - 22 : y - 8;
     if (words.length > 1 && lab.length > 12) {
       const mid = Math.ceil(words.length / 2);
       const line1 = words.slice(0, mid).join(' ');
       const line2 = words.slice(mid).join(' ');
-      ctx.fillText(line1, x, y - 20);
-      ctx.fillText(line2, x, y - 8);
+      ctx.fillText(line1, x, labelY - 7);
+      ctx.fillText(line2, x, labelY + 7);
     } else {
-      ctx.fillText(lab, x, y - 14);
+      ctx.fillText(lab, x, labelY);
     }
 
+    // Valor: número + descripción en la mitad inferior, bien separados
     if (val !== '') {
+      const displayVal = val === '-2' ? 'N/A' : val;
+      const shortTxt = valTxt.length > 13 ? valTxt.slice(0,12)+'…' : valTxt;
+      // Línea divisoria sutil
+      ctx.save();
+      ctx.strokeStyle = 'rgba(8,145,178,0.3)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x - tw/2 + 8, y + 4); ctx.lineTo(x + tw/2 - 8, y + 4); ctx.stroke();
+      ctx.restore();
       ctx.fillStyle = '#005f73';
-      ctx.font = '700 12px DM Sans, sans-serif';
-      ctx.fillText(val, x - 18, y + 10);
+      ctx.font = '800 13px DM Sans, sans-serif';
+      ctx.fillText(displayVal, x, y + 16);
       ctx.fillStyle = '#0e7490';
-      ctx.font = '600 10px DM Sans, sans-serif';
-      ctx.fillText(valTxt.length > 14 ? valTxt.slice(0,13)+'…' : valTxt, x + 10, y + 10);
+      ctx.font = '600 9px DM Sans, sans-serif';
+      ctx.fillText(shortTxt, x, y + 28);
     } else {
       ctx.fillStyle = '#94a3b8';
       ctx.font = '600 11px DM Sans, sans-serif';
-      ctx.fillText('—', x, y + 10);
+      ctx.fillText('—', x, y + 14);
     }
   });
 }
