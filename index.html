@@ -413,14 +413,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
             <input type="text" id="r-microterritorio" placeholder="Ej: MT-26 SAN FERNANDO">
           </div>
         </div>
-        <!-- Logos: se configuran en la pestaña ⚙️ Config, se aplican automáticamente -->
-        <div style="background:#f0f9ff;border:1px solid var(--primary-light);border-radius:10px;padding:10px 14px;margin-bottom:4px;display:flex;align-items:center;gap:10px">
-          <div style="display:flex;gap:8px;align-items:center;flex:1;flex-wrap:wrap">
-            <span style="font-size:.78rem;color:var(--primary);font-weight:600">Logos del encabezado:</span>
-            <span style="font-size:.75rem;color:var(--text-muted)" id="r-logos-status">cargando…</span>
-          </div>
-          <button type="button" class="btn-sec" style="font-size:.75rem;padding:4px 10px;white-space:nowrap" onclick="showTab('config')">⚙️ Configurar</button>
-        </div>
+        <!-- Logos: se configuran en la pestaña ⚙️ Config (solo BOSS), se aplican automáticamente -->
         <!-- Elementos ocultos requeridos por la lógica de logos -->
         <img id="r-logo-hospital-prev" src="" alt="" style="display:none">
         <img id="r-logo-ebs-prev" src="" alt="" style="display:none">
@@ -818,26 +811,6 @@ function saveLogoToStorage(prevId, dataUrl) {
 }
 
 // ── Restaurar logos desde localStorage (al abrir o cambiar municipio) ──
-function updateLogosStatus() {
-  const el = document.getElementById('r-logos-status');
-  if (!el) return;
-  const tieneHosp = !!(logoData['r-logo-hospital-prev']);
-  const tieneEbs  = !!(logoData['r-logo-ebs-prev']);
-  if (tieneHosp && tieneEbs) {
-    el.textContent = '✅ Hospital y EBS listos';
-    el.style.color = '#15803d';
-  } else if (tieneHosp) {
-    el.textContent = '⚠️ Falta logo EBS';
-    el.style.color = '#b45309';
-  } else if (tieneEbs) {
-    el.textContent = '⚠️ Falta logo hospital';
-    el.style.color = '#b45309';
-  } else {
-    el.textContent = 'Sin logos configurados — el documento usará solo texto';
-    el.style.color = 'var(--text-muted)';
-  }
-}
-
 function restoreLogos() {
   // Logo hospital (por municipio)
   const hospData = localStorage.getItem(logoKeyHospital());
@@ -1038,7 +1011,7 @@ function doLogout() {
   CU = null; CM = null;
   document.getElementById('inp-user').value = '';
   document.getElementById('inp-pass').value = '';
-  showScreen('login');
+  window.location.reload();
 }
 
 
