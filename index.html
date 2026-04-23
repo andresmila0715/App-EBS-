@@ -317,9 +317,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       <div class="muni-sel" id="muni-btns"></div>
     </div>
 
-    <!-- ═══ FORMULARIO 1: CARTOGRAFÍAS ═══════════════════
-         Spreadsheet: SHEETS_URLS[municipio].carto
-         ═══════════════════════════════════════════════ -->
+    <!-- ═══ FORMULARIO 1: CARTOGRAFÍAS ═══════════════════ -->
     <div class="qblock open" id="q-carto">
       <div class="qhead" onclick="toggleQ('carto')">
         <div class="qleft">
@@ -372,9 +370,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
     </div>
 
 
-    <!-- ═══ FORMULARIO 2: RECOLECCIÓN ════════════════════
-         Spreadsheet: SHEETS_URLS[municipio].recoleccion
-         ═══════════════════════════════════════════════ -->
+    <!-- ═══ FORMULARIO 2: RECOLECCIÓN ════════════════════ -->
     <div class="qblock" id="q-recoleccion">
       <div class="qhead" onclick="toggleQ('recoleccion')">
         <div class="qleft">
@@ -550,9 +546,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
     </div>
 
 
-    <!-- ═══ FORMULARIO 3: MACRO ═══════════════════════════
-         Spreadsheet: SHEETS_URLS[municipio].macro
-         ═══════════════════════════════════════════════ -->
+    <!-- ═══ FORMULARIO 3: MACRO ═══════════════════════════ -->
     <div class="qblock" id="q-macro">
       <div class="qhead" onclick="toggleQ('macro')">
         <div class="qleft">
@@ -677,8 +671,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 <script>
 
 // ── Constantes derivadas de config.js ──────────────────────
-// (USERS, MUNIS, SHEETS_URLS, getSheetUrl vienen de config.js)
-
 const TIPOS = ['carto', 'recoleccion', 'macro'];
 
 const TLABELS = {
@@ -706,9 +698,6 @@ let intCount = 0;
 
 
 // ── Almacenamiento local (localStorage) ────────────────────
-// Clave: ebs_{tipo}_{municipio} → array de registros guardados
-// Clave: ebs_p_{tipo}_{municipio} → array de registros pendientes de sync
-
 const storageKey    = (m, t) => `ebs_${t}_${m.replace(/\s/g, '_')}`;
 const storagePendKey = (m, t) => `ebs_p_${t}_${m.replace(/\s/g, '_')}`;
 
@@ -764,9 +753,6 @@ function updateSync() {
 
 
 // ── Sincronización con Google Sheets ───────────────────────
-// Cada formulario se envía al spreadsheet correspondiente
-// según getSheetUrl(municipio, tipo) definido en config.js
-
 async function syncAll() {
   if (!online || !CU) return;
   const munis = CU.role === 'boss' ? MUNIS : [CM];
@@ -777,9 +763,8 @@ async function syncAll() {
       const pendientes = getPend(m, t);
       if (!pendientes.length) continue;
 
-      const url = getSheetUrl(m, t); // ← URL específica por municipio Y formulario
+      const url = getSheetUrl(m, t);
       if (!url) {
-        // URL no configurada aún → dejar en cola
         continue;
       }
 
@@ -1022,7 +1007,6 @@ function clearF(tipo) {
     document.getElementById('c1-cst').textContent = 'Presiona 📍 para ubicar';
     fotoData['c1-prev'] = null;
   } else if (tipo === 'recoleccion') {
-    // Clear all sub-form fields
     document.querySelectorAll('#sub-familiograma input, #sub-familiograma select, #sub-familiograma textarea').forEach(el => el.value = '');
     document.querySelectorAll('#sub-zarit select, #sub-zarit textarea').forEach(el => el.value = '');
     document.getElementById('apgar-miembros-tbody').innerHTML = '';
@@ -1055,7 +1039,6 @@ function clearF(tipo) {
 const gv = id => document.getElementById(id)?.value || '';
 
 async function saveR(tipo) {
-  // Construir registro base
   let registro = {
     id: Date.now(),
     fecha: new Date().toLocaleString('es-CO'),
@@ -1064,7 +1047,6 @@ async function saveR(tipo) {
     synced: false
   };
 
-  // Validar y agregar campos específicos por tipo
   if (tipo === 'carto') {
     if (!gv('c1-casa') || !gv('c1-familia')) { toast('⚠️ Casa y familia son obligatorios', 'err'); return; }
     if (!gv('c1-riesgo')) { toast('⚠️ Selecciona el riesgo', 'err'); return; }
@@ -1106,7 +1088,6 @@ async function saveR(tipo) {
     });
   }
 
-  // Guardar localmente SIN imágenes base64 (para no saturar localStorage)
   const registroLocal = { ...registro };
   if (registroLocal.subData?.familiograma) registroLocal.subData = {
     ...registroLocal.subData,
@@ -1117,7 +1098,6 @@ async function saveR(tipo) {
   recs.unshift(registroLocal);
   setRecs(CM, tipo, recs);
 
-  // Agregar a cola de sincronización CON imágenes (se envían a Google Sheets)
   const paraSheets = { ...registro, foto: registro.foto ? '✅ Tiene foto' : 'Sin foto' };
   const pendientes = getPend(CM, tipo);
   pendientes.push(paraSheets);
@@ -1228,7 +1208,6 @@ function buildFields(r) {
       <div class="rfield" style="grid-column:1/-1"><strong>Servicios</strong>${r.servicios || '—'}</div>
       <div class="rfield" style="grid-column:1/-1"><strong>Enfermedades</strong>${r.enfermedades || '—'}</div>`;
   }
-  // MACRO
   const viv = r.vivienda || {};
   const ints = r.integrantes || [];
   return `
@@ -1536,8 +1515,8 @@ function getFamiliogramaMiembros() {
       genero: gv2(`fg-f${n}-genero`),
       estado: gv2(`fg-f${n}-estado`),
       nota: gv2(`fg-f${n}-nota`),
-      nucleo: gv2(`fg-f${n}-nucleo`),          // ← AGREGAR
-      convivencia: gv2(`fg-f${n}-convivencia`) // ← AGREGAR
+      nucleo: gv2(`fg-f${n}-nucleo`),
+      convivencia: gv2(`fg-f${n}-convivencia`)
     };
     if (m.parentesco || m.nombre || m.anio || m.estado || m.nota) miembros.push(m);
   });
@@ -1556,6 +1535,7 @@ function pickMany(miembros, parentesco, fallbackGenero) {
     .map(m => ({ ...m, genero: m.genero || fallbackGenero }));
 }
 
+// ✅ FUNCIÓN CORREGIDA - FAMILIOGRAMA
 function dibujarFamiliograma() {
   const canvas = document.getElementById('familiograma-canvas');
   if (!canvas) return;
@@ -1564,13 +1544,12 @@ function dibujarFamiliograma() {
   const DPR = 2;
   const W = (canvas.offsetWidth || 400);
 
-  // Zonas fijas — la leyenda va SIEMPRE debajo de todo
-  const LEGEND_H    = 260; // 2 cols × 6 filas × 34px + header + padding
+  const LEGEND_H    = 260;
   const yPadres     = 130;
   const yCore       = 310;
   const yHijos      = 500;
-  const HIJO_LABEL  = 60;  // espacio bajo hijos para nombre + año
-  const H = yHijos + HIJO_LABEL + 20 + LEGEND_H; // ≈ 910px
+  const HIJO_LABEL  = 60;
+  const H = yHijos + HIJO_LABEL + 20 + LEGEND_H;
 
   canvas.width  = W * DPR;
   canvas.height = H * DPR;
@@ -1578,6 +1557,10 @@ function dibujarFamiliograma() {
   canvas.style.height = H + 'px';
   ctx.scale(DPR, DPR);
   ctx.clearRect(0, 0, W, H);
+
+  // ✅ CORRECCIÓN: Pintar fondo blanco AHORA (al inicio)
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
 
   const PERSON_SIZE = 52;
   const colorM = '#005f73';
@@ -1655,21 +1638,18 @@ function dibujarFamiliograma() {
     }
     ctx.restore();
 
-    // Año arriba
     if (anio) {
       ctx.font = '600 13px DM Sans,sans-serif';
       ctx.fillStyle = '#475569';
       ctx.textAlign = 'center';
       ctx.fillText(anio, x, y - size/2 - 8);
     }
-    // Nombre abajo
     if (nombre) {
       ctx.font = isPrincipal ? 'bold 14px DM Sans,sans-serif' : 'bold 13px DM Sans,sans-serif';
       ctx.fillStyle = isPrincipal ? '#78350f' : colorText;
       ctx.textAlign = 'center';
       ctx.fillText(shortName(nombre), x, y + size/2 + 16);
     }
-    // Etiqueta jefe
     if (isPrincipal && (nombre || anio || estado)) {
       ctx.font = 'bold 11px DM Sans,sans-serif';
       ctx.fillStyle = '#b45309';
@@ -1706,7 +1686,6 @@ function dibujarFamiliograma() {
     drawLine(fromX, yP, childX, childY-PERSON_SIZE/2);
   }
 
-  // ── Datos ────────────────────────────────────────────────
   const miembros = getFamiliogramaMiembros();
   const relacion = document.getElementById('fg-relacion')?.value || '';
   const tituloFamilia = (document.getElementById('fg-familia-nombre')?.value || '').trim();
@@ -1727,7 +1706,6 @@ function dibujarFamiliograma() {
   const madrePareja = pickFirst(miembros, 'madre_pareja', 'F');
   const hijos = pickMany(miembros, 'hijo', 'M').filter(h => hasData(h));
 
-  // ── Marco principal (excluye zona de leyenda) ────────────
   const topPad = tituloFamilia ? 52 : 10;
   ctx.save();
   ctx.fillStyle = frameFill; ctx.strokeStyle = frameStroke; ctx.lineWidth = 1.5;
@@ -1745,7 +1723,6 @@ function dibujarFamiliograma() {
     ctx.restore();
   }
 
-  // ── Dibujar personas y líneas ────────────────────────────
   if (hasData(padreJefe)&&hasData(madreJefe)) drawCouple(padreJefeX, madreJefeX, yPadres, 'matrimonio');
   if (hasData(padreJefe))   drawPerson(padreJefeX,   yPadres, padreJefe,   'M', false);
   if (hasData(madreJefe))   drawPerson(madreJefeX,   yPadres, madreJefe,   'F', false);
@@ -1762,7 +1739,6 @@ function dibujarFamiliograma() {
   if (hasData(principal)) drawPerson(principalX, yCore, principal, principal.genero||'M', true);
   if (hasData(pareja))    drawPerson(parejaX,    yCore, pareja,    pareja.genero||'F',    false);
 
-  // ── Hijos ────────────────────────────────────────────────
   const hijosConDatos = hijos.filter(h => hasData(h));
   if (hijosConDatos.length && (hasData(principal)||hasData(pareja))) {
     const coupleMidX = hasData(pareja) ? (principalX+parejaX)/2 : principalX;
@@ -1779,19 +1755,17 @@ function dibujarFamiliograma() {
     });
   }
 
-  // Fondo blanco del canvas (evita fondo negro en el documento)
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, W, H);
+  // ❌ ELIMINADO: Ya no pintamos blanco aquí (borraba el dibujo)
 
-  // ── LEYENDA — siempre debajo del marco de personas ───────
+  // ── LEYENDA ──────────────────────────────────────────────
   (function drawLegend() {
-    const COLS   = 2;                              // 2 columnas → nunca se pisan
+    const COLS   = 2;
     const PAD_X  = 16;
     const PAD_Y  = 14;
     const HDR_H  = 38;
     const SYM_W  = 28;
     const ROW_H  = 34;
-    const COL_W  = Math.floor((W - 16 - PAD_X * 2) / COLS); // ancho real por columna
+    const COL_W  = Math.floor((W - 16 - PAD_X * 2) / COLS);
 
     const items = [
       { label: 'Hombre',              type: 'square',   color: '#005f73' },
@@ -1814,7 +1788,6 @@ function dibujarFamiliograma() {
     const LX   = 8;
     const LY   = yHijos + HIJO_LABEL + 18;
 
-    // Fondo
     ctx.save();
     ctx.shadowColor='rgba(0,0,0,0.10)'; ctx.shadowBlur=6; ctx.shadowOffsetY=2;
     ctx.fillStyle='#ffffff';
@@ -1826,7 +1799,6 @@ function dibujarFamiliograma() {
     else ctx.strokeRect(LX,LY,boxW,boxH);
     ctx.restore();
 
-    // Header
     ctx.save();
     ctx.fillStyle='#003d4d';
     if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(LX,LY,boxW,HDR_H,[10,10,0,0]); ctx.fill(); }
@@ -1893,7 +1865,6 @@ function dibujarFamiliograma() {
 
       ctx.fillStyle='#1a2332'; ctx.font='400 12px DM Sans,sans-serif';
       ctx.textAlign='left'; ctx.textBaseline='middle';
-      // Truncar solo si aún así no cabe (seguridad extra)
       const maxLabelW = COL_W - SYM_W - 12;
       ctx.save();
       ctx.rect(ix + SYM_W + 6, iy - ROW_H/2, maxLabelW, ROW_H);
@@ -1994,7 +1965,6 @@ function initApgarFam() {
   const tb = document.getElementById('apgar-miembros-tbody');
   if (!tb || tb.querySelector('tr')) return;
 
-  // Intentar pre-llenar con los integrantes del familiograma
   const miembros = getFamiliogramaMiembros ? getFamiliogramaMiembros() : [];
   const principal = {
     nombre: document.getElementById('fg-principal-nombre')?.value || '',
@@ -2146,7 +2116,6 @@ function dibujarEcomapa() {
   const cy = H / 2 - 10;
   const R  = Math.min(W * 0.46, H * 0.44);
 
-  // Caja central
   const bw = 140, bh = 96;
   ctx.save();
   ctx.shadowColor = 'rgba(0,95,115,0.25)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 4;
@@ -2159,7 +2128,6 @@ function dibujarEcomapa() {
   ctx.font = '700 13px DM Sans, sans-serif'; ctx.fillStyle = '#003d4d';
   ctx.fillText('FAMILIA', cx, cy + bh/2 - 20);
 
-  // Nodos periféricos
   const n   = ECOMAPA_CATS.length;
   const tw  = 132;
   const th  = 68;
@@ -2171,7 +2139,6 @@ function dibujarEcomapa() {
     const val = document.getElementById(cat.id)?.value ?? '';
     const valTxt = val !== '' ? ecoValorTexto(val) : '';
 
-    // Línea conectora
     const lsx = cx + Math.cos(ang) * (bw/2 + 5);
     const lsy = cy + Math.sin(ang) * (bh/2 + 5);
     const lex = x  - Math.cos(ang) * (tw/2 + 3);
@@ -2183,7 +2150,6 @@ function dibujarEcomapa() {
     ctx.beginPath(); ctx.moveTo(lsx,lsy); ctx.lineTo(lex,ley); ctx.stroke();
     ctx.restore();
 
-    // Caja del nodo
     ctx.save();
     if (val !== '') {
       ctx.shadowColor='rgba(8,145,178,0.18)'; ctx.shadowBlur=8; ctx.shadowOffsetY=2;
@@ -2195,12 +2161,10 @@ function dibujarEcomapa() {
     ctx.fill(); ctx.stroke();
     ctx.restore();
 
-    // Etiqueta — nombre del sistema (puede ir en 2 líneas)
     ctx.fillStyle = '#0f172a';
     ctx.font = '700 11px DM Sans, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const lab = cat.short;
-    // Partir en 2 líneas si es largo
     const words = lab.split(' ');
     if (words.length > 1 && lab.length > 12) {
       const mid = Math.ceil(words.length / 2);
@@ -2212,7 +2176,6 @@ function dibujarEcomapa() {
       ctx.fillText(lab, x, y - 14);
     }
 
-    // Valor
     if (val !== '') {
       ctx.fillStyle = '#005f73';
       ctx.font = '700 12px DM Sans, sans-serif';
@@ -2240,7 +2203,6 @@ function getEcomapaData() {
   const o = { obs: document.getElementById('eco-obs')?.value || '', valores: {} };
   ECOMAPA_CATS.forEach(c => {
     o.valores[c.id] = document.getElementById(c.id)?.value || '';
-    // también al nivel raíz para compatibilidad
     o[c.id] = o.valores[c.id];
   });
   return o;
@@ -2340,13 +2302,9 @@ function getRecoleccionData() {
     zaritTotal += raw === '' || raw == null ? 0 : (parseInt(raw, 10) || 0);
   }
 
-  // El canvas ya tiene resolución interna ×2 (DPR). Solo se exporta directamente
-  // con compresión JPEG para mantener el tamaño del payload bajo control.
   function capturarCanvasHD(canvas) {
     if (!canvas) return '';
     try {
-      // Exportar el canvas tal cual (ya tiene DPR×2 internamente)
-      // JPEG 0.85 da buena calidad y pesa ~5–10× menos que PNG
       return canvas.toDataURL('image/jpeg', 0.85);
     } catch(e) {
       return '';
