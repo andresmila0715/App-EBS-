@@ -413,10 +413,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
             <input type="text" id="r-microterritorio" placeholder="Ej: MT-26 SAN FERNANDO">
           </div>
         </div>
-        <!-- Logos: se configuran en la pestaña ⚙️ Config (solo BOSS), se aplican automáticamente -->
-        <!-- Elementos ocultos requeridos por la lógica de logos -->
-        <img id="r-logo-hospital-prev" src="" alt="" style="display:none">
-        <img id="r-logo-ebs-prev" src="" alt="" style="display:none">
+        <!-- Logos: gestionados desde ⚙️ Config, nunca visibles en el formulario -->
+        <span id="r-logo-hospital-prev" style="display:none;width:0;height:0;overflow:hidden"></span>
+        <span id="r-logo-ebs-prev" style="display:none;width:0;height:0;overflow:hidden"></span>
 
         <!-- SUB-ACORDEÓN: FAMILIOGRAMA -->
         <div class="sub-block" id="sub-familiograma">
@@ -812,32 +811,9 @@ function saveLogoToStorage(prevId, dataUrl) {
 
 // ── Restaurar logos desde localStorage (al abrir o cambiar municipio) ──
 function restoreLogos() {
-  // Logo hospital (por municipio)
-  const hospData = localStorage.getItem(logoKeyHospital());
-  const hospPrev = document.getElementById('r-logo-hospital-prev');
-  if (hospData && hospPrev) {
-    hospPrev.src = hospData;
-    hospPrev.style.display = 'block';
-    logoData['r-logo-hospital-prev'] = hospData;
-  } else if (hospPrev) {
-    hospPrev.src = '';
-    hospPrev.style.display = 'none';
-    logoData['r-logo-hospital-prev'] = null;
-  }
-
-  // Logo EBS (global)
-  const ebsData = localStorage.getItem(logoKeyEbs());
-  const ebsPrev = document.getElementById('r-logo-ebs-prev');
-  if (ebsData && ebsPrev) {
-    ebsPrev.src = ebsData;
-    ebsPrev.style.display = 'block';
-    logoData['r-logo-ebs-prev'] = ebsData;
-  } else if (ebsPrev) {
-    ebsPrev.src = '';
-    ebsPrev.style.display = 'none';
-    logoData['r-logo-ebs-prev'] = null;
-  }
-  updateLogosStatus();
+  // Solo carga los datos en memoria (logoData) — los elementos del formulario son invisibles
+  logoData['r-logo-hospital-prev'] = localStorage.getItem(logoKeyHospital()) || null;
+  logoData['r-logo-ebs-prev']      = localStorage.getItem(logoKeyEbs())      || null;
 }
 
 // ── Vista previa de logos ────────────────────────────────────
