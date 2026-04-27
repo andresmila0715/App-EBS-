@@ -12,23 +12,295 @@ var NOMBRE_CARPETA   = 'EBS+ Instrumentos';
 function doPost(e) {
   try {
     var datos = JSON.parse(e.postData.contents);
-    guardarDatos(datos);
-    return respuesta(true, 'Guardado correctamente');
+    var accion = datos.accion || 'guardar';
+
+    if (accion === 'guardar') {
+      guardarDatos(datos);
+      return respuesta(true, 'Guardado correctamente');
+
+    } else if (accion === 'eliminar') {
+      eliminarDatos(datos);
+      return respuesta(true, 'Eliminado correctamente');
+
+    } else if (accion === 'actualizar') {
+      actualizarDatos(datos);
+      return respuesta(true, 'Actualizado correctamente');
+
+    } else if (accion === 'guardarLogo') {
+      guardarLogo(datos);
+      return respuesta(true, 'Logo guardado');
+
+    } else {
+      return respuesta(false, 'Acción desconocida: ' + accion);
+    }
   } catch (err) {
-    Logger.log('Error en doPost: ' + err.message);
+    Logger.log('Error en doPost: ' + err.message + ' | ' + err.stack);
     return respuesta(false, 'Error: ' + err.message);
   }
 }
 
-function doGet() {
+function doGet(e) {
+  // Si viene ?check=logos, reportar qué logos existen en Drive
+  if (e && e.parameter && e.parameter.check === 'logos') {
+    try {
+      var sub = obtenerSubCarpetaLogos(obtenerCarpeta());
+      var archivos = sub.getFiles();
+      var lista = [];
+      while (archivos.hasNext()) lista.push(archivos.next().getName());
+      return respuesta(true, 'Logos en Drive (' + NOMBRE_MUNICIPIO + '): ' + (lista.length ? lista.join(', ') : 'ninguno'));
+    } catch(eg) {
+      return respuesta(false, 'Error revisando logos: ' + eg.message);
+    }
+  }
   return respuesta(true, 'EBS+ activo · ' + NOMBRE_MUNICIPIO + ' · ' + TIPO_FORMULARIO);
 }
 
+// ── GUARDAR ─────────────────────────────────────────────────
 function guardarDatos(datos) {
   var sheet = obtenerHoja();
   if      (TIPO_FORMULARIO === 'carto')       guardarCarto(sheet, datos);
   else if (TIPO_FORMULARIO === 'recoleccion') guardarRecoleccion(sheet, datos);
   else if (TIPO_FORMULARIO === 'macro')       guardarMacro(sheet, datos);
+}
+
+// ── ELIMINAR ────────────────────────────────────────────────
+function eliminarDatos(datos) {
+  var id = String(datos.id || '');
+  if (!id) { Logger.log('eliminarDatos: sin ID'); return; }
+
+  var sheet = obtenerHoja();
+  var rows  = sheet.getDataRange().getValues();
+
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]) === id) {
+      // Intentar borrar el documento de Drive si existe URL
+      var urlDoc = String(rows[i][rows[i].length - 1] || '');
+      if (urlDoc.indexOf('docs.google.com') !== -1) {
+        try {
+          var docId = urlDoc.match(/\/d\/([^\/]+)/);
+          if (docId) DriveApp.getFileById(docId[1]).setTrashed(true);
+          Logger.log('Documento eliminado: ' + urlDoc);
+        } catch(eDoc) {
+          Logger.log('No se pudo eliminar doc: ' + eDoc.message);
+        }
+      }
+      sheet.deleteRow(i + 1); // +1 porque getValues es 0-indexed, sheet es 1-indexed
+      Logger.log('Fila eliminada para ID: ' + id);
+      return;
+    }
+  }
+  Logger.log('eliminarDatos: ID no encontrado: ' + id);
+}
+
+// ── ACTUALIZAR ──────────────────────────────────────────────
+function actualizarDatos(datos) {
+  var id = String(datos.id || '');
+  if (!id) { Logger.log('actualizarDatos: sin ID'); return; }
+
+  var sheet = obtenerHoja();
+  var rows  = sheet.getDataRange().getValues();
+
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]) === id) {
+      var filaNum = i + 1; // 1-indexed para Apps Script
+
+      // Borrar doc anterior si existe
+      var urlVieja = String(rows[i][rows[i].length - 1] || '');
+      if (urlVieja.indexOf('docs.google.com') !== -1) {
+        try {
+          var oldDocId = urlVieja.match(/\/d\/([^\/]+)/);
+          if (oldDocId) DriveApp.getFileById(oldDocId[1]).setTrashed(true);
+        } catch(eOld) {
+          Logger.log('No se pudo borrar doc anterior: ' + eOld.message);
+        }
+      }
+
+      // Construir la nueva fila con los datos actualizados
+      var nuevaFila = construirFila(datos);
+      if (!nuevaFila || !nuevaFila.length) {
+        // Fallback: borrar y re-insertar si no se puede construir la fila
+        sheet.deleteRow(filaNum);
+        guardarDatos(datos);
+        Logger.log('Fila reemplazada (fallback) para ID: ' + id);
+        return;
+      }
+
+      // Actualizar exactamente la misma fila
+      var range = sheet.getRange(filaNum, 1, 1, nuevaFila.length);
+      range.setValues([nuevaFila]);
+      Logger.log('Fila actualizada in-place en fila ' + filaNum + ' para ID: ' + id);
+      return;
+    }
+  }
+
+  // Si no existe aún, guardar como nuevo
+  Logger.log('actualizarDatos: ID no encontrado, guardando como nuevo: ' + id);
+  guardarDatos(datos);
+}
+
+// Construye el array de valores de una fila según el tipo de formulario
+function construirFila(datos) {
+  try {
+    var sheet = obtenerHoja();
+    var carpeta = obtenerCarpeta();
+    var d = datos;
+
+    if (TIPO_FORMULARIO === 'carto') {
+      return [
+        d.id||'', d.fecha||'', d.municipio||'',
+        d.vereda||'', d.casa||'', d.familia||'', d.idFam||'',
+        d.coord||'', d.riesgo||'', d.conv||'', d.patologias||'', d.obs||'',
+        d.foto ? '✅ Tiene foto' : 'Sin foto'
+      ];
+    }
+
+    if (TIPO_FORMULARIO === 'recoleccion') {
+      var sub    = d.subData        || {};
+      var fg     = sub.familiograma  || {};
+      var apg    = sub.apgar         || {};
+      var zar    = sub.zarit         || {};
+      var eco    = sub.ecomapa       || {};
+      var jefe   = fg.principal || {};
+      var pareja = pickPareja(fg);
+
+      var todosMiembros2 = fg.miembros || [];
+      var hijosU = []; var vistos2 = {};
+      todosMiembros2.forEach(function(m) {
+        if (m.parentesco === 'hijo' && !vistos2[m.nombre]) { hijosU.push(m); vistos2[m.nombre]=true; }
+      });
+      var hijos2 = hijosU.map(function(h){ return (h.nombre||'?')+'('+(h.anio||'?')+'/'+( h.genero||'?')+')'; }).join('|');
+
+      var apgarMiembros2 = apg.miembros || [];
+      var apgarCols2 = [];
+      for (var am2=0; am2<6; am2++) {
+        var rm2 = apgarMiembros2[am2] || {};
+        apgarCols2 = apgarCols2.concat([rm2.nombres||rm2.nombre||'',rm2.sexo||'',rm2.edad||'',
+          valOrEmpty(rm2.p1),valOrEmpty(rm2.p2),valOrEmpty(rm2.p3),valOrEmpty(rm2.p4),valOrEmpty(rm2.p5),
+          rm2.total!==null&&rm2.total!==undefined?rm2.total:'']);
+      }
+      apgarCols2.push(apg.analisis||'');
+
+      var zaritResps2 = zar.respuestas||[];
+      var zaritCols2  = [];
+      for (var zi2=0; zi2<22; zi2++) { var zv2=zaritResps2[zi2]; zaritCols2.push(zv2!==null&&zv2!==undefined?zv2:''); }
+      var zaritP2 = zar.puntaje||0;
+      var zaritI2 = zaritP2<=46?'No sobrecarga':zaritP2<=55?'Sobrecarga leve':'Sobrecarga intensa';
+      zaritCols2 = zaritCols2.concat([zaritP2,zaritI2,zar.obs||'']);
+
+      var ecoVals2 = eco.valores||eco||{};
+      var ECO_IDS2 = ['eco-vias','eco-fam-ext','eco-programas','eco-justicia','eco-org-com',
+                      'eco-vecinos','eco-espiritualidad','eco-educacion','eco-trabajo',
+                      'eco-jac','eco-recreacion','eco-salud','eco-recursos'];
+      var ecoCols2 = ECO_IDS2.map(function(id){ return ecoVals2[id]||''; });
+      ecoCols2.push(eco.obs||'');
+
+      // Regenerar documento
+      var urlDoc2 = '';
+      try { urlDoc2 = crearDocInstrumentos(carpeta, d, fg, apg, zar, eco); }
+      catch(eD) { urlDoc2 = 'Error: '+eD.message; }
+
+      return [
+        d.id||'', d.fecha||'', d.municipio||NOMBRE_MUNICIPIO,
+        d.hospital||'', d.vereda||'', d.microterritorio||'', d.telefono||'',
+        fg.familia||'', fg.vereda||'',
+        jefe.nombre||'', jefe.anio||'', jefe.estado||'', jefe.enf||'',
+        pareja.nombre||'', pareja.anio||'', pareja.estado||'', pareja.enf||'',
+        fg.relacion||fg.relacionPareja||'', hijos2, fg.obs||''
+      ].concat(apgarCols2).concat(zaritCols2).concat(ecoCols2).concat([urlDoc2]);
+    }
+
+    if (TIPO_FORMULARIO === 'macro') {
+      var viv2 = d.vivienda||{};
+      var ints2 = (d.integrantes||[]).map(function(p){
+        return [p.nombre,p.tipodoc,p.numdoc,p.edad,p.cursovida,p.genero].filter(Boolean).join('|');
+      }).join(' / ');
+      return [
+        d.id||'', d.fechaVisita||d.fecha||'', d.municipio||NOMBRE_MUNICIPIO,
+        d.vereda||'', d.microterritorio||'', d.auxiliar||'', d.novedad||'',
+        d.familia||'', d.casa||'', d.telefono||'', d.cargado||'',
+        d.segTelf||'', d.segMedico||'',
+        viv2.acueducto||'', viv2.pozo||'', viv2.sanitaria||'', viv2.ducha||'',
+        viv2.cocina||'', viv2.residuos||'', viv2.paredes||'', viv2.piso||'',
+        viv2.techo||'', viv2.electricidad||'', viv2.riesgoEntorno||'',
+        viv2.nivelRiesgo||'', viv2.ingresos||'', viv2.sisben||'',
+        ints2
+      ];
+    }
+    return null;
+  } catch(eCF) {
+    Logger.log('construirFila error: ' + eCF.message);
+    return null;
+  }
+}
+
+// ── GUARDAR LOGO EN DRIVE ────────────────────────────────────
+function guardarLogo(datos) {
+  var municipio = datos.municipio || 'global';
+  var tipo      = datos.tipo      || 'hospital';
+  var base64    = datos.base64    || '';
+
+  if (!base64 || base64.length < 100) {
+    Logger.log('guardarLogo: base64 vacío o inválido - longitud: ' + base64.length);
+    return;
+  }
+
+  var clean = base64.indexOf(',') !== -1 ? base64.split(',')[1] : base64;
+  var mime  = base64.indexOf('image/jpeg') !== -1 ? 'image/jpeg' : 'image/png';
+
+  if (tipo === 'ebs') {
+    // Logo EBS: se guarda en la carpeta de este script (cada script tiene la suya)
+    var subCarpeta = obtenerSubCarpetaLogos(obtenerCarpeta());
+    var nombreArch = 'logo_ebs.png';
+    var existentes = subCarpeta.getFilesByName(nombreArch);
+    while (existentes.hasNext()) existentes.next().setTrashed(true);
+    var blob = Utilities.newBlob(Utilities.base64Decode(clean), mime, nombreArch);
+    subCarpeta.createFile(blob);
+    Logger.log('Logo EBS guardado en carpeta: ' + subCarpeta.getName());
+  } else {
+    // Logo hospital: se guarda en la carpeta de este script con nombre del municipio
+    var subCarpeta2 = obtenerSubCarpetaLogos(obtenerCarpeta());
+    var nombreArch2 = 'logo_hospital_' + limpiarNombre(municipio) + '.png';
+    var existentes2 = subCarpeta2.getFilesByName(nombreArch2);
+    while (existentes2.hasNext()) existentes2.next().setTrashed(true);
+    var blob2 = Utilities.newBlob(Utilities.base64Decode(clean), mime, nombreArch2);
+    subCarpeta2.createFile(blob2);
+    Logger.log('Logo hospital guardado: ' + nombreArch2);
+  }
+}
+
+// ── LEER LOGO DESDE DRIVE ────────────────────────────────────
+function leerLogoDesdeDrive(municipio, tipo) {
+  try {
+    var subCarpeta = obtenerSubCarpetaLogos(obtenerCarpeta());
+    var nombreArch = tipo === 'ebs'
+      ? 'logo_ebs.png'
+      : 'logo_hospital_' + limpiarNombre(municipio) + '.png';
+
+    Logger.log('Buscando logo: ' + nombreArch + ' en carpeta: ' + subCarpeta.getName());
+
+    var archivos = subCarpeta.getFilesByName(nombreArch);
+    if (!archivos.hasNext()) {
+      Logger.log('Logo NO encontrado: ' + nombreArch);
+      return null;
+    }
+
+    var file  = archivos.next();
+    var blob  = file.getBlob();
+    var mime  = blob.getContentType() || 'image/png';
+    var bytes = blob.getBytes();
+    Logger.log('Logo encontrado: ' + nombreArch + ' mime: ' + mime + ' bytes: ' + bytes.length);
+    return 'data:' + mime + ';base64,' + Utilities.base64Encode(bytes);
+  } catch(e) {
+    Logger.log('leerLogoDesdeDrive error: ' + e.message);
+    return null;
+  }
+}
+
+function obtenerSubCarpetaLogos(carpetaPadre) {
+  var nombre = 'Logos';
+  var subs   = carpetaPadre.getFoldersByName(nombre);
+  if (subs.hasNext()) return subs.next();
+  return carpetaPadre.createFolder(nombre);
 }
 
 function guardarCarto(sheet, d) {
@@ -128,6 +400,19 @@ function guardarRecoleccion(sheet, d) {
 
   var carpeta = obtenerCarpeta();
   var urlDoc  = '';
+
+  // Verificar si este ID ya fue procesado (evita documentos duplicados por reintentos de red)
+  var registroId = String(d.id || '');
+  if (registroId) {
+    var allData = sheet.getDataRange().getValues();
+    for (var ri = 1; ri < allData.length; ri++) {
+      if (String(allData[ri][0]) === registroId) {
+        Logger.log('ID duplicado detectado, omitiendo: ' + registroId);
+        return; // Ya fue guardado, no crear documento de nuevo
+      }
+    }
+  }
+
   try { 
     urlDoc = crearDocInstrumentos(carpeta, d, fg, apg, zar, eco); 
     Logger.log('Documento creado: ' + urlDoc);
@@ -164,6 +449,10 @@ function crearDocInstrumentos(carpeta, d, fg, apg, zar, eco) {
 
   try {
     // ENCABEZADO INSTITUCIONAL
+    // Leer logos desde Drive (guardados por BOSS, compartidos para todos)
+    var logoHospB64 = leerLogoDesdeDrive(d.municipio || NOMBRE_MUNICIPIO, 'hospital');
+    var logoEbsB64  = leerLogoDesdeDrive(d.municipio || NOMBRE_MUNICIPIO, 'ebs');
+
     var nombreHospital = d.hospital || 'E.S.E SAN MARTÍN';
     var headerTable = body.appendTable([
       ['', nombreHospital, ''],
@@ -173,14 +462,19 @@ function crearDocInstrumentos(carpeta, d, fg, apg, zar, eco) {
     // Celda izquierda fila 0: Logo Hospital
     var celdaLogoHosp = headerTable.getRow(0).getCell(0);
     celdaLogoHosp.setBackgroundColor('#ffffff');
-    if (d.logoHospital && d.logoHospital.length > 100) {
+    celdaLogoHosp.setPaddingTop(4);
+    celdaLogoHosp.setPaddingBottom(4);
+    celdaLogoHosp.setPaddingLeft(4);
+    celdaLogoHosp.setPaddingRight(4);
+    if (logoHospB64 && logoHospB64.length > 100) {
       try {
-        var b64Hosp = d.logoHospital.indexOf(',') !== -1 ? d.logoHospital.split(',')[1] : d.logoHospital;
-        var blobHosp = Utilities.newBlob(Utilities.base64Decode(b64Hosp), 'image/png', 'logo_hospital.png');
-        var imgHosp = body.getImages ? null : null; // placeholder
-        celdaLogoHosp.insertImage(0, blobHosp);
+        var mimeHosp2 = logoHospB64.indexOf('image/jpeg') !== -1 ? 'image/jpeg' : 'image/png';
+        var b64Hosp   = logoHospB64.split(',')[1];
+        var blobHosp  = Utilities.newBlob(Utilities.base64Decode(b64Hosp), mimeHosp2, 'logo_hospital');
+        var imgHosp   = celdaLogoHosp.insertImage(0, blobHosp);
+        imgHosp.setWidth(80).setHeight(60);
       } catch(eImg) {
-        celdaLogoHosp.editAsText().setText('LOGO\nHOSPITAL').setFontSize(7).setForegroundColor('#005f73');
+        celdaLogoHosp.editAsText().setText('').setFontSize(8);
       }
     } else {
       celdaLogoHosp.editAsText().setText('').setFontSize(8);
@@ -193,13 +487,17 @@ function crearDocInstrumentos(carpeta, d, fg, apg, zar, eco) {
     // Celda derecha fila 0: Logo EBS
     var celdaLogoEbs = headerTable.getRow(0).getCell(2);
     celdaLogoEbs.setBackgroundColor('#ffffff');
-    if (d.logoEbs && d.logoEbs.length > 100) {
+    celdaLogoEbs.setPaddingTop(4); celdaLogoEbs.setPaddingBottom(4);
+    celdaLogoEbs.setPaddingLeft(4); celdaLogoEbs.setPaddingRight(4);
+    if (logoEbsB64 && logoEbsB64.length > 100) {
       try {
-        var b64Ebs = d.logoEbs.indexOf(',') !== -1 ? d.logoEbs.split(',')[1] : d.logoEbs;
-        var blobEbs = Utilities.newBlob(Utilities.base64Decode(b64Ebs), 'image/png', 'logo_ebs.png');
-        celdaLogoEbs.insertImage(0, blobEbs);
+        var mimeEbs2 = logoEbsB64.indexOf('image/jpeg') !== -1 ? 'image/jpeg' : 'image/png';
+        var b64Ebs   = logoEbsB64.split(',')[1];
+        var blobEbs  = Utilities.newBlob(Utilities.base64Decode(b64Ebs), mimeEbs2, 'logo_ebs');
+        var imgEbs   = celdaLogoEbs.insertImage(0, blobEbs);
+        imgEbs.setWidth(80).setHeight(60);
       } catch(eImg2) {
-        celdaLogoEbs.editAsText().setText('LOGO\nEBS').setFontSize(7).setForegroundColor('#005f73');
+        celdaLogoEbs.editAsText().setText('').setFontSize(8);
       }
     } else {
       celdaLogoEbs.editAsText().setText('').setFontSize(8);
@@ -284,22 +582,30 @@ function crearDocInstrumentos(carpeta, d, fg, apg, zar, eco) {
       ]);
     }
     
-    // ✅ CORRECCIÓN: Procesar miembros sin duplicados
-    var todosMiembros = fg.miembros || [];
+    // Registrar jefe y pareja como ya procesados para evitar duplicados
     var miembrosProcesados = {};
-    
+    if (jefe.nombre)   miembrosProcesados[normNombre(jefe.nombre)]   = true;
+    if (pareja.nombre) miembrosProcesados[normNombre(pareja.nombre)] = true;
+
+    // Resto de miembros: saltar pareja (ya procesada arriba) y duplicados
+    var todosMiembros = fg.miembros || [];
     todosMiembros.forEach(function(m) {
-      // Evitar duplicados por nombre
-      if (!m.nombre || miembrosProcesados[m.nombre]) return;
-      miembrosProcesados[m.nombre] = true;
-      
+      if (!m.nombre) return;
+      var key = normNombre(m.nombre);
+      // Saltar si ya está en la tabla (jefe, pareja, o duplicado)
+      if (miembrosProcesados[key]) return;
+      // Saltar parentesco 'pareja' aunque tenga nombre distinto al de pickPareja
+      // (se habrá procesado ya o es redundante)
+      if (m.parentesco === 'pareja' && pareja.nombre) return;
+      miembrosProcesados[key] = true;
+
       var etiqueta = obtenerEtiquetaParentesco(m.parentesco);
       miembrosTableData.push([
         etiqueta,
         m.nombre || '—',
-        m.anio || '—',
+        m.anio   || '—',
         m.estado || '—',
-        m.nota || '—'
+        m.nota   || '—'
       ]);
     });
 
@@ -580,9 +886,15 @@ function crearDocInstrumentos(carpeta, d, fg, apg, zar, eco) {
 // ════════════════════════════════════════════════════════════
 
 // ✅ NUEVA: Verificar si un miembro ya está en la tabla
+// Normaliza nombre para comparación: minúsculas sin espacios extra
+function normNombre(n) {
+  return (n || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 function esMiembroRepetido(nombre, tablaData) {
+  var key = normNombre(nombre);
   for (var i = 1; i < tablaData.length; i++) {
-    if (tablaData[i][1] === nombre) return true;
+    if (normNombre(tablaData[i][1]) === key) return true;
   }
   return false;
 }
