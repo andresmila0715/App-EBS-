@@ -240,60 +240,60 @@ function guardarLogo(datos) {
   var base64    = datos.base64    || '';
 
   if (!base64 || base64.length < 100) {
-    Logger.log('guardarLogo: base64 vacío o inválido - longitud: ' + base64.length);
+    Logger.log('guardarLogo: base64 inválido, longitud: ' + base64.length);
     return;
   }
 
   var clean = base64.indexOf(',') !== -1 ? base64.split(',')[1] : base64;
   var mime  = base64.indexOf('image/jpeg') !== -1 ? 'image/jpeg' : 'image/png';
 
-  if (tipo === 'ebs') {
-    // Logo EBS: se guarda en la carpeta de este script (cada script tiene la suya)
-    var subCarpeta = obtenerSubCarpetaLogos(obtenerCarpeta());
-    var nombreArch = 'logo_ebs.png';
-    var existentes = subCarpeta.getFilesByName(nombreArch);
-    while (existentes.hasNext()) existentes.next().setTrashed(true);
-    var blob = Utilities.newBlob(Utilities.base64Decode(clean), mime, nombreArch);
-    subCarpeta.createFile(blob);
-    Logger.log('Logo EBS guardado en carpeta: ' + subCarpeta.getName());
-  } else {
-    // Logo hospital: se guarda en la carpeta de este script con nombre del municipio
-    var subCarpeta2 = obtenerSubCarpetaLogos(obtenerCarpeta());
-    var nombreArch2 = 'logo_hospital_' + limpiarNombre(municipio) + '.png';
-    var existentes2 = subCarpeta2.getFilesByName(nombreArch2);
-    while (existentes2.hasNext()) existentes2.next().setTrashed(true);
-    var blob2 = Utilities.newBlob(Utilities.base64Decode(clean), mime, nombreArch2);
-    subCarpeta2.createFile(blob2);
-    Logger.log('Logo hospital guardado: ' + nombreArch2);
-  }
+  // Siempre usar la misma carpeta que guardarRecoleccion
+  var carpeta    = obtenerCarpeta();
+  var subCarpeta = obtenerSubCarpetaLogos(carpeta);
+  var nombreArch = tipo === 'ebs'
+    ? 'logo_ebs.png'
+    : 'logo_hospital_' + limpiarNombre(municipio) + '.png';
+
+  // Borrar versión anterior
+  var existentes = subCarpeta.getFilesByName(nombreArch);
+  while (existentes.hasNext()) existentes.next().setTrashed(true);
+
+  // Guardar nuevo
+  var blob = Utilities.newBlob(Utilities.base64Decode(clean), mime, nombreArch);
+  subCarpeta.createFile(blob);
+  Logger.log('Logo guardado: ' + nombreArch + ' en ' + subCarpeta.getName() + ' (' + clean.length + ' chars b64)');
 }
 
 // ── LEER LOGO DESDE DRIVE ────────────────────────────────────
-function leerLogoDesdeDrive(municipio, tipo) {
+// Versión que recibe carpeta explícita (evita inconsistencias con shared drives)
+function leerLogoDesdeCarpeta(carpeta, municipio, tipo) {
   try {
-    var subCarpeta = obtenerSubCarpetaLogos(obtenerCarpeta());
+    var subCarpeta = obtenerSubCarpetaLogos(carpeta);
     var nombreArch = tipo === 'ebs'
       ? 'logo_ebs.png'
       : 'logo_hospital_' + limpiarNombre(municipio) + '.png';
 
-    Logger.log('Buscando logo: ' + nombreArch + ' en carpeta: ' + subCarpeta.getName());
-
+    Logger.log('Buscando logo: ' + nombreArch + ' en: ' + subCarpeta.getName());
     var archivos = subCarpeta.getFilesByName(nombreArch);
     if (!archivos.hasNext()) {
       Logger.log('Logo NO encontrado: ' + nombreArch);
       return null;
     }
-
     var file  = archivos.next();
     var blob  = file.getBlob();
     var mime  = blob.getContentType() || 'image/png';
     var bytes = blob.getBytes();
-    Logger.log('Logo encontrado: ' + nombreArch + ' mime: ' + mime + ' bytes: ' + bytes.length);
+    Logger.log('Logo OK: ' + nombreArch + ' (' + bytes.length + ' bytes, ' + mime + ')');
     return 'data:' + mime + ';base64,' + Utilities.base64Encode(bytes);
   } catch(e) {
-    Logger.log('leerLogoDesdeDrive error: ' + e.message);
+    Logger.log('leerLogoDesdeCarpeta error: ' + e.message);
     return null;
   }
+}
+
+// Versión legacy (usa obtenerCarpeta internamente)
+function leerLogoDesdeDrive(municipio, tipo) {
+  return leerLogoDesdeCarpeta(obtenerCarpeta(), municipio, tipo);
 }
 
 function obtenerSubCarpetaLogos(carpetaPadre) {
@@ -449,9 +449,9 @@ function crearDocInstrumentos(carpeta, d, fg, apg, zar, eco) {
 
   try {
     // ENCABEZADO INSTITUCIONAL
-    // Leer logos desde Drive (guardados por BOSS, compartidos para todos)
-    var logoHospB64 = leerLogoDesdeDrive(d.municipio || NOMBRE_MUNICIPIO, 'hospital');
-    var logoEbsB64  = leerLogoDesdeDrive(d.municipio || NOMBRE_MUNICIPIO, 'ebs');
+    // Leer logos desde la misma carpeta donde se guardan los documentos
+    var logoHospB64 = leerLogoDesdeCarpeta(carpeta, d.municipio || NOMBRE_MUNICIPIO, 'hospital');
+    var logoEbsB64  = leerLogoDesdeCarpeta(carpeta, d.municipio || NOMBRE_MUNICIPIO, 'ebs');
 
     var nombreHospital = d.hospital || 'E.S.E SAN MARTÍN';
     var headerTable = body.appendTable([
@@ -1067,19 +1067,21 @@ function obtenerCarpeta() {
 function moverACarpeta(doc, carpeta) {
   try {
     var file = DriveApp.getFileById(doc.getId());
+    // Agregar a la carpeta destino
+    carpeta.addFile(file);
+    // Quitar de todas las carpetas padre (incluyendo root)
     var parents = file.getParents();
-    
     while (parents.hasNext()) {
       var parent = parents.next();
-      if (parent.getName() !== 'Mi Unidad' && parent.getName() !== 'My Drive') {
-        parent.removeFile(file);
+      if (parent.getId() !== carpeta.getId()) {
+        try { parent.removeFile(file); } catch(er) { /* ignora si no tiene permiso */ }
       }
     }
-    
-    carpeta.addFile(file);
     Logger.log('Documento movido a carpeta: ' + carpeta.getName());
   } catch (e) {
     Logger.log('Error moviendo documento: ' + e.message);
+    // Intentar solo agregar sin quitar
+    try { carpeta.addFile(DriveApp.getFileById(doc.getId())); } catch(e2) {}
   }
 }
 
