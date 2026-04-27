@@ -1210,6 +1210,10 @@ function clearF(tipo) {
 const gv = id => document.getElementById(id)?.value || '';
 
 async function saveR(tipo) {
+  // Evitar doble envío deshabilitando el botón mientras guarda
+  const btns = document.querySelectorAll(`button[onclick="saveR('${tipo}')"]`);
+  btns.forEach(b => { b.disabled = true; b.textContent = '⏳ Guardando...'; });
+
   let registro = {
     id: Date.now(),
     fecha: new Date().toLocaleString('es-CO'),
@@ -1525,6 +1529,9 @@ function closeModal() {
 }
 
 async function saveEdit() {
+  const btnEdit = document.querySelector('#modal-edit .btn-pri');
+  if (btnEdit) { btnEdit.disabled = true; btnEdit.textContent = '⏳ Guardando...'; }
+  const restoreEditBtn = () => { if (btnEdit) { btnEdit.disabled = false; btnEdit.textContent = 'Guardar'; } };
   const recs = getRecs(CM, editTipo);
   const r = recs.find(x => x.id == editId);
   if (!r) { closeModal(); return; }
@@ -1559,6 +1566,7 @@ async function saveEdit() {
   r.editada = new Date().toLocaleString('es-CO');
   setRecs(CM, editTipo, recs);
 
+  restoreEditBtn();
   closeModal();
   renderRecs();
   updateSync();
@@ -2342,8 +2350,13 @@ function dibujarEcomapa() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const DPR = 2;
-  const W = Math.max(460, canvas.offsetWidth || 500);
-  const H = 780;
+  const W   = Math.max(360, canvas.offsetWidth || 460);
+  // Radio y cajas se ajustan al ancho
+  const R   = Math.min(W * 0.40, 200);
+  const bw  = Math.min(132, W * 0.28);
+  const bh  = 68;
+  // Altura dinámica: nodo más lejano + margen
+  const H   = Math.ceil(R * 2 + bh + 60) + 40;
   canvas.width  = W * DPR;
   canvas.height = H * DPR;
   canvas.style.width  = W + 'px';
@@ -2353,10 +2366,7 @@ function dibujarEcomapa() {
   ctx.fillRect(0, 0, W, H);
 
   const cx = W / 2;
-  const cy = H / 2 - 10;
-  const R  = Math.min(W * 0.46, H * 0.44);
-
-  const bw = 140, bh = 96;
+  const cy = H / 2;
   ctx.save();
   ctx.shadowColor = 'rgba(0,95,115,0.25)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 4;
   ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#005f73'; ctx.lineWidth = 3;
