@@ -857,6 +857,7 @@ function setPend(m, t, arr) {
     localStorage.setItem(storagePendKey(m, t), JSON.stringify(arr));
   } catch(e) {
     console.warn('setPend quota exceeded', e);
+    toast('⚠️ Almacenamiento lleno. Sincroniza y elimina registros viejos.', 'err');
   }
 }
 
@@ -896,6 +897,8 @@ function updateSync() {
 async function syncAll() {
   if (!online || !CU) return;
   const munis = CU.role === 'boss' ? MUNIS : [CM];
+  // Track if there were pending items so we only toast on actual sync
+  const _hadPending = munis.some(m => TIPOS.some(t => getPend(m, t).length > 0));
   document.getElementById('sdot').className = 'sdot syncing';
 
   for (const m of munis) {
@@ -952,7 +955,7 @@ async function syncAll() {
 
   const restantes = (CU.role === 'boss' ? MUNIS : [CM])
     .reduce((s, m) => s + TIPOS.reduce((s2, t) => s2 + getPend(m, t).length, 0), 0);
-  if (restantes === 0) toast('☁️ Todo sincronizado con Google Sheets', 'ok');
+  if (restantes === 0 && _hadPending) toast('☁️ Todo sincronizado con Google Sheets', 'ok');
 }
 
 async function pushToSheet(registro, url) {
@@ -1224,9 +1227,11 @@ async function saveR(tipo) {
     synced: false
   };
 
+  const restoreBtn = () => btns.forEach(b => { b.disabled = false; b.textContent = '💾 Guardar'; });
+
   if (tipo === 'carto') {
-    if (!gv('c1-casa') || !gv('c1-familia')) { toast('⚠️ Casa y familia son obligatorios', 'err'); return; }
-    if (!gv('c1-riesgo')) { toast('⚠️ Selecciona el riesgo', 'err'); return; }
+    if (!gv('c1-casa') || !gv('c1-familia')) { toast('⚠️ Casa y familia son obligatorios', 'err'); restoreBtn(); return; }
+    if (!gv('c1-riesgo')) { toast('⚠️ Selecciona el riesgo', 'err'); restoreBtn(); return; }
     Object.assign(registro, {
       casa: gv('c1-casa'), familia: gv('c1-familia'),
       vereda: gv('c1-vereda'),
@@ -1237,6 +1242,8 @@ async function saveR(tipo) {
     });
 
   } else if (tipo === 'recoleccion') {
+    const jefeNombreVal = document.getElementById('fg-principal-nombre')?.value?.trim();
+    if (!jefeNombreVal) { toast('⚠️ El nombre del jefe del hogar es obligatorio', 'err'); restoreBtn(); return; }
     const subData = getRecoleccionData();
     // Promover campos clave al nivel raíz para que el Apps Script los lea como d.xxx
     Object.assign(registro, {
@@ -1295,6 +1302,7 @@ async function saveR(tipo) {
     toast('💾 Guardado · Se subirá cuando haya señal', 'warn');
   }
 
+  restoreBtn();
   updateSync();
   clearF(tipo);
   showTab('registros');
@@ -2771,6 +2779,8 @@ async function cfgUploadLogo(input, tipo) {
   };
   reader.readAsDataURL(file);
 }
+
+function updateLogosStatus() { /* logos managed via cfgRefreshPreviews */ }
 
 function cfgDeleteLogo(tipo) {
   if (!confirm('¿Quitar este logo?')) return;
