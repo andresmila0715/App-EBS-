@@ -2353,33 +2353,35 @@ function dibujarEcomapa() {
   const ctx = canvas.getContext('2d');
   const DPR = 2;
 
-  // ── Layout de cuadrícula 5-3-5 alrededor del centro ─────────
-  // Fila 0 (arriba):    índices 0-4   → 5 nodos
-  // Fila 1 (izq/der):   índices 5-6 izq, 7-8 der → 4 nodos laterales
-  // Centro:             FAMILIA
-  // Fila 2 (abajo):     índices 9-13 → 4/5 nodos
+  // ── Layout rectángulo: 4 arriba · 2 izq · 3 der · 4 abajo ───
+  // Distribución:
+  //  TOP (4):   [0] [1] [2] [3]
+  //  LEFT (2):  [4]                   RIGHT (3): [9] [10] [11]
+  //             [5]
+  //  BOT (4):   [6] [7] [8]  ← 3 abajo + índice 12 en esquina inf-der
 
-  const BW   = 112;  // ancho caja nodo
-  const BH   = 60;   // alto caja nodo
-  const HGAP = 14;   // espacio horizontal entre cajas
-  const VGAP = 18;   // espacio vertical entre filas
-  const CW   = 130;  // ancho caja central (familia)
-  const CH   = 70;   // alto caja central
+  // Mejor distribución simétrica para 13:
+  // top=4, bot=4, left=2, right=3  → total 13
+  // Visualmente:
+  //   [0]  [1]  [2]  [3]
+  //   [4]  [FAMILIA]  [9]
+  //   [5]  [FAMILIA] [10]
+  //        [FAMILIA] [11]
+  //   [6]  [7]  [8] [12]
 
-  // Posiciones fijas de los 13 nodos + centro
-  // Layout:
-  //  fila top (5):    0  1  2  3  4
-  //  fila mid (4):    5  6  [FAMILIA]  7  8
-  //  fila bot (4):    9  10 11 12
-  const COLS  = 5;
-  const totalW = COLS * BW + (COLS - 1) * HGAP;
-  const W = totalW + 40;
+  const BW   = 110;  // ancho caja nodo
+  const BH   = 58;   // alto caja nodo
+  const HGAP = 12;   // espacio horizontal
+  const VGAP = 12;   // espacio vertical
+  const CW   = 120;  // ancho familia
+  const CH   = 110;  // alto familia (ocupa 2 filas)
 
-  // Calcular filas
-  const rowTop = 20;
-  const rowMid = rowTop + BH + VGAP;
-  const rowBot = rowMid + Math.max(BH, CH) + VGAP;
-  const H = rowBot + BH + 20;
+  // Número de columnas totales = 1(left) + 1(center) + 1(right) = 3 zonas
+  // Ancho total: BW + HGAP + CW + HGAP + BW
+  const W = BW + HGAP + CW + HGAP + BW + 40;
+  // 4 filas de nodos + gaps
+  const nRows = 4;
+  const H = nRows * BH + (nRows - 1) * VGAP + 40;
 
   canvas.width  = W * DPR;
   canvas.height = H * DPR;
@@ -2390,46 +2392,46 @@ function dibujarEcomapa() {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, H);
 
-  const ox = 20; // offset izquierdo
+  // Columnas X
+  const PAD   = 20;
+  const colL  = PAD + BW/2;                        // col izquierda
+  const colC  = PAD + BW + HGAP + CW/2;            // col centro (familia)
+  const colR  = PAD + BW + HGAP + CW + HGAP + BW/2; // col derecha
 
-  // Posiciones de los 13 nodos
-  const step = BW + HGAP;
+  // Filas Y (4 filas equiespaciadas)
+  const rowY = (i) => PAD + BH/2 + i * (BH + VGAP);
 
-  // Fila top: 5 nodos (índices 0-4), centrada
-  const topStartX = ox + (totalW - 5*BW - 4*HGAP) / 2;
-  const topNodes = [0,1,2,3,4].map((_, i) => ({
-    x: topStartX + i * step + BW/2,
-    y: rowTop + BH/2
-  }));
+  // Centro familia (ocupa filas 1-2, columna central)
+  const cx = colC;
+  const cy = PAD + BH + VGAP + CH/2;   // centrado entre filas 1 y 2
 
-  // Centro familia
-  const cx = ox + totalW/2;
-  const cy = rowMid + Math.max(BH,CH)/2;
-
-  // Fila mid: 2 izq (5,6) + 2 der (7,8)
-  const midY = cy;
-  const midNodes = [
-    { x: ox + BW/2,           y: midY }, // 5 — col 0
-    { x: ox + step + BW/2,    y: midY }, // 6 — col 1
-    { x: ox + 3*step + BW/2,  y: midY }, // 7 — col 3
-    { x: ox + 4*step + BW/2,  y: midY }, // 8 — col 4
-  ];
-
-  // Fila bot: 4 nodos centrados (9-12)
-  const botStartX = ox + (totalW - 4*BW - 3*HGAP) / 2;
-  const botNodes = [0,1,2,3].map((_, i) => ({
-    x: botStartX + i * step + BW/2,
-    y: rowBot + BH/2
-  }));
-
-  // Asignación índice → posición
+  // ── Posiciones de los 13 nodos ────────────────────────────────
+  // top (4): fila 0, distribuidas en las 4 columnas
+  // Centrar 4 nodos en el ancho total
+  const totalInnerW = BW + HGAP + CW + HGAP + BW;
+  const topStep = totalInnerW / 3;
   const positions = [
-    ...topNodes,             // 0-4
-    ...midNodes,             // 5-8
-    ...botNodes,             // 9-12
+    // TOP 4 — fila 0
+    { x: PAD + BW/2,                        y: rowY(0) },   // 0
+    { x: PAD + BW/2 + topStep,              y: rowY(0) },   // 1
+    { x: PAD + BW/2 + topStep*2,            y: rowY(0) },   // 2
+    { x: PAD + BW/2 + topStep*3,            y: rowY(0) },   // 3
+    // LEFT 2 — filas 1 y 2
+    { x: colL, y: rowY(1) },   // 4
+    { x: colL, y: rowY(2) },   // 5
+    // BOT 4 — fila 3
+    { x: PAD + BW/2,                        y: rowY(3) },   // 6
+    { x: PAD + BW/2 + topStep,              y: rowY(3) },   // 7
+    { x: PAD + BW/2 + topStep*2,            y: rowY(3) },   // 8
+    // RIGHT 3 — filas 1, 2, 3
+    { x: colR, y: rowY(1) },   // 9
+    { x: colR, y: rowY(2) },   // 10
+    { x: colR, y: rowY(3) },   // 11 — esquina der-bot
+    // Extra: fila 3 col derecha-bot llena con índice 12
+    { x: PAD + BW/2 + topStep*3,            y: rowY(3) },   // 12
   ];
 
-  // ── Helpers ──────────────────────────────────────────────────
+  // ── Helper drawNode ───────────────────────────────────────────
   function drawNode(x, y, cat) {
     const val    = document.getElementById(cat.id)?.value ?? '';
     const valTxt = val !== '' ? ecoValorTexto(val) : '';
@@ -2439,17 +2441,17 @@ function dibujarEcomapa() {
     ctx.save();
     ctx.strokeStyle = filled ? '#0891b2' : '#cbd5e1';
     ctx.lineWidth   = filled ? 2 : 1.2;
-    ctx.setLineDash(filled ? [] : [5,4]);
+    ctx.setLineDash(filled ? [] : [4,4]);
     ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
     ctx.restore();
 
     // Caja
     ctx.save();
-    if (filled) { ctx.shadowColor='rgba(8,145,178,0.18)'; ctx.shadowBlur=7; ctx.shadowOffsetY=2; }
+    if (filled) { ctx.shadowColor='rgba(8,145,178,0.15)'; ctx.shadowBlur=6; ctx.shadowOffsetY=2; }
     ctx.fillStyle   = filled ? '#e0f7fa' : '#f8fafc';
     ctx.strokeStyle = filled ? '#0891b2' : '#cbd5e1';
     ctx.lineWidth   = filled ? 2 : 1.2;
-    ecomapaRoundRect(ctx, x-BW/2, y-BH/2, BW, BH, 10);
+    ecomapaRoundRect(ctx, x-BW/2, y-BH/2, BW, BH, 9);
     ctx.fill(); ctx.stroke();
     ctx.restore();
 
@@ -2458,50 +2460,105 @@ function dibujarEcomapa() {
     ctx.font = '700 10px DM Sans, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const words = cat.short.split(' ');
-    const labelY = filled ? y - BH/2 + 12 : y;
+    const labelY = filled ? y - BH/2 + 11 : y;
     if (words.length > 1) {
-      const mid = Math.ceil(words.length / 2);
-      ctx.fillText(words.slice(0,mid).join(' '), x, labelY - 6);
-      ctx.fillText(words.slice(mid).join(' '),   x, labelY + 6);
+      const half = Math.ceil(words.length / 2);
+      ctx.fillText(words.slice(0,half).join(' '), x, labelY - 6);
+      ctx.fillText(words.slice(half).join(' '),   x, labelY + 6);
     } else {
       ctx.fillText(cat.short, x, labelY);
     }
 
     // Valor
     if (filled) {
-      const displayVal = val === '-2' ? 'N/A' : val;
-      const shortTxt   = valTxt.length > 14 ? valTxt.slice(0,13)+'…' : valTxt;
+      const dv  = val === '-2' ? 'N/A' : val;
+      const st  = valTxt.length > 14 ? valTxt.slice(0,13)+'…' : valTxt;
       ctx.save();
       ctx.strokeStyle='rgba(8,145,178,0.25)'; ctx.lineWidth=1;
       ctx.beginPath(); ctx.moveTo(x-BW/2+8, y+2); ctx.lineTo(x+BW/2-8, y+2); ctx.stroke();
       ctx.restore();
-      ctx.fillStyle = '#005f73'; ctx.font = '800 12px DM Sans, sans-serif';
-      ctx.fillText(displayVal, x, y + 13);
-      ctx.fillStyle = '#0e7490'; ctx.font = '600 9px DM Sans, sans-serif';
-      ctx.fillText(shortTxt, x, y + 25);
+      ctx.fillStyle='#005f73'; ctx.font='800 12px DM Sans, sans-serif';
+      ctx.fillText(dv, x, y+13);
+      ctx.fillStyle='#0e7490'; ctx.font='600 9px DM Sans, sans-serif';
+      ctx.fillText(st, x, y+25);
     } else {
-      ctx.fillStyle = '#94a3b8'; ctx.font = '600 10px DM Sans, sans-serif';
-      ctx.fillText('—', x, y + 14);
+      ctx.fillStyle='#94a3b8'; ctx.font='600 10px DM Sans, sans-serif';
+      ctx.fillText('—', x, y+14);
     }
   }
 
-  // ── Dibujar nodos ────────────────────────────────────────────
+  // ── Dibujar líneas primero (quedan detrás de las cajas) ───────
   ECOMAPA_CATS.forEach((cat, i) => {
     const pos = positions[i];
-    if (pos) drawNode(pos.x, pos.y, cat);
+    if (!pos) return;
+    const val = document.getElementById(cat.id)?.value ?? '';
+    const filled = val !== '';
+    ctx.save();
+    ctx.strokeStyle = filled ? '#0891b2' : '#cbd5e1';
+    ctx.lineWidth   = filled ? 2 : 1.2;
+    ctx.setLineDash(filled ? [] : [4,4]);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+    ctx.restore();
   });
 
-  // ── Caja central FAMILIA ─────────────────────────────────────
+  // ── Dibujar nodos encima ──────────────────────────────────────
+  ECOMAPA_CATS.forEach((cat, i) => {
+    const pos = positions[i];
+    if (!pos) return;
+    const val    = document.getElementById(cat.id)?.value ?? '';
+    const valTxt = val !== '' ? ecoValorTexto(val) : '';
+    const filled = val !== '';
+
+    ctx.save();
+    if (filled) { ctx.shadowColor='rgba(8,145,178,0.15)'; ctx.shadowBlur=6; ctx.shadowOffsetY=2; }
+    ctx.fillStyle   = filled ? '#e0f7fa' : '#f8fafc';
+    ctx.strokeStyle = filled ? '#0891b2' : '#cbd5e1';
+    ctx.lineWidth   = filled ? 2 : 1.2;
+    ecomapaRoundRect(ctx, pos.x-BW/2, pos.y-BH/2, BW, BH, 9);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = '#0f172a';
+    ctx.font = '700 10px DM Sans, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const words = cat.short.split(' ');
+    const labelY = filled ? pos.y - BH/2 + 11 : pos.y;
+    if (words.length > 1) {
+      const half = Math.ceil(words.length / 2);
+      ctx.fillText(words.slice(0,half).join(' '), pos.x, labelY - 6);
+      ctx.fillText(words.slice(half).join(' '),   pos.x, labelY + 6);
+    } else {
+      ctx.fillText(cat.short, pos.x, labelY);
+    }
+
+    if (filled) {
+      const dv = val === '-2' ? 'N/A' : val;
+      const st = valTxt.length > 14 ? valTxt.slice(0,13)+'…' : valTxt;
+      ctx.save();
+      ctx.strokeStyle='rgba(8,145,178,0.25)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pos.x-BW/2+8, pos.y+2); ctx.lineTo(pos.x+BW/2-8, pos.y+2); ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle='#005f73'; ctx.font='800 12px DM Sans, sans-serif';
+      ctx.fillText(dv, pos.x, pos.y+13);
+      ctx.fillStyle='#0e7490'; ctx.font='600 9px DM Sans, sans-serif';
+      ctx.fillText(st, pos.x, pos.y+25);
+    } else {
+      ctx.fillStyle='#94a3b8'; ctx.font='600 10px DM Sans, sans-serif';
+      ctx.fillText('—', pos.x, pos.y+14);
+    }
+  });
+
+  // ── Caja central FAMILIA (dibujada al final, encima de líneas) ─
   ctx.save();
   ctx.shadowColor='rgba(0,95,115,0.22)'; ctx.shadowBlur=14; ctx.shadowOffsetY=3;
   ctx.fillStyle='#ffffff'; ctx.strokeStyle='#005f73'; ctx.lineWidth=2.5;
   ecomapaRoundRect(ctx, cx-CW/2, cy-CH/2, CW, CH, 14);
   ctx.fill(); ctx.stroke();
   ctx.restore();
-  ctx.font = '32px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('👨‍👩‍👧‍👦', cx, cy - 10);
+  ctx.font = '30px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('👨‍👩‍👧‍👦', cx, cy - 14);
   ctx.font = '700 11px DM Sans, sans-serif'; ctx.fillStyle='#003d4d';
-  ctx.fillText('FAMILIA', cx, cy + CH/2 - 14);
+  ctx.fillText('FAMILIA', cx, cy + 12);
 }
 function descargarEcomapa() {
   const canvas = document.getElementById('ecomapa-canvas');
