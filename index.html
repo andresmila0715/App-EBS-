@@ -159,6 +159,12 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .hogar-logo-upload { border: 1.5px dashed var(--primary-light); border-radius: 10px; padding: 12px; background: #f0f9ff; }
 .hogar-logo-upload input[type="file"] { display: block; width: 100%; font: inherit; color: var(--text); }
 .hogar-logo-preview { display: none; width: 150px; height: 80px; margin-top: 10px; padding: 4px; object-fit: contain; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+.hogar-delivery { margin: 16px 0; border: 1px solid var(--border); border-radius: 12px; background: linear-gradient(135deg, #f8fafc, #f0f9ff); overflow: hidden; }
+.hogar-delivery summary { cursor: pointer; padding: 13px 15px; color: var(--primary-dark); font-weight: 700; }
+.hogar-delivery-body { padding: 0 15px 15px; }
+.hogar-delivery-note { margin: 0 0 11px; font-size: .78rem; line-height: 1.4; color: var(--text-muted); }
+.hogar-email-opt { display: flex; align-items: flex-start; gap: 9px; font-size: .84rem; color: var(--text); cursor: pointer; }
+.hogar-email-opt input { width: 17px; height: 17px; margin: 1px 0 0; accent-color: var(--primary); flex: 0 0 auto; }
 .sdiv { font-size: .7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .08em; padding: 8px 0 4px; border-bottom: 1px solid var(--border); margin-bottom: 12px; margin-top: 4px; }
 .apgar-ref { background: #f0f9ff; border: 1.5px solid var(--primary-light); border-radius: 10px; padding: 12px 14px; font-size: .78rem; color: var(--text); margin-bottom: 14px; line-height: 1.45; }
 .apgar-ref strong { color: var(--primary-dark); }
@@ -708,7 +714,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           <div class="ff"><label>Hora de culminación</label><input type="time" id="h-fin"></div>
         </div>
         <div class="frow"><div class="ff"><label>Nombre de quien diligencia</label><input id="h-diligencia" type="text"></div><div class="ff"><label>Persona que atiende la visita</label><input id="h-atiende" type="text"></div></div>
-        <div class="frow"><div class="ff"><label>Dirección de la vivienda</label><input id="h-direccion" type="text"></div><div class="ff"><label>Teléfono de contacto</label><input id="h-telefono" type="tel"></div></div>
+        <div class="frow"><div class="ff"><label>Dirección de la vivienda</label><input id="h-direccion" type="text" autocomplete="street-address"></div><div class="ff"><label>Teléfono de contacto</label><input id="h-telefono" type="tel" autocomplete="tel"></div></div>
+        <details class="hogar-delivery">
+          <summary>✉️ Entrega digital del formato <span style="font-weight:400;color:var(--text-muted);font-size:.78rem">(opcional)</span></summary>
+          <div class="hogar-delivery-body">
+            <p class="hogar-delivery-note">Además de descargar el PDF, puede solicitar una copia al correo indicado. Requiere que el administrador haya configurado el servicio de Hogar en Google Apps Script.</p>
+            <div class="ff"><label for="h-correo-pdf">Correo Gmail para recibir el PDF</label><input id="h-correo-pdf" type="email" inputmode="email" autocomplete="email" placeholder="nombre@gmail.com"></div>
+            <label class="hogar-email-opt"><input id="h-enviar-correo" type="checkbox"><span><strong>Enviar copia del PDF por correo</strong><br><small style="color:var(--text-muted)">La solicitud se guarda junto con el formulario y se procesa al sincronizar.</small></span></label>
+          </div>
+        </details>
         <div id="hogar-form"></div>
         <div class="factions">
           <button class="btn-sec" onclick="clearF('hogar')">Limpiar</button>
@@ -1310,7 +1324,7 @@ const HOGAR_NUMERIC_LABELS = [
 function renderHogarForm() {
   const root = document.getElementById('hogar-form');
   if (!root || root.children.length) return;
-  root.innerHTML = hogarSpecialBlocks() + HOGAR_SECTIONS.map((section, si) => {
+  const renderSection = (section, si) => {
     const fields = section[1].map((question, qi) => {
       const id = hogarId(si, qi), options = question[1] ? question[1].split('|') : [];
       const isMulti = options[0] === 'multiple';
@@ -1332,8 +1346,10 @@ function renderHogarForm() {
       }
       return `<div class="ff"><label>${safeHtml(question[0])}</label>${control}</div>`;
     }).join('');
-    return `<details open style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">${si + 1}. ${safeHtml(section[0])}</summary><div class="frow" style="padding:14px">${fields}</div></details>`;
-  }).join('');
+    return `<details open style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">${safeHtml(section[0])}</summary><div class="frow" style="padding:14px">${fields}</div></details>`;
+  };
+  // Orden similar a la ficha física: territorio, vivienda, integrantes y luego condiciones del hogar.
+  root.innerHTML = HOGAR_SECTIONS.slice(0, 2).map(renderSection).join('') + hogarSpecialBlocks() + HOGAR_SECTIONS.slice(2).map((section, index) => renderSection(section, index + 2)).join('');
   agregarMiembroHogar();
 }
 
@@ -1359,7 +1375,7 @@ function getHogarAnswers() {
 }
 
 function hogarSpecialBlocks() {
-  return `<details open style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">2. Información demográfica por integrante</summary><div style="padding:14px;overflow:auto"><p style="font-size:.8rem;color:var(--text-muted)">Registre una fila por cada persona que reside habitualmente en la vivienda.</p><table class="apgar-table" id="h-miembros"><thead><tr><th>Apellidos y nombres</th><th>Tipo y N° documento</th><th>Fecha nac.</th><th>Género</th><th>Ocupación</th><th>Estado civil</th><th>Parentesco</th><th>SGSSS</th><th>Escolaridad</th><th>Étnica</th><th></th></tr></thead><tbody></tbody></table><button type="button" class="btn-add-int" onclick="agregarMiembroHogar()">＋ Agregar integrante</button></div></details>
+  return `<details open style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">Información demográfica por integrante</summary><div style="padding:14px;overflow:auto"><p style="font-size:.8rem;color:var(--text-muted)">Registre una fila por cada persona que reside habitualmente en la vivienda.</p><table class="apgar-table" id="h-miembros"><thead><tr><th>Apellidos y nombres</th><th>Tipo y N° documento</th><th>Fecha nac.</th><th>Género</th><th>Ocupación</th><th>Estado civil</th><th>Parentesco</th><th>SGSSS</th><th>Escolaridad</th><th>Étnica</th><th></th></tr></thead><tbody></tbody></table><button type="button" class="btn-add-int" onclick="agregarMiembroHogar()">＋ Agregar integrante</button></div></details>
   <div class="ff hogar-logo-upload"><label for="h-logo-departamento">Logo del departamento</label><input id="h-logo-departamento" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" onchange="handleHogarLogo(this)"><small style="display:block;margin-top:6px;color:var(--text-muted)">Admite PNG, JPG, WebP, GIF y BMP. Se ajustará automáticamente al espacio reservado en la esquina superior derecha del PDF.</small><img id="h-logo-departamento-preview" class="hogar-logo-preview" alt="Vista previa del logo del departamento"></div>
   <details style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">Matrices de movilidad, accidentes e higiene</summary><div style="padding:14px">${hogarMatrix('Medio de transporte por destino',['Vehículo particular','Transporte masivo','Bus/buseta/colectivo','Taxi','Cable aéreo','Motocicleta','Bicicleta','Bicitaxi','Semovientes','Maquinaria/camión','Tarabita','Canoa/lancha','Caminando','Otro'],['Trabajo','Estudio','Otros'])}${hogarMatrix('Accidentes domésticos atendidos en urgencias',['Primera infancia (0-5)','Infancia (6-11)','Adolescencia (12-18)','Juventud (14-26)','Adultez (27-59)','Persona mayor (60+)'],['Heridas','Intoxicación','Quemadura','Electrocución','Asfixia','Golpes','Caída','Ahogamiento','Agresión animal','Caída de altura'])}${hogarMatrix('Frecuencia de limpieza',['Todos los días','Una vez a la semana','Una vez cada 15 días','Una vez al mes','Cada 6 meses','Cada año'],['Pisos','Paredes','Techos','Muebles','Tapetes','Cortinas','Sábanas','Cobijas','Otras superficies','Baño','Cocina'])}</div></details>`;
 }
@@ -1542,6 +1558,8 @@ function clearF(tipo) {
       else el.value = '';
     });
     hogarLogoData = ''; hogarLogoSize = null;
+    const logoPreview = document.getElementById('h-logo-departamento-preview');
+    if (logoPreview) { logoPreview.removeAttribute('src'); logoPreview.style.display = 'none'; }
   }
 }
 
@@ -1615,11 +1633,18 @@ async function saveR(tipo) {
     });
   } else if (tipo === 'hogar') {
     if (!gv('h-direccion')) { toast('⚠️ La dirección de la vivienda es obligatoria', 'err'); restoreBtn(); return; }
+    const enviarCorreo = document.getElementById('h-enviar-correo')?.checked || false;
+    const correoPdf = gv('h-correo-pdf').trim();
+    if (enviarCorreo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoPdf)) {
+      toast('⚠️ Escribe un correo válido para enviar el PDF', 'err'); restoreBtn(); return;
+    }
     Object.assign(registro, {
       fechaVisita: gv('h-fecha'), direccion: gv('h-direccion'), telefono: gv('h-telefono'),
       diligencia: gv('h-diligencia'), atiende: gv('h-atiende'), inicio: gv('h-inicio'), fin: gv('h-fin'),
       respuestas: getHogarAnswers(),
-      logoDepartamento: hogarLogoData
+      logoDepartamento: hogarLogoData,
+      correoDestino: correoPdf,
+      enviarCorreo
     });
   }
 
@@ -1772,6 +1797,7 @@ function buildFields(r) {
       <div class="rfield"><strong>Teléfono</strong>${r.telefono || '—'}</div>
       <div class="rfield"><strong>Diligencia</strong>${r.diligencia || '—'}</div>
       <div class="rfield"><strong>Atiende</strong>${r.atiende || '—'}</div>
+      ${r.enviarCorreo ? `<div class="rfield"><strong>Copia por correo</strong>${r.correoDestino || 'Pendiente de correo válido'}</div>` : ''}
       <div class="rfield" style="grid-column:1/-1"><strong>Respuestas (${answers.length})</strong>${answers.map(([k,v]) => `<p style="margin:5px 0"><b>${k}:</b> ${v}</p>`).join('') || '—'}</div>`;
   }
   const viv = r.vivienda || {};
