@@ -61,6 +61,7 @@ function guardarDatos(datos) {
   if      (TIPO_FORMULARIO === 'carto')       guardarCarto(sheet, datos);
   else if (TIPO_FORMULARIO === 'recoleccion') guardarRecoleccion(sheet, datos);
   else if (TIPO_FORMULARIO === 'macro')       guardarMacro(sheet, datos);
+  else if (TIPO_FORMULARIO === 'hogar')       guardarHogar(sheet, datos);
 }
 
 // ── ELIMINAR ────────────────────────────────────────────────
@@ -226,11 +227,27 @@ function construirFila(datos) {
         ints2
       ];
     }
+    if (TIPO_FORMULARIO === 'hogar') {
+      return [d.id||'', d.fecha||'', d.municipio||NOMBRE_MUNICIPIO,
+        d.fechaVisita||'', d.inicio||'', d.fin||'', d.diligencia||'', d.atiende||'',
+        d.direccion||'', d.telefono||'', JSON.stringify(d.respuestas||{})];
+    }
     return null;
   } catch(eCF) {
     Logger.log('construirFila error: ' + eCF.message);
     return null;
   }
+}
+
+// ── CARACTERIZACIÓN ENTORNO HOGAR ───────────────────────────
+// Usa un solo campo JSON para conservar todas las respuestas sin perder
+// preguntas si la ficha se actualiza posteriormente.
+function guardarHogar(sheet, d) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['ID','Fecha registro','Municipio','Fecha visita','Hora inicio','Hora fin',
+      'Diligencia','Atiende visita','Dirección','Teléfono','Respuestas (JSON)']);
+  }
+  sheet.appendRow(construirFila(d));
 }
 
 // ── GUARDAR LOGO EN DRIVE ────────────────────────────────────
