@@ -659,6 +659,39 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       </div>
     </div>
 
+    <!-- ═══ FORMULARIO 4: CARACTERIZACIÓN ENTORNO HOGAR ═══ -->
+    <div class="qblock" id="q-hogar">
+      <div class="qhead" onclick="toggleQ('hogar')">
+        <div class="qleft">
+          <div class="qicon">🏠</div>
+          <div>
+            <div class="qtitle">Caracterización Entorno Hogar</div>
+            <div class="qsub">Ficha social y ambiental del hogar</div>
+          </div>
+        </div>
+        <div class="qright">
+          <span class="qcount" id="qc-hogar">0 guardados</span>
+          <span class="qchev">▼</span>
+        </div>
+      </div>
+      <div class="qbody">
+        <div class="apgar-ref"><strong>Ficha de caracterización social y ambiental.</strong><br>Complete las secciones que correspondan a la visita. El PDF final se descarga directamente en el dispositivo.</div>
+        <div class="frow">
+          <div class="ff"><label>Fecha de visita</label><input type="date" id="h-fecha"></div>
+          <div class="ff"><label>Hora de inicio</label><input type="time" id="h-inicio"></div>
+          <div class="ff"><label>Hora de culminación</label><input type="time" id="h-fin"></div>
+        </div>
+        <div class="frow"><div class="ff"><label>Nombre de quien diligencia</label><input id="h-diligencia" type="text"></div><div class="ff"><label>Persona que atiende la visita</label><input id="h-atiende" type="text"></div></div>
+        <div class="frow"><div class="ff"><label>Dirección de la vivienda</label><input id="h-direccion" type="text"></div><div class="ff"><label>Teléfono de contacto</label><input id="h-telefono" type="tel"></div></div>
+        <div id="hogar-form"></div>
+        <div class="factions">
+          <button class="btn-sec" onclick="clearF('hogar')">Limpiar</button>
+          <button class="btn-sec" onclick="downloadHogarPdf()">⬇ Descargar PDF</button>
+          <button class="btn-pri" onclick="saveR('hogar')">💾 Guardar</button>
+        </div>
+      </div>
+    </div>
+
   </div> <!-- /panel-nuevo -->
 
 
@@ -676,6 +709,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       <button class="fbtn" onclick="setFilter('carto')" id="f-carto">🗺️ Carto</button>
       <button class="fbtn" onclick="setFilter('recoleccion')" id="f-recoleccion">📝 Recolección</button>
       <button class="fbtn" onclick="setFilter('macro')" id="f-macro">📊 Macro</button>
+      <button class="fbtn" onclick="setFilter('hogar')" id="f-hogar">🏠 Hogar</button>
     </div>
     <div class="rlist" id="rlist"></div>
   </div>
@@ -770,19 +804,50 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 <script>
 
 // ── Constantes derivadas de config.js ──────────────────────
-const TIPOS = ['carto', 'recoleccion', 'macro'];
+const TIPOS = ['carto', 'recoleccion', 'macro', 'hogar'];
 
 const TLABELS = {
   carto: '🗺️ Cartografías',
   recoleccion: '📝 Recolección',
-  macro: '📊 Macro'
+  macro: '📊 Macro',
+  hogar: '🏠 Entorno Hogar'
 };
 
 const TCSS = {
   carto: 'tc',
   recoleccion: 'tr',
-  macro: 'tm'
+  macro: 'tm',
+  hogar: 'tr'
 };
+
+// Preguntas tomadas de la ficha "Caracterización Social y Ambiental - Entorno Hogar".
+// Las secciones se generan dinámicamente para mantener el formulario ágil en celulares.
+const HOGAR_SECTIONS = [
+  ['Identificación territorial', [
+    ['Ámbito territorial', 'Urbano|Alta ruralidad|Rural disperso'], ['Entidad territorial', 'Departamento|Distrito|Municipio|Territorio indígena'], ['Nombre de la entidad territorial'], ['División geográfica', 'Localidad|Centro poblado|Resguardo indígena|Comuna|Vereda|Barrio|Caserío|Corregimiento|Otro'], ['Nombre de la unidad de división geográfica']
+  ]],
+  ['Información de la vivienda', [
+    ['Tipo de vivienda', 'Casa|Casa indígena|Apartamento|Cuarto de inquilinato|Tipo cuarto|Otra vivienda'], ['Tenencia de la vivienda', 'Propia totalmente pagada|Propia la están pagando|Arriendo o subarriendo|Usufructo|Posesión sin título|Vivienda en empeño|Propiedad colectiva|Otra'], ['Estrato'], ['Grupos que cocinan por separado'], ['Número de familias en la vivienda'], ['Personas que habitan la vivienda'], ['Personas con discapacidad o dependencia'], ['Mujeres gestantes']
+  ]],
+  ['Habitabilidad y movilidad', [
+    ['Riesgos cercanos a la vivienda (puede seleccionar varios)', 'Cultivos|Apriscos|Porquerizas|Plagas|Ruido|Malos olores|Río o quebrada|Extracción minera|Quemas|Tráfico vehicular|Otro'], ['Material predominante del piso', 'Tierra, arena o barro|Cemento o gravilla|Madera|Baldosa o ladrillo|Otro'], ['Material predominante de paredes', 'Bloque, ladrillo o concreto|Bahareque o barro|Madera|Materiales de desecho|No tiene|Otro'], ['Material predominante del techo', 'Concreto|Teja de barro|Fibrocemento|Zinc|Palma o paja|Plástico|Desechos|Otro'], ['Estado de paredes', 'Buen estado|Con humedad o deterioro'], ['Estado del techo', 'Buen estado|Con agrietamiento o goteras'], ['¿Cocina separada de otros espacios?', 'Sí|No'], ['¿Baño separado de otros espacios?', 'Sí|No'], ['Número de dormitorios'], ['Ventilación de la vivienda', 'Siempre|Algunas veces|Nunca'], ['Tipo de alumbrado', 'Luz eléctrica|Kerosén/petróleo|Velas|Energía solar|Planta eléctrica|Otro'], ['Actividad económica dentro de la vivienda', 'Sí|No'], ['Acceso cercano a', 'Transporte|Centros sociales/culturales|Parques|Iglesias|Instituciones educativas|Servicios de salud|Otro'], ['Medio de desplazamiento habitual', 'Vehículo particular|Transporte público|Motocicleta|Bicicleta|Semovientes|Canoa/lancha|Caminando|Otro'], ['Elementos de seguridad usados', 'Casco|Cinturón de seguridad|Retención infantil|Chaleco reflectivo|Chaleco salvavidas|Ninguno|Otro']
+  ]],
+  ['Accidentes en el hogar', [
+    ['Accidentes domésticos en el último año', 'Heridas|Intoxicación|Quemadura|Electrocución|Asfixia|Golpes|Caídas|Ahogamiento|Agresión animal|Caída de alturas|Ninguno'], ['Escenarios de riesgo identificados', 'Objetos cortantes al alcance|Químicos al alcance|Medicamentos al alcance|Velas encendidas|Conexiones eléctricas en mal estado|Pasillos obstruidos|Superficies resbaladizas|Tanques sin tapa|Escaleras sin protección|Ninguno']
+  ]],
+  ['Agua y saneamiento básico', [
+    ['Fuente principal de agua', 'Acueducto ESP|Agua embotellada|Acueducto comunitario|Pila pública|Carro tanque|Pozo con bomba|Pozo sin bomba|Río/quebrada|Aguas lluvias|Otro'], ['Horas diarias de suministro', '24 horas|12 a 23 horas|4 a 12 horas|Menor a 4 horas|Días sin suministro'], ['Tanque de almacenamiento', 'Aéreo|Superficial|Subterráneo|No tiene'], ['Tratamiento casero del agua', 'Clarificación|Filtración|Desinfección|Hervido|Otro|Ninguno'], ['Almacenamiento del agua', 'Recipiente con tapa|Recipiente sin tapa|Tanque con tapa|Tanque sin tapa|No almacena'], ['Disposición de excretas', 'Sanitario al alcantarillado|Letrina|Pozo séptico|Sanitario ecológico seco|Sin conexión|Fuente hídrica|Campo abierto|Otro'], ['Disposición de aguas residuales', 'Pozo séptico|Campo de oxidación|Biofiltro|Fuente hídrica|Campo abierto|Otro'], ['Almacenamiento de residuos ordinarios', 'Recipientes con tapa|Recipientes sin tapa|Directamente al suelo|Bolsas plásticas|Otro'], ['Disposición final residuos ordinarios', 'Servicio de aseo|Enterramiento|Quema|Fuente de agua|Campo abierto|Otro'], ['Disposición final residuos peligrosos', 'Empresa especializada|Sitio autorizado|Centro de acopio|Enterramiento|Quema|Fuente de agua|Campo abierto|Con ordinarios|Otro']
+  ]],
+  ['Higiene y aire intradomiciliario', [
+    ['Limpieza de pisos', 'Barrido|Trapeado|Barrido y trapeado|Barrido, trapeado y desinfección|Otro'], ['Limpieza de paredes', 'Retiro de suciedad|Agua y jabón|Agua, jabón y desinfección|Otro'], ['¿Lavado de manos con agua y jabón?', 'Sí|No'], ['Momentos de lavado de manos', 'Después de baño|Después de cambiar pañales|Antes de alimentos|Después de animales|Después de llegar de la calle|Después de químicos|Todas'], ['Momentos de cepillado dental', 'Al levantarse|Después del desayuno|Después del almuerzo|Después de cena|Antes de acostarse|Nunca|Otro'], ['Combustible para cocinar', 'Electricidad|Gas natural|Gas propano|Leña/carbón|Petróleo/kerosén|Carbón mineral|Desechos|Otro'], ['¿Hay humo dentro de la vivienda?', 'Sí|No'], ['Fuentes de humo', 'Cigarrillo/tabaco|Leña|Carbón|Quema de basura|Vapeadores|Narguilas|Otro'], ['Tipo y estado de estufa'], ['Medidas ante enfermedad respiratoria', 'Tapabocas|Lavado de manos|Cubrirse al toser|Ninguna|Otra']
+  ]],
+  ['Zoonosis, vectores y sustancias químicas', [
+    ['¿Conviven con animales?', 'Sí|No'], ['Animales y cantidad'], ['Finalidad de los animales', 'Compañía|Producción|Autoconsumo|Vigilancia'], ['Manejo de animales', 'Confinados|Parcialmente confinados|Libres'], ['¿Desparasitan animales domésticos?', 'Sí|No'], ['¿Vacunan perros/gatos contra rabia?', 'Sí|No'], ['Presencia de vectores', 'Sí|No'], ['Vectores observados', 'Zancudos|Cucarachas|Moscas|Mosquitos|Pulgas|Piojos|Garrapatas|Roedores|Chinches|Triatominos|Otro'], ['Medidas de control de vectores', 'Manejo de residuos|Toldillos|Angeos/trampas|Orden e higiene|Limpieza de maleza|Drenaje|Protección de agua|Otra'], ['Animales venenosos o ponzoñosos', 'Sí|No'], ['Manejo seguro de químicos', 'Sí|No'], ['Productos almacenados en recipientes originales y fuera del alcance de menores', 'Sí|No'], ['Lugar ventilado y separado de alimentos', 'Sí|No'], ['Área ventilada y con protección al usar productos', 'Sí|No']
+  ]],
+  ['Morbilidad sentida', [
+    ['Menores de 5 años: afectaciones último mes', 'Diarrea|Tos/resfriado|Infección pulmonar|Intoxicación química|Problemas de piel/alergias|Accidente hogar|Otra enfermedad|Ninguna'], ['Mayores de 5 años: afectaciones último mes', 'Diarrea|Tos/resfriado|Infección pulmonar|Intoxicación química|Problemas de piel/alergias|Accidente hogar|Lesiones explosivos|Siniestro vial|Cáncer|HTA|Diabetes|Obesidad|Enfermedad renal|EPOC|Asma|Enfermedad huérfana|Bucales|Visuales/auditivas|Otra|Ninguna'], ['Ante afectación de salud, acudió a', 'Ningún servicio|EPS y atendido|EPS no atendido|Particular|Alternativa|Farmacia|Curandero|Otro'], ['Observaciones generales']
+  ]]
+];
 
 
 // ── Estado global ───────────────────────────────────────────
@@ -1023,6 +1088,8 @@ function initApp() {
   bindFamiliogramaEvents();
   dibujarFamiliograma();
   restoreLogos();
+  renderHogarForm();
+  applySectionVisibility();
   // Pestaña Config solo visible para BOSS
   const tabConfig = document.getElementById('tab-config');
   if (tabConfig) tabConfig.style.display = CU.role === 'boss' ? '' : 'none';
@@ -1035,10 +1102,30 @@ function selMuni(m) {
   renderRecs();
   updateSync();
   restoreLogos(); // Carga el logo del hospital del municipio seleccionado
+  applySectionVisibility();
 }
 
 function setMuniUI() {
   document.getElementById('hdr-muni').textContent = CM;
+}
+
+function sectionEnabled(tipo) {
+  return String(SECCIONES_VISIBLES?.[CM]?.[tipo] ?? 'si').trim().toLowerCase() === 'si';
+}
+
+function applySectionVisibility() {
+  TIPOS.forEach(tipo => {
+    const visible = sectionEnabled(tipo);
+    const block = document.getElementById('q-' + tipo);
+    const filter = document.getElementById('f-' + tipo);
+    if (block) block.style.display = visible ? '' : 'none';
+    if (filter) filter.style.display = visible ? '' : 'none';
+  });
+  const first = TIPOS.find(sectionEnabled);
+  if (first && !document.querySelector('.qblock.open:not([style*="display: none"])')) {
+    document.getElementById('q-' + first)?.classList.add('open');
+  }
+  if (!sectionEnabled(activeF)) activeF = 'todos';
 }
 
 function showScreen(s) {
@@ -1170,6 +1257,72 @@ function getIntData(n) {
 
 
 // ── Limpiar formularios ─────────────────────────────────────
+function hogarId(section, question) { return `h-${section}-${question}`; }
+function safeHtml(text) { return String(text).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderHogarForm() {
+  const root = document.getElementById('hogar-form');
+  if (!root || root.children.length) return;
+  root.innerHTML = HOGAR_SECTIONS.map((section, si) => {
+    const fields = section[1].map((question, qi) => {
+      const id = hogarId(si, qi), options = question[1] ? question[1].split('|') : [];
+      const control = options.length
+        ? `<select id="${id}"><option value="">— Seleccionar —</option>${options.map(o => `<option>${safeHtml(o)}</option>`).join('')}</select>`
+        : (question[0].toLowerCase().includes('observaciones') ? `<textarea id="${id}" placeholder="Escriba las observaciones relevantes..."></textarea>` : `<input id="${id}" type="text">`);
+      return `<div class="ff"><label>${safeHtml(question[0])}</label>${control}</div>`;
+    }).join('');
+    return `<details open style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">${si + 1}. ${safeHtml(section[0])}</summary><div class="frow" style="padding:14px">${fields}</div></details>`;
+  }).join('');
+}
+
+function getHogarAnswers() {
+  const answers = {};
+  HOGAR_SECTIONS.forEach((section, si) => section[1].forEach((question, qi) => {
+    const val = document.getElementById(hogarId(si, qi))?.value?.trim();
+    if (val) answers[question[0]] = val;
+  }));
+  return answers;
+}
+
+// Generador PDF autónomo: no requiere conexión ni librerías externas.
+function downloadHogarPdf() {
+  const answers = getHogarAnswers();
+  if (!gv('h-direccion') && !Object.keys(answers).length) { toast('⚠️ Diligencia al menos un dato antes de descargar el PDF', 'err'); return; }
+  const raw = [
+    'EBS+ | CARACTERIZACIÓN ENTORNO HOGAR',
+    `Municipio: ${CM}`, `Fecha de visita: ${gv('h-fecha') || '—'}`,
+    `Dirección: ${gv('h-direccion') || '—'}`, `Teléfono: ${gv('h-telefono') || '—'}`,
+    `Diligencia: ${gv('h-diligencia') || '—'}`, `Atiende visita: ${gv('h-atiende') || '—'}`, ''
+  ];
+  HOGAR_SECTIONS.forEach(section => {
+    const included = section[1].filter(q => answers[q[0]]);
+    if (included.length) { raw.push(section[0].toUpperCase()); included.forEach(q => raw.push(`${q[0]}: ${answers[q[0]]}`)); raw.push(''); }
+  });
+  const clean = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ').replace(/[\\()]/g, '\\$&');
+  const lines = raw.flatMap(line => {
+    const words = clean(line).split(/\s+/); const rows = []; let current = '';
+    words.forEach(word => { if ((current + ' ' + word).trim().length > 92) { rows.push(current); current = word; } else current = (current + ' ' + word).trim(); });
+    if (current || !words[0]) rows.push(current); return rows;
+  });
+  const pages = []; for (let i = 0; i < lines.length; i += 48) pages.push(lines.slice(i, i + 48));
+  const objects = []; const add = text => { objects.push(text); return objects.length; };
+  const catalog = add(''); const pagesObj = add(''); const font = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'); const pageIds = [];
+  pages.forEach((page, pi) => {
+    const commands = ['BT /F1 11 Tf 45 790 Td'];
+    page.forEach((line, i) => { if (i) commands.push('0 -15 Td'); commands.push(`(${line}) Tj`); });
+    commands.push('ET');
+    const content = add(`<< /Length ${commands.join('\n').length} >>\nstream\n${commands.join('\n')}\nendstream`);
+    pageIds.push(add(`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 ${font} 0 R >> >> /Contents ${content} 0 R >>`));
+  });
+  objects[pagesObj - 1] = `<< /Type /Pages /Kids [${pageIds.map(id => id + ' 0 R').join(' ')}] /Count ${pageIds.length} >>`;
+  objects[catalog - 1] = `<< /Type /Catalog /Pages ${pagesObj} 0 R >>`;
+  let pdf = '%PDF-1.4\n'; const offsets = [0]; objects.forEach((obj, i) => { offsets.push(pdf.length); pdf += `${i + 1} 0 obj\n${obj}\nendobj\n`; });
+  const xref = pdf.length; pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map(o => String(o).padStart(10, '0') + ' 00000 n ').join('\n')}\ntrailer\n<< /Size ${objects.length + 1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' })); const a = document.createElement('a');
+  a.href = url; a.download = `Caracterizacion_Entorno_Hogar_${CM.replace(/\s/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('✅ PDF descargado', 'ok');
+}
+
 function clearF(tipo) {
   if (tipo === 'carto') {
     ['c1-casa','c1-familia','c1-vereda','c1-patologias','c1-obs','c1-idfam','c1-coord'].forEach(i => document.getElementById(i).value = '');
@@ -1207,6 +1360,8 @@ function clearF(tipo) {
     document.getElementById('integrantes-container').innerHTML = '';
     intCount = 0;
     addIntegrante();
+  } else if (tipo === 'hogar') {
+    document.querySelectorAll('#q-hogar input, #q-hogar select, #q-hogar textarea').forEach(el => el.value = '');
   }
 }
 
@@ -1278,6 +1433,13 @@ async function saveR(tipo) {
       },
       integrantes
     });
+  } else if (tipo === 'hogar') {
+    if (!gv('h-direccion')) { toast('⚠️ La dirección de la vivienda es obligatoria', 'err'); restoreBtn(); return; }
+    Object.assign(registro, {
+      fechaVisita: gv('h-fecha'), direccion: gv('h-direccion'), telefono: gv('h-telefono'),
+      diligencia: gv('h-diligencia'), atiende: gv('h-atiende'), inicio: gv('h-inicio'), fin: gv('h-fin'),
+      respuestas: getHogarAnswers()
+    });
   }
 
   const registroLocal = { ...registro };
@@ -1291,13 +1453,18 @@ async function saveR(tipo) {
   setRecs(CM, tipo, recs);
 
   const paraSheets = { ...registro, foto: registro.foto ? '✅ Tiene foto' : 'Sin foto' };
-  const pendientes = getPend(CM, tipo);
-  pendientes.push(paraSheets);
-  setPend(CM, tipo, pendientes);
+  // Hogar se guarda localmente hasta que se configure su URL de Apps Script.
+  if (getSheetUrl(CM, tipo)) {
+    const pendientes = getPend(CM, tipo);
+    pendientes.push(paraSheets);
+    setPend(CM, tipo, pendientes);
+  }
 
-  if (online) {
+  if (online && getSheetUrl(CM, tipo)) {
     toast('💾 Guardado · Subiendo...', 'ok');
     await syncAll();
+  } else if (!getSheetUrl(CM, tipo)) {
+    toast('💾 Guardado localmente · PDF listo para descargar', 'ok');
   } else {
     toast('💾 Guardado · Se subirá cuando haya señal', 'warn');
   }
@@ -1348,11 +1515,15 @@ function renderRecs() {
       ? `Casa ${r.casa || '—'} · Fam. ${r.familia || '—'}`
       : r.tipo === 'recoleccion'
       ? (jefeNombre ? jefeNombre : famNombre ? `Familia ${famNombre}` : `Registro ${r.id}`)
+      : r.tipo === 'hogar'
+      ? `${r.direccion || 'Vivienda sin dirección'} · ${r.atiende || 'Sin responsable'}`
       : `${r.familia || '—'} · ${r.vereda || '—'}`;
     const subtitulo = r.tipo === 'carto'
       ? `${r.vereda || '—'} · ${r.idFam || '—'}`
       : r.tipo === 'recoleccion'
       ? `${famNombre ? 'Fam. ' + famNombre + ' · ' : ''}${r.municipio || CM}`
+      : r.tipo === 'hogar'
+      ? `${Object.keys(r.respuestas || {}).length} respuestas diligenciadas · ${r.municipio || CM}`
       : `${r.integrantes?.length || 0} integrantes · ${r.microterritorio || '—'}`;
     const riesgoBadge = r.tipo === 'carto'
       ? `<span class="rbadge ${r.riesgo === 'Riesgo Bajo' ? 'bajo' : r.riesgo === 'Riesgo Medio' ? 'medio' : r.riesgo === 'Riesgo Alto' ? 'alto' : 'vacia'}">${r.riesgo || '—'}</span>`
@@ -1412,6 +1583,15 @@ function buildFields(r) {
       <div class="rfield"><strong>Hijos registrados</strong>${nHijos}</div>
       <div class="rfield"><strong>Total miembros</strong>${miembros.length + 1}</div>
       ${r.editada ? `<div class="rfield" style="grid-column:1/-1"><strong>Última edición</strong>${r.editada}</div>` : ''}`;
+  }
+  if (r.tipo === 'hogar') {
+    const answers = Object.entries(r.respuestas || {});
+    return `
+      <div class="rfield"><strong>Dirección</strong>${r.direccion || '—'}</div>
+      <div class="rfield"><strong>Teléfono</strong>${r.telefono || '—'}</div>
+      <div class="rfield"><strong>Diligencia</strong>${r.diligencia || '—'}</div>
+      <div class="rfield"><strong>Atiende</strong>${r.atiende || '—'}</div>
+      <div class="rfield" style="grid-column:1/-1"><strong>Respuestas (${answers.length})</strong>${answers.map(([k,v]) => `<p style="margin:5px 0"><b>${k}:</b> ${v}</p>`).join('') || '—'}</div>`;
   }
   const viv = r.vivienda || {};
   const ints = r.integrantes || [];
@@ -1628,6 +1808,7 @@ function exportCSV() {
     if (r.tipo === 'carto')       { f1 = `Casa ${r.casa}`; f2 = `Fam ${r.familia}`; f3 = r.idFam || ''; f4 = r.riesgo || ''; }
     if (r.tipo === 'recoleccion') { f1 = r.codigo || ''; f2 = `${r.personas} pers`; f3 = r.estrato || ''; f4 = r.salud || ''; }
     if (r.tipo === 'macro')       { f1 = r.familia || ''; f2 = r.vereda || ''; f3 = r.microterritorio || ''; f4 = `${(r.integrantes || []).length} int.`; }
+    if (r.tipo === 'hogar')       { f1 = r.direccion || ''; f2 = r.atiende || ''; f3 = r.telefono || ''; f4 = `${Object.keys(r.respuestas || {}).length} resp.`; }
     filas.push([r.fecha, r.municipio, TLABELS[r.tipo], f1, f2, f3, f4, r.synced ? 'Sync' : 'Pendiente'].map(v => `"${v}"`).join(','));
   });
 
