@@ -1,7 +1,7 @@
 {
-  "name": "EBS+ Santander - App de Campo",
-  "short_name": "EBS+",
-  "description": "Equipos Básicos de Salud - Sistema de Cartografías",
+  "name": "PIC Departamental Santander - App de Campo",
+  "short_name": "PIC",
+  "description": "Plan de Intervenciones Colectivas - Sistema de Cartografías",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
