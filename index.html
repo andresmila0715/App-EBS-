@@ -153,6 +153,12 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .hogar-toggle-opt input:checked + label { background: var(--primary); border-color: var(--primary); color: #fff; }
 .hogar-toggle-opt input:focus-visible + label { outline: 2px solid var(--primary-light); outline-offset: 2px; }
 .hogar-checks { display: flex; flex-direction: column; gap: 8px; }
+/* Mantiene todos los cuadros de selección en la misma columna, aun cuando el texto ocupe varias líneas. */
+.hogar-check-option { display: grid; grid-template-columns: 18px minmax(0, 1fr); column-gap: 7px; align-items: start; font-weight: 400; line-height: 1.35; cursor: pointer; }
+.hogar-check-option input[type="checkbox"] { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--primary); }
+.hogar-logo-upload { border: 1.5px dashed var(--primary-light); border-radius: 10px; padding: 12px; background: #f0f9ff; }
+.hogar-logo-upload input[type="file"] { display: block; width: 100%; font: inherit; color: var(--text); }
+.hogar-logo-preview { display: none; width: 150px; height: 80px; margin-top: 10px; padding: 4px; object-fit: contain; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
 .sdiv { font-size: .7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .08em; padding: 8px 0 4px; border-bottom: 1px solid var(--border); margin-bottom: 12px; margin-top: 4px; }
 .apgar-ref { background: #f0f9ff; border: 1.5px solid var(--primary-light); border-radius: 10px; padding: 12px 14px; font-size: .78rem; color: var(--text); margin-bottom: 14px; line-height: 1.45; }
 .apgar-ref strong { color: var(--primary-dark); }
@@ -877,6 +883,8 @@ let editId = null;
 let editTipo = null;
 let fotoData = {};    // Almacena fotos en base64 por id de preview
 let logoData = {};    // Almacena logos en base64 (hospital y PIC Departamental)
+let hogarLogoData = ''; // Logo cargado específicamente para el PDF de Entorno Hogar
+let hogarLogoSize = null;
 let activeF = 'todos';
 let online = navigator.onLine;
 let intCount = 0;
@@ -1312,7 +1320,7 @@ function renderHogarForm() {
       if (isBinary) {
         control = `<div class="hogar-toggle">${options.map((o,i) => `<div class="hogar-toggle-opt"><input class="hogar-input" type="radio" name="${id}" id="${id}-${i}" value="${safeHtml(o)}" data-hogar-label="${safeHtml(question[0])}"><label for="${id}-${i}">${safeHtml(o)}</label></div>`).join('')}</div>`;
       } else if (isMulti) {
-        control = `<div class="hogar-checks">${options.map((o,i) => `<label style="font-weight:400;display:flex;gap:6px;align-items:flex-start"><input class="hogar-input" data-hogar-label="${safeHtml(question[0])}" type="checkbox" value="${safeHtml(o)}">${safeHtml(o)}</label>`).join('')}</div>`;
+        control = `<div class="hogar-checks">${options.map(o => `<label class="hogar-check-option"><input class="hogar-input" data-hogar-label="${safeHtml(question[0])}" type="checkbox" value="${safeHtml(o)}"><span>${safeHtml(o)}</span></label>`).join('')}</div>`;
       } else if (options.length) {
         control = `<select class="hogar-input" data-hogar-label="${safeHtml(question[0])}" id="${id}"><option value="">— Seleccionar —</option>${options.map(o => `<option>${safeHtml(o)}</option>`).join('')}</select>`;
       } else if (question[0].toLowerCase().includes('observaciones')) {
@@ -1352,7 +1360,37 @@ function getHogarAnswers() {
 
 function hogarSpecialBlocks() {
   return `<details open style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">2. Información demográfica por integrante</summary><div style="padding:14px;overflow:auto"><p style="font-size:.8rem;color:var(--text-muted)">Registre una fila por cada persona que reside habitualmente en la vivienda.</p><table class="apgar-table" id="h-miembros"><thead><tr><th>Apellidos y nombres</th><th>Tipo y N° documento</th><th>Fecha nac.</th><th>Género</th><th>Ocupación</th><th>Estado civil</th><th>Parentesco</th><th>SGSSS</th><th>Escolaridad</th><th>Étnica</th><th></th></tr></thead><tbody></tbody></table><button type="button" class="btn-add-int" onclick="agregarMiembroHogar()">＋ Agregar integrante</button></div></details>
+  <div class="ff hogar-logo-upload"><label for="h-logo-departamento">Logo del departamento</label><input id="h-logo-departamento" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" onchange="handleHogarLogo(this)"><small style="display:block;margin-top:6px;color:var(--text-muted)">Admite PNG, JPG, WebP, GIF y BMP. Se ajustará automáticamente al espacio reservado en la esquina superior derecha del PDF.</small><img id="h-logo-departamento-preview" class="hogar-logo-preview" alt="Vista previa del logo del departamento"></div>
   <details style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">Matrices de movilidad, accidentes e higiene</summary><div style="padding:14px">${hogarMatrix('Medio de transporte por destino',['Vehículo particular','Transporte masivo','Bus/buseta/colectivo','Taxi','Cable aéreo','Motocicleta','Bicicleta','Bicitaxi','Semovientes','Maquinaria/camión','Tarabita','Canoa/lancha','Caminando','Otro'],['Trabajo','Estudio','Otros'])}${hogarMatrix('Accidentes domésticos atendidos en urgencias',['Primera infancia (0-5)','Infancia (6-11)','Adolescencia (12-18)','Juventud (14-26)','Adultez (27-59)','Persona mayor (60+)'],['Heridas','Intoxicación','Quemadura','Electrocución','Asfixia','Golpes','Caída','Ahogamiento','Agresión animal','Caída de altura'])}${hogarMatrix('Frecuencia de limpieza',['Todos los días','Una vez a la semana','Una vez cada 15 días','Una vez al mes','Cada 6 meses','Cada año'],['Pisos','Paredes','Techos','Muebles','Tapetes','Cortinas','Sábanas','Cobijas','Otras superficies','Baño','Cocina'])}</div></details>`;
+}
+
+function handleHogarLogo(input) {
+  const file = input.files && input.files[0];
+  const preview = document.getElementById('h-logo-departamento-preview');
+  if (!file) { hogarLogoData = ''; hogarLogoSize = null; if (preview) preview.style.display = 'none'; return; }
+  if (!/^image\/(png|jpeg|webp|gif|bmp)$/.test(file.type)) { toast('⚠️ Selecciona una imagen PNG, JPG, WebP, GIF o BMP', 'err'); input.value = ''; return; }
+  if (file.size > 8 * 1024 * 1024) { toast('⚠️ La imagen supera el límite de 8 MB', 'err'); input.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = event => {
+    const image = new Image();
+    image.onload = () => {
+      // Normalizamos formatos a JPEG y limitamos la resolución para un PDF liviano y compatible.
+      const maxSide = 1000;
+      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      hogarLogoData = canvas.toDataURL('image/jpeg', 0.88);
+      hogarLogoSize = { width: canvas.width, height: canvas.height };
+      preview.src = hogarLogoData; preview.style.display = 'block';
+    };
+    image.onerror = () => { toast('⚠️ No fue posible leer la imagen seleccionada', 'err'); input.value = ''; };
+    image.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 function hogarMatrix(title, rows, cols) { const key = title.replace(/[^a-z0-9]/gi,''); return `<div style="overflow:auto;margin:12px 0"><strong style="font-size:.84rem;color:var(--primary-dark)">${title}</strong><table class="apgar-table" style="margin-top:7px"><thead><tr><th></th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr><th>${r}</th>${cols.map(c=>`<td><input class="hogar-matrix" data-hogar-label="${title} · ${r} · ${c}" style="width:20px" aria-label="${r} ${c}"></td>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
@@ -1368,37 +1406,89 @@ function agregarMiembroHogar() {
 function downloadHogarPdf() {
   const answers = getHogarAnswers();
   if (!gv('h-direccion') && !Object.keys(answers).length) { toast('⚠️ Diligencia al menos un dato antes de descargar el PDF', 'err'); return; }
-  const raw = [
-    'PIC DEPARTAMENTAL | CARACTERIZACIÓN ENTORNO HOGAR',
-    `Municipio: ${CM}`, `Fecha de visita: ${gv('h-fecha') || '—'}`,
-    `Dirección: ${gv('h-direccion') || '—'}`, `Teléfono: ${gv('h-telefono') || '—'}`,
-    `Diligencia: ${gv('h-diligencia') || '—'}`, `Atiende visita: ${gv('h-atiende') || '—'}`, ''
-  ];
+  const clean = value => String(value ?? '—').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ').replace(/[\\()]/g, '\\$&');
+  const wrap = (value, width) => {
+    const words = clean(value).split(/\s+/), rows = []; let line = '';
+    words.forEach(word => { if ((line + ' ' + word).trim().length > width && line) { rows.push(line); line = word; } else line = (line + ' ' + word).trim(); });
+    return rows.length || line ? [...rows, line].filter(Boolean) : ['—'];
+  };
+  const blocks = [{ type: 'section', title: 'GENERALIDADES' }];
+  [
+    ['Municipio', CM], ['Fecha de visita', gv('h-fecha')], ['Direccion de la vivienda', gv('h-direccion')],
+    ['Telefono de contacto', gv('h-telefono')], ['Quien diligencia', gv('h-diligencia')], ['Atiende la visita', gv('h-atiende')],
+    ['Hora de inicio', gv('h-inicio')], ['Hora de finalizacion', gv('h-fin')]
+  ].forEach(([label, value]) => blocks.push({ type: 'row', label, value }));
   HOGAR_SECTIONS.forEach(section => {
     const included = section[1].filter(q => answers[q[0]]);
-    if (included.length) { raw.push(section[0].toUpperCase()); included.forEach(q => raw.push(`${q[0]}: ${answers[q[0]]}`)); raw.push(''); }
+    if (!included.length) return;
+    blocks.push({ type: 'section', title: section[0].toUpperCase() });
+    included.forEach(q => blocks.push({ type: 'row', label: q[0], value: answers[q[0]] }));
   });
   if (answers['Integrantes del hogar']) {
-    raw.push('INFORMACIÓN DEMOGRÁFICA');
-    answers['Integrantes del hogar'].forEach((m, i) => raw.push(`Integrante ${i + 1}: ${Object.entries(m).map(([k,v]) => `${k}: ${v}`).join(' | ')}`));
-    raw.push('');
+    blocks.push({ type: 'section', title: 'INFORMACION DEMOGRAFICA' });
+    answers['Integrantes del hogar'].forEach((m, i) => blocks.push({ type: 'row', label: `Integrante ${i + 1}`, value: Object.entries(m).map(([k,v]) => `${k}: ${v}`).join(' | ') }));
   }
-  Object.entries(answers).filter(([k]) => k.includes(' · ')).forEach(([k,v]) => raw.push(`${k}: ${v}`));
-  const clean = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ').replace(/[\\()]/g, '\\$&');
-  const lines = raw.flatMap(line => {
-    const words = clean(line).split(/\s+/); const rows = []; let current = '';
-    words.forEach(word => { if ((current + ' ' + word).trim().length > 92) { rows.push(current); current = word; } else current = (current + ' ' + word).trim(); });
-    if (current || !words[0]) rows.push(current); return rows;
-  });
-  const pages = []; for (let i = 0; i < lines.length; i += 48) pages.push(lines.slice(i, i + 48));
+  const matrices = Object.entries(answers).filter(([key]) => key.includes(' · '));
+  if (matrices.length) {
+    blocks.push({ type: 'section', title: 'MATRICES DE MOVILIDAD, ACCIDENTES E HIGIENE' });
+    matrices.forEach(([label, value]) => blocks.push({ type: 'row', label: label.replaceAll(' · ', ' - '), value }));
+  }
+
   const objects = []; const add = text => { objects.push(text); return objects.length; };
-  const catalog = add(''); const pagesObj = add(''); const font = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'); const pageIds = [];
-  pages.forEach((page, pi) => {
-    const commands = ['BT /F1 11 Tf 45 790 Td'];
-    page.forEach((line, i) => { if (i) commands.push('0 -15 Td'); commands.push(`(${line}) Tj`); });
-    commands.push('ET');
-    const content = add(`<< /Length ${commands.join('\n').length} >>\nstream\n${commands.join('\n')}\nendstream`);
-    pageIds.push(add(`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 ${font} 0 R >> >> /Contents ${content} 0 R >>`));
+  const catalog = add(''), pagesObj = add('');
+  const font = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+  const fontBold = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
+  let logoImage = null;
+  if (hogarLogoData && hogarLogoSize) {
+    try {
+      const binary = atob(hogarLogoData.split(',')[1]); let hex = '';
+      for (let i = 0; i < binary.length; i++) hex += binary.charCodeAt(i).toString(16).padStart(2, '0');
+      logoImage = add(`<< /Type /XObject /Subtype /Image /Width ${hogarLogoSize.width} /Height ${hogarLogoSize.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length ${hex.length + 1} >>\nstream\n${hex}>\nendstream`);
+    } catch (error) { console.warn('No se pudo incluir el logo en el PDF:', error); }
+  }
+
+  const pageCommands = []; let commands = [], y = 0, pageNumber = 0, rowIndex = 0;
+  const text = (fontName, size, x, top, value, color = '0 0 0') => commands.push(`${color} rg BT /${fontName} ${size} Tf ${x} ${top} Td (${clean(value)}) Tj ET`);
+  const beginPage = () => {
+    pageNumber++; commands = [];
+    commands.push('0.02 0.29 0.45 rg 36 795 540 24 re f');
+    text('F2', 11, 47, 802, 'FICHA DE CARACTERIZACION SOCIAL Y AMBIENTAL - ENTORNO HOGAR', '1 1 1');
+    if (pageNumber === 1 && logoImage) {
+      const maxW = 96, maxH = 56, ratio = hogarLogoSize.width / hogarLogoSize.height;
+      const drawW = Math.min(maxW, maxH * ratio), drawH = drawW / ratio;
+      commands.push(`q ${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${(568 - drawW).toFixed(2)} ${(782 - drawH).toFixed(2)} cm /ImLogo Do Q`);
+      y = 718;
+    } else y = 775;
+  };
+  const closePage = () => {
+    commands.push(`0.35 0.40 0.45 rg BT /F1 7 Tf 36 25 Td (Documento generado desde PIC Departamental - Pagina ${pageNumber}) Tj ET`);
+    pageCommands.push(commands);
+  };
+  const ensure = height => { if (y - height < 42) { closePage(); beginPage(); } };
+  const section = title => {
+    ensure(24); commands.push(`0.11 0.41 0.56 rg 36 ${(y - 19).toFixed(2)} 540 19 re f`);
+    text('F2', 8.5, 43, y - 13, title, '1 1 1'); y -= 20; rowIndex = 0;
+  };
+  const row = (label, value) => {
+    const labels = wrap(label, 35), values = wrap(value, 57), lines = Math.max(labels.length, values.length);
+    const height = Math.max(25, 11 + lines * 10); ensure(height);
+    const bottom = y - height;
+    if (rowIndex % 2 === 0) commands.push(`0.97 0.98 0.99 rg 36 ${bottom.toFixed(2)} 540 ${height.toFixed(2)} re f`);
+    commands.push(`0.68 0.73 0.77 RG 0.55 w 36 ${bottom.toFixed(2)} 540 ${height.toFixed(2)} re S 230 ${bottom.toFixed(2)} m 230 ${y.toFixed(2)} l S`);
+    labels.forEach((line, i) => text('F2', 7.4, 43, y - 11 - i * 10, line, '0.08 0.18 0.25'));
+    values.forEach((line, i) => text('F1', 7.6, 237, y - 11 - i * 10, line, '0.12 0.12 0.12'));
+    y = bottom; rowIndex++;
+  };
+  beginPage();
+  blocks.forEach(block => block.type === 'section' ? section(block.title) : row(block.label, block.value));
+  closePage();
+
+  const pageIds = pageCommands.map((contentCommands, pi) => {
+    // El logo se declara como recurso, pero solo se dibuja al iniciar la primera pagina.
+    const contentText = contentCommands.join('\n');
+    const content = add(`<< /Length ${contentText.length} >>\nstream\n${contentText}\nendstream`);
+    const imageResource = logoImage ? ` /XObject << /ImLogo ${logoImage} 0 R >>` : '';
+    return add(`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 ${font} 0 R /F2 ${fontBold} 0 R >>${imageResource} >> /Contents ${content} 0 R >>`);
   });
   objects[pagesObj - 1] = `<< /Type /Pages /Kids [${pageIds.map(id => id + ' 0 R').join(' ')}] /Count ${pageIds.length} >>`;
   objects[catalog - 1] = `<< /Type /Catalog /Pages ${pagesObj} 0 R >>`;
@@ -1451,6 +1541,7 @@ function clearF(tipo) {
       if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
       else el.value = '';
     });
+    hogarLogoData = ''; hogarLogoSize = null;
   }
 }
 
@@ -1527,7 +1618,8 @@ async function saveR(tipo) {
     Object.assign(registro, {
       fechaVisita: gv('h-fecha'), direccion: gv('h-direccion'), telefono: gv('h-telefono'),
       diligencia: gv('h-diligencia'), atiende: gv('h-atiende'), inicio: gv('h-inicio'), fin: gv('h-fin'),
-      respuestas: getHogarAnswers()
+      respuestas: getHogarAnswers(),
+      logoDepartamento: hogarLogoData
     });
   }
 
