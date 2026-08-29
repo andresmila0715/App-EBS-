@@ -9,6 +9,12 @@ var NOMBRE_MUNICIPIO = 'Enciso';
 var NOMBRE_HOJA      = 'Datos App';
 var NOMBRE_CARPETA   = 'EBS+ Instrumentos';
 
+// Para habilitar el envío de copias PDF desde Entorno Hogar, cambia a true
+// después de autorizar MailApp y volver a implementar el Apps Script.
+// Mantenerlo en false evita envíos accidentales mientras se configura el servicio.
+var HOGAR_CORREOS_HABILITADOS = false;
+var HOGAR_MAX_CORREOS_DIARIOS = 50;
+
 function doPost(e) {
   try {
     var datos = JSON.parse(e.postData.contents);
@@ -230,7 +236,8 @@ function construirFila(datos) {
     if (TIPO_FORMULARIO === 'hogar') {
       return [d.id||'', d.fecha||'', d.municipio||NOMBRE_MUNICIPIO,
         d.fechaVisita||'', d.inicio||'', d.fin||'', d.diligencia||'', d.atiende||'',
-        d.direccion||'', d.telefono||'', JSON.stringify(d.respuestas||{})];
+        d.direccion||'', d.telefono||'', JSON.stringify(d.respuestas||{}),
+        d.correoDestino||'', d.enviarCorreo ? 'Sí' : 'No'];
     }
     return null;
   } catch(eCF) {
@@ -243,12 +250,127 @@ function construirFila(datos) {
 // Usa un solo campo JSON para conservar todas las respuestas sin perder
 // preguntas si la ficha se actualiza posteriormente.
 function guardarHogar(sheet, d) {
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['ID','Fecha registro','Municipio','Fecha visita','Hora inicio','Hora fin',
-      'Diligencia','Atiende visita','Dirección','Teléfono','Respuestas (JSON)']);
-  }
+  var encabezadosHogar = ['ID','Fecha registro','Municipio','Fecha visita','Hora inicio','Hora fin',
+    'Diligencia','Atiende visita','Dirección','Teléfono','Respuestas (JSON)','Correo PDF','Solicita envío'];
+  initEncabezados(sheet, encabezadosHogar);
+  // Las hojas creadas con una versión anterior tenían 11 columnas. Se completan
+  // las nuevas cabeceras sin alterar los registros existentes.
+  if (sheet.getLastRow() > 0) sheet.getRange(1, 12, 1, 2).setValues([encabezadosHogar.slice(11)]);
   sheet.appendRow(construirFila(d));
+
+  if (d.enviarCorreo && d.correoDestino) {
+    if (!HOGAR_CORREOS_HABILITADOS) {
+      Logger.log('Solicitud de correo recibida, pero HOGAR_CORREOS_HABILITADOS está en false.');
+      return;
+    }
+    if (!esCorreoValido(d.correoDestino)) {
+      Logger.log('Correo no válido, no se envía: ' + d.correoDestino);
+      return;
+    }
+    try {
+      enviarPdfHogar(carpetaHogar(), d);
+    } catch (eCorreo) {
+      Logger.log('No se pudo enviar el PDF de Hogar: ' + eCorreo.message);
+    }
+  }
 }
+
+// ── PDF Y CORREO DE ENTORNO HOGAR ────────────────────────────
+// El PDF se guarda en la carpeta institucional y, si el usuario lo solicitó,
+// se adjunta a un correo. Guardar directamente en un Drive personal requiere
+// OAuth por usuario; por eso no se intenta sin autorización explícita.
+function carpetaHogar() {
+  var raiz = obtenerCarpeta();
+  var nombre = 'Caracterizaciones Entorno Hogar';
+  var folders = raiz.getFoldersByName(nombre);
+  return folders.hasNext() ? folders.next() : raiz.createFolder(nombre);
+}
+
+function enviarPdfHogar(carpeta, d) {
+  var propiedades = PropertiesService.getScriptProperties();
+  var hoy = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  var llave = 'hogar_correos_' + hoy;
+  var enviados = Number(propiedades.getProperty(llave) || 0);
+  if (enviados >= HOGAR_MAX_CORREOS_DIARIOS) throw new Error('Se alcanzó el límite diario de correos configurado.');
+
+  var pdf = crearPdfHogar(carpeta, d);
+  MailApp.sendEmail({
+    to: d.correoDestino,
+    subject: 'Caracterización Entorno Hogar - ' + (d.municipio || NOMBRE_MUNICIPIO),
+    htmlBody: '<p>Adjuntamos la copia en PDF de la ficha de caracterización del entorno hogar.</p>' +
+      '<p><b>Dirección:</b> ' + escaparHtml(d.direccion || 'No registrada') + '</p>' +
+      '<p>Este mensaje fue generado por PIC Departamental.</p>',
+    attachments: [pdf.getBlob()]
+  });
+  propiedades.setProperty(llave, String(enviados + 1));
+  Logger.log('PDF de Hogar enviado a ' + d.correoDestino);
+}
+
+function crearPdfHogar(carpeta, d) {
+  var fecha = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd_HHmm');
+  var nombre = 'Caracterizacion_Entorno_Hogar_' + limpiarNombre(d.municipio || NOMBRE_MUNICIPIO) + '_' + fecha;
+  var doc = DocumentApp.create(nombre);
+  var body = doc.getBody();
+  var titulo = body.appendParagraph('FICHA DE CARACTERIZACIÓN SOCIAL Y AMBIENTAL - ENTORNO HOGAR');
+  titulo.setHeading(DocumentApp.ParagraphHeading.HEADING1);
+  titulo.editAsText().setForegroundColor('#075985');
+  body.appendParagraph('PIC Departamental').editAsText().setForegroundColor('#64748b');
+
+  var generales = [
+    ['Municipio', d.municipio || NOMBRE_MUNICIPIO], ['Fecha de visita', d.fechaVisita || '—'],
+    ['Dirección', d.direccion || '—'], ['Teléfono', d.telefono || '—'],
+    ['Diligencia', d.diligencia || '—'], ['Atiende visita', d.atiende || '—']
+  ];
+  agregarTablaHogar(body, 'GENERALIDADES', generales);
+
+  var respuestas = d.respuestas || {};
+  var filas = Object.keys(respuestas).filter(function(k) { return k !== 'Integrantes del hogar' && k.indexOf(' · ') === -1; })
+    .map(function(k) { return [k, resumenValorHogar(respuestas[k])]; });
+  if (filas.length) agregarTablaHogar(body, 'RESPUESTAS DEL CUESTIONARIO', filas);
+
+  if (respuestas['Integrantes del hogar']) {
+    var integrantes = respuestas['Integrantes del hogar'].map(function(persona, indice) {
+      return ['Integrante ' + (indice + 1), resumenValorHogar(persona)];
+    });
+    agregarTablaHogar(body, 'INFORMACIÓN DEMOGRÁFICA', integrantes);
+  }
+  var matrices = Object.keys(respuestas).filter(function(k) { return k.indexOf(' · ') !== -1; })
+    .map(function(k) { return [k.replace(/ · /g, ' - '), resumenValorHogar(respuestas[k])]; });
+  if (matrices.length) agregarTablaHogar(body, 'MATRICES', matrices);
+
+  body.appendParagraph('Documento generado desde PIC Departamental.').editAsText().setForegroundColor('#64748b');
+  doc.saveAndClose();
+  var docFile = DriveApp.getFileById(doc.getId());
+  carpeta.addFile(docFile);
+  try { DriveApp.getRootFolder().removeFile(docFile); } catch (eRoot) {}
+  var pdfBlob = docFile.getAs(MimeType.PDF).setName(nombre + '.pdf');
+  return carpeta.createFile(pdfBlob);
+}
+
+function agregarTablaHogar(body, titulo, filas) {
+  var encabezado = body.appendParagraph(titulo);
+  encabezado.setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  encabezado.editAsText().setForegroundColor('#0f766e');
+  var table = body.appendTable([['Pregunta / campo', 'Respuesta']].concat(filas));
+  table.getRow(0).getCell(0).setBackgroundColor('#0f766e').editAsText().setForegroundColor('#ffffff').setBold(true);
+  table.getRow(0).getCell(1).setBackgroundColor('#0f766e').editAsText().setForegroundColor('#ffffff').setBold(true);
+  for (var i = 1; i < table.getNumRows(); i++) {
+    table.getRow(i).getCell(0).editAsText().setBold(true);
+    if (i % 2 === 0) {
+      table.getRow(i).getCell(0).setBackgroundColor('#f1f5f9');
+      table.getRow(i).getCell(1).setBackgroundColor('#f1f5f9');
+    }
+  }
+}
+
+function resumenValorHogar(valor) {
+  if (Array.isArray(valor)) return valor.map(resumenValorHogar).join(' | ');
+  if (valor && typeof valor === 'object') return Object.keys(valor).map(function(k) { return k + ': ' + valor[k]; }).join(' | ');
+  return String(valor || '—');
+}
+
+function esCorreoValido(correo) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(correo || '')); }
+function escaparHtml(valor) { return String(valor || '').replace(/[&<>'"]/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]; }); }
 
 // ── GUARDAR LOGO EN DRIVE ────────────────────────────────────
 function guardarLogo(datos) {
