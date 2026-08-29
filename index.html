@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>EBS+ | App de Campo</title>
+<title>PIC DEPARTAMENTAL | App de Campo</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#005f73">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="EBS+">
+<meta name="apple-mobile-web-app-title" content="PIC Departamental">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
@@ -49,22 +49,29 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 #screen-login::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 20% 80%, rgba(209,29,91,0.18), transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(10,147,150,0.2), transparent 50%); }
 .login-card { background: rgba(255,255,255,0.97); border-radius: 20px; padding: 48px 40px 40px; width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); position: relative; z-index: 1; animation: fadeUp .6s ease both; }
 .login-logo { text-align: center; margin-bottom: 32px; }
-.badge-logo { display: inline-block; background: var(--primary); color: #fff; font-family: var(--font-display); font-size: 2rem; font-weight: 700; padding: 14px 24px; border-radius: 14px; margin-bottom: 12px; box-shadow: 0 4px 20px rgba(0,95,115,0.3); }
-.badge-logo span { color: var(--accent); }
+.badge-logo { display: inline-flex; align-items: center; justify-content: center; width: 68px; height: 68px; background: linear-gradient(150deg, var(--primary), var(--primary-dark)); color: #fff; font-family: var(--font-display); font-size: 1.7rem; font-weight: 700; border-radius: 18px; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(0,95,115,0.35); position: relative; }
+.badge-logo::after { content: ''; position: absolute; right: -3px; bottom: -3px; width: 14px; height: 14px; background: var(--accent); border-radius: 50%; border: 2.5px solid #fff; }
+.login-logo .brand-name { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; letter-spacing: .03em; color: var(--primary-dark); margin-bottom: 4px; }
 .login-logo p { color: var(--text-muted); font-size: .85rem; letter-spacing: .04em; text-transform: uppercase; }
 .login-title { font-family: var(--font-display); font-size: 1.4rem; color: var(--primary-dark); margin-bottom: 24px; text-align: center; }
 .fgroup { margin-bottom: 18px; }
 .fgroup label { display: block; font-size: .8rem; font-weight: 600; color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 7px; }
 .fgroup input { width: 100%; padding: 13px 16px; border: 1.5px solid var(--border); border-radius: var(--radius); font-family: var(--font-body); font-size: .95rem; color: var(--text); background: var(--bg); outline: none; transition: border-color .2s, box-shadow .2s; }
 .fgroup input:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(10,147,150,.12); }
+.pass-wrap { position: relative; }
+.pass-wrap input { padding-right: 46px; }
+.btn-toggle-pass { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; font-size: 1.05rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: background .15s, color .15s; }
+.btn-toggle-pass:hover { background: rgba(0,95,115,.08); color: var(--primary); }
 .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: #fff; border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 8px; transition: transform .15s, box-shadow .15s; }
 .btn-login:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,95,115,.3); }
 .login-error { background: #fff0f3; border: 1px solid #fecdd3; color: #be123c; border-radius: 8px; padding: 10px 14px; font-size: .875rem; margin-top: 14px; text-align: center; display: none; }
 
 /* ── HEADER ────────────────────────────────────────────── */
-.app-header { background: var(--primary-dark); padding: 0 16px; display: flex; align-items: center; justify-content: space-between; height: 56px; box-shadow: 0 2px 12px rgba(0,0,0,.2); position: sticky; top: 0; z-index: 100; }
-.logo-text { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: #fff; }
-.logo-text span { color: var(--accent); }
+.app-header { background: var(--primary-dark); padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; min-height: 56px; box-shadow: 0 2px 12px rgba(0,0,0,.2); position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 6px; }
+.logo-text { font-family: var(--font-display); font-weight: 700; color: #fff; line-height: 1.15; }
+.logo-text .lt-main { font-size: 1.15rem; }
+.logo-text .lt-main span { color: var(--accent); }
+.logo-text .lt-sub { display: block; font-family: var(--font-body); font-size: .58rem; font-weight: 600; letter-spacing: .12em; color: rgba(255,255,255,.65); text-transform: uppercase; }
 .header-right { display: flex; align-items: center; gap: 7px; }
 .chip-muni { background: var(--accent); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: .7rem; font-weight: 600; }
 .chip-user { background: rgba(255,255,255,.12); color: rgba(255,255,255,.9); padding: 4px 10px; border-radius: 20px; font-size: .75rem; font-weight: 600; }
@@ -137,6 +144,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .ff input, .ff select, .ff textarea { width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 9px; font-family: var(--font-body); font-size: .88rem; color: var(--text); background: var(--bg); outline: none; transition: border-color .2s, box-shadow .2s; }
 .ff input:focus, .ff select:focus, .ff textarea:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(10,147,150,.10); background: #fff; }
 .ff textarea { resize: vertical; min-height: 75px; }
+
+/* ── Toggle Sí/No (reemplaza los <select> de dos opciones) ── */
+.hogar-toggle { display: flex; gap: 8px; }
+.hogar-toggle-opt { position: relative; flex: 1; }
+.hogar-toggle-opt input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.hogar-toggle-opt label { display: flex; align-items: center; justify-content: center; text-align: center; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 9px; font-size: .85rem; font-weight: 600; color: var(--text-muted); background: var(--bg); transition: background .15s, border-color .15s, color .15s; }
+.hogar-toggle-opt input:checked + label { background: var(--primary); border-color: var(--primary); color: #fff; }
+.hogar-toggle-opt input:focus-visible + label { outline: 2px solid var(--primary-light); outline-offset: 2px; }
+.hogar-checks { display: flex; flex-direction: column; gap: 8px; }
 .sdiv { font-size: .7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .08em; padding: 8px 0 4px; border-bottom: 1px solid var(--border); margin-bottom: 12px; margin-top: 4px; }
 .apgar-ref { background: #f0f9ff; border: 1.5px solid var(--primary-light); border-radius: 10px; padding: 12px 14px; font-size: .78rem; color: var(--text); margin-bottom: 14px; line-height: 1.45; }
 .apgar-ref strong { color: var(--primary-dark); }
@@ -276,8 +292,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 <div id="screen-login" class="screen active">
   <div class="login-card">
     <div class="login-logo">
-      <div class="badge-logo">EBS<span>+</span></div>
-      <p>Equipos Básicos de Salud · Santander</p>
+      <div class="badge-logo">PIC</div>
+      <div class="brand-name">PIC Departamental</div>
+      <p>Plan de Intervenciones Colectivas · Santander</p>
     </div>
     <p class="login-title">Acceso al Sistema de Campo</p>
     <div class="fgroup">
@@ -286,7 +303,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
     </div>
     <div class="fgroup">
       <label>Contraseña</label>
-      <input type="password" id="inp-pass" placeholder="Ingrese su contraseña">
+      <div class="pass-wrap">
+        <input type="password" id="inp-pass" placeholder="Ingrese su contraseña" autocomplete="current-password">
+        <button type="button" class="btn-toggle-pass" id="btn-toggle-pass" onclick="togglePassVisibility()" aria-label="Mostrar contraseña" title="Mostrar contraseña">👁️</button>
+      </div>
     </div>
     <button class="btn-login" onclick="doLogin()">Ingresar</button>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
@@ -301,7 +321,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 
   <!-- Header -->
   <header class="app-header">
-    <div class="logo-text">EBS<span>+</span></div>
+    <div class="logo-text"><span class="lt-main">PIC<span>+</span></span><span class="lt-sub">Departamental</span></div>
     <div class="header-right">
       <span class="chip-muni" id="hdr-muni">—</span>
       <span class="chip-user" id="hdr-user">—</span>
@@ -515,7 +535,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
               <li>¿Se siente satisfecho con la forma en que su familia expresa afecto y responde a sus emociones como rabia, tristeza o amor?</li>
               <li>¿Se siente satisfecho con la manera como comparten en su familia el tiempo para estar juntos, los espacios en la casa o el dinero?</li>
             </ol>
-            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:8px"><strong>Escala:</strong> 0 = Nunca · 1 = Casi nunca · 2 = Algunas veces · 3 = A veces · 4 = Casi siempre · 5 = Siempre</p>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:8px"><strong>Escala:</strong> 0 = Nunca · 1 = Casi nunca · 2 = Algunas veces · 3 = Frecuentemente · 4 = Casi siempre · 5 = Siempre</p>
             <div class="apgar-table-wrap">
               <table class="apgar-table" id="apgar-table">
                 <thead>
@@ -630,7 +650,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
         </div>
         <div class="frow">
           <div class="ff"><label>Cocina</label><select id="m-cocina"><option value="">—</option><option>ESTUFA A GAS</option><option>ESTUFA DE LEÑA</option><option>GAS - LEÑA</option><option>ESTUFA DE LEÑA, ESTUFA A GAS</option></select></div>
-          <div class="ff"><label>Manejo de Residuos No Aprovechables</label><select id="m-residuos"><option value="">—</option><option>RECOLECCION POR SERVICIO DE ASEO</option><option>INICINERACION</option><option>INCINERACION</option><option>ENTIERRO</option><option>HUECO</option></select></div>
+          <div class="ff"><label>Manejo de Residuos No Aprovechables</label><select id="m-residuos"><option value="">—</option><option>RECOLECCION POR SERVICIO DE ASEO</option><option>INCINERACION</option><option>ENTIERRO</option><option>HUECO</option></select></div>
         </div>
         <div class="frow">
           <div class="ff"><label>Paredes</label><select id="m-paredes"><option value="">—</option><option>BLOQUE /LADRILLO/PIEDRA</option><option>MADERA</option><option>ADOBE</option><option>PREFABRICADA</option></select></div>
@@ -717,13 +737,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
   <!-- ── TAB: CONFIGURACIÓN ────────────────────────────── -->
   <div class="tab-panel" id="panel-config">
 
-    <!-- Logo EBS (global) -->
+    <!-- Logo PIC Departamental (global) -->
     <div class="cfg-section">
-      <div class="cfg-section-title">🏥 Logo EBS+ <span class="cfg-badge cfg-badge-global">Global</span></div>
+      <div class="cfg-section-title">🏥 Logo PIC Departamental <span class="cfg-badge cfg-badge-global">Global</span></div>
       <p class="cfg-desc">Se usa en todos los municipios. Súbelo una sola vez.</p>
       <div class="cfg-logo-wrap">
         <div class="cfg-logo-preview" id="cfg-ebs-preview-wrap">
-          <img id="cfg-ebs-prev" src="" alt="Logo EBS" style="display:none;max-height:80px;max-width:160px;object-fit:contain">
+          <img id="cfg-ebs-prev" src="" alt="Logo PIC Departamental" style="display:none;max-height:80px;max-width:160px;object-fit:contain">
           <span class="cfg-logo-placeholder" id="cfg-ebs-placeholder">Sin logo</span>
         </div>
         <div class="cfg-logo-actions">
@@ -830,13 +850,13 @@ const HOGAR_SECTIONS = [
     ['Tipo de vivienda', 'Casa|Casa indígena|Apartamento|Cuarto de inquilinato|Tipo cuarto|Otra vivienda'], ['Tenencia de la vivienda', 'Propia totalmente pagada|Propia la están pagando|Arriendo o subarriendo|Usufructo|Posesión sin título|Vivienda en empeño|Propiedad colectiva|Otra'], ['Estrato'], ['Grupos que cocinan por separado'], ['Número de familias en la vivienda'], ['Personas que habitan la vivienda'], ['Personas con discapacidad o dependencia'], ['Mujeres gestantes']
   ]],
   ['Habitabilidad y movilidad', [
-    ['Riesgos cercanos a la vivienda (puede seleccionar varios)', 'Cultivos|Apriscos|Porquerizas|Plagas|Ruido|Malos olores|Río o quebrada|Extracción minera|Quemas|Tráfico vehicular|Otro'], ['Material predominante del piso', 'Tierra, arena o barro|Cemento o gravilla|Madera|Baldosa o ladrillo|Otro'], ['Material predominante de paredes', 'Bloque, ladrillo o concreto|Bahareque o barro|Madera|Materiales de desecho|No tiene|Otro'], ['Material predominante del techo', 'Concreto|Teja de barro|Fibrocemento|Zinc|Palma o paja|Plástico|Desechos|Otro'], ['Estado de paredes', 'Buen estado|Con humedad o deterioro'], ['Estado del techo', 'Buen estado|Con agrietamiento o goteras'], ['¿Cocina separada de otros espacios?', 'Sí|No'], ['¿Baño separado de otros espacios?', 'Sí|No'], ['Número de dormitorios'], ['Ventilación de la vivienda', 'Siempre|Algunas veces|Nunca'], ['Tipo de alumbrado', 'Luz eléctrica|Kerosén/petróleo|Velas|Energía solar|Planta eléctrica|Otro'], ['Actividad económica dentro de la vivienda', 'Sí|No'], ['Acceso cercano a', 'Transporte|Centros sociales/culturales|Parques|Iglesias|Instituciones educativas|Servicios de salud|Otro'], ['Medio de desplazamiento habitual', 'Vehículo particular|Transporte público|Motocicleta|Bicicleta|Semovientes|Canoa/lancha|Caminando|Otro'], ['Elementos de seguridad usados', 'Casco|Cinturón de seguridad|Retención infantil|Chaleco reflectivo|Chaleco salvavidas|Ninguno|Otro']
+    ['Riesgos cercanos a la vivienda (puede seleccionar varios)', 'multiple|Cultivos|Apriscos|Porquerizas|Galpones|Terrenos baldíos|Plagas|Ruido|Malos olores|Excretas|Rellenos/botaderos|Industrias contaminantes|Contaminación visual|Río/quebrada|Extracción minera|Canales|Tráfico|Quemas|Otro'], ['Material predominante del piso', 'Tierra, arena o barro|Cemento o gravilla|Madera|Baldosa o ladrillo|Otro'], ['Material predominante de paredes', 'Bloque, ladrillo o concreto|Bahareque o barro|Madera|Materiales de desecho|No tiene|Otro'], ['Material predominante del techo', 'Concreto|Teja de barro|Fibrocemento|Zinc|Palma o paja|Plástico|Desechos|Otro'], ['Estado de paredes', 'Buen estado|Con humedad o deterioro'], ['Estado del techo', 'Buen estado|Con agrietamiento o goteras'], ['¿Cocina separada de otros espacios?', 'Sí|No'], ['¿Baño separado de otros espacios?', 'Sí|No'], ['¿Dormitorios de adultos y niños separados?', 'Sí|No'], ['Número de dormitorios'], ['Número de personas para índice de hacinamiento'], ['Iluminación natural por ambiente', 'multiple|Cocina|Dormitorio adultos|Dormitorio niños|Sala/comedor|Sanitario|Zona de lavado'], ['Ventilación natural por ambiente', 'multiple|Cocina|Dormitorio adultos|Dormitorio niños|Sala/comedor|Sanitario|Zona de lavado'], ['Ventilación de la vivienda', 'Siempre|Algunas veces|Nunca'], ['Uso de lavamanos', 'multiple|Lavado de manos|Lavado de ropa|Lavado de utensilios/alimentos'], ['Uso de lavaplatos', 'multiple|Lavado de manos|Lavado de ropa|Lavado de utensilios/alimentos'], ['Uso de lavadero', 'multiple|Lavado de manos|Lavado de ropa|Lavado de utensilios/alimentos'], ['Tipo de alumbrado', 'Luz eléctrica|Kerosén/petróleo|Velas|Energía solar|Planta eléctrica|Otro'], ['Actividad económica dentro de la vivienda', 'Sí|No'], ['¿Área de trabajo separada e independiente?', 'Sí|No'], ['¿Algún miembro afectado por la actividad económica?', 'Sí|No'], ['Acceso cercano a', 'multiple|Transporte|Centros sociales/culturales|Parques|Iglesias|Instituciones educativas|Servicios de salud|Otro'], ['Elementos de seguridad usados', 'multiple|Casco|Cinturón de seguridad|Retención infantil|Chaleco reflectivo|Chaleco salvavidas|Ninguno|Otro']
   ]],
   ['Accidentes en el hogar', [
-    ['Accidentes domésticos en el último año', 'Heridas|Intoxicación|Quemadura|Electrocución|Asfixia|Golpes|Caídas|Ahogamiento|Agresión animal|Caída de alturas|Ninguno'], ['Escenarios de riesgo identificados', 'Objetos cortantes al alcance|Químicos al alcance|Medicamentos al alcance|Velas encendidas|Conexiones eléctricas en mal estado|Pasillos obstruidos|Superficies resbaladizas|Tanques sin tapa|Escaleras sin protección|Ninguno']
+    ['Escenarios de riesgo identificados', 'multiple|Objetos cortantes al alcance|Químicos al alcance|Medicamentos al alcance|Velas encendidas|Conexiones eléctricas en mal estado|Objetos pequeños al alcance|Pasillos obstruidos|Superficies resbaladizas|Tanques sin tapa|Escaleras sin protección|Ninguno']
   ]],
   ['Agua y saneamiento básico', [
-    ['Fuente principal de agua', 'Acueducto ESP|Agua embotellada|Acueducto comunitario|Pila pública|Carro tanque|Pozo con bomba|Pozo sin bomba|Río/quebrada|Aguas lluvias|Otro'], ['Horas diarias de suministro', '24 horas|12 a 23 horas|4 a 12 horas|Menor a 4 horas|Días sin suministro'], ['Tanque de almacenamiento', 'Aéreo|Superficial|Subterráneo|No tiene'], ['Tratamiento casero del agua', 'Clarificación|Filtración|Desinfección|Hervido|Otro|Ninguno'], ['Almacenamiento del agua', 'Recipiente con tapa|Recipiente sin tapa|Tanque con tapa|Tanque sin tapa|No almacena'], ['Disposición de excretas', 'Sanitario al alcantarillado|Letrina|Pozo séptico|Sanitario ecológico seco|Sin conexión|Fuente hídrica|Campo abierto|Otro'], ['Disposición de aguas residuales', 'Pozo séptico|Campo de oxidación|Biofiltro|Fuente hídrica|Campo abierto|Otro'], ['Almacenamiento de residuos ordinarios', 'Recipientes con tapa|Recipientes sin tapa|Directamente al suelo|Bolsas plásticas|Otro'], ['Disposición final residuos ordinarios', 'Servicio de aseo|Enterramiento|Quema|Fuente de agua|Campo abierto|Otro'], ['Disposición final residuos peligrosos', 'Empresa especializada|Sitio autorizado|Centro de acopio|Enterramiento|Quema|Fuente de agua|Campo abierto|Con ordinarios|Otro']
+    ['Fuente principal de agua', 'Acueducto ESP|Agua embotellada|Acueducto comunitario|Pila pública|Carro tanque|Abasto comunitario|Pozo con bomba|Pozo sin bomba|Laguna/jagüey|Río/quebrada|Aguas lluvias|Aguatero|Otro'], ['Horas diarias de suministro', '24 horas|12 a 23 horas|4 a 12 horas|Menor a 4 horas|Días sin suministro'], ['Tanque de almacenamiento', 'Aéreo|Superficial|Subterráneo|No tiene'], ['Tratamiento casero del agua', 'multiple|Clarificación|Filtración|Desinfección|Hervido|Otro|Ninguno'], ['Almacenamiento del agua', 'Recipiente con tapa|Recipiente sin tapa|Tanque con tapa|Tanque sin tapa|No almacena'], ['Frecuencia de lavado de tanque', 'Después de cada uso|Semestral|Otro|No realiza lavado'], ['Distancia tanque subterráneo a pozo séptico', 'Más de 10 m|Entre 5 y 9 m|Menor a 5 m'], ['Disposición de excretas', 'Sanitario al alcantarillado|Letrina|Pozo séptico|Sanitario ecológico seco|Sin conexión|Fuente hídrica|Campo abierto|Otro'], ['Disposición de aguas residuales', 'Pozo séptico|Campo de oxidación|Biofiltro|Fuente hídrica|Campo abierto|Otro'], ['Distancia del sistema de excretas a vivienda/fuentes/ríos/tanques'], ['Almacenamiento de residuos ordinarios', 'Recipientes con tapa|Recipientes sin tapa|Directamente al suelo|Bolsas plásticas|Otro'], ['Disposición final residuos ordinarios', 'multiple|Servicio de aseo|Enterramiento|Quema|Fuente de agua|Campo abierto|Otro'], ['Disposición final residuos peligrosos', 'multiple|Empresa especializada|Sitio autorizado|Centro de acopio|Enterramiento|Quema|Fuente de agua|Campo abierto|Con ordinarios|Otro'], ['¿Conocen prácticas de reducción/aprovechamiento/separación?', 'Sí|No'], ['Prácticas de reducción de residuos', 'multiple|Evita productos de un solo uso|Reutiliza papel/cartón|Entrega aparatos eléctricos|Evita aerosoles|Compra a granel|Otra'], ['Prácticas de aprovechamiento rural', 'multiple|Compostaje|Lombricultivo|Biocombustible|Biofertilizante|Otra'], ['Prácticas de separación rural', 'multiple|Aprovechables|No aprovechables|Orgánicos']
   ]],
   ['Higiene y aire intradomiciliario', [
     ['Limpieza de pisos', 'Barrido|Trapeado|Barrido y trapeado|Barrido, trapeado y desinfección|Otro'], ['Limpieza de paredes', 'Retiro de suciedad|Agua y jabón|Agua, jabón y desinfección|Otro'], ['¿Lavado de manos con agua y jabón?', 'Sí|No'], ['Momentos de lavado de manos', 'Después de baño|Después de cambiar pañales|Antes de alimentos|Después de animales|Después de llegar de la calle|Después de químicos|Todas'], ['Momentos de cepillado dental', 'Al levantarse|Después del desayuno|Después del almuerzo|Después de cena|Antes de acostarse|Nunca|Otro'], ['Combustible para cocinar', 'Electricidad|Gas natural|Gas propano|Leña/carbón|Petróleo/kerosén|Carbón mineral|Desechos|Otro'], ['¿Hay humo dentro de la vivienda?', 'Sí|No'], ['Fuentes de humo', 'Cigarrillo/tabaco|Leña|Carbón|Quema de basura|Vapeadores|Narguilas|Otro'], ['Tipo y estado de estufa'], ['Medidas ante enfermedad respiratoria', 'Tapabocas|Lavado de manos|Cubrirse al toser|Ninguna|Otra']
@@ -856,7 +876,7 @@ let CM = null;        // Municipio actual
 let editId = null;
 let editTipo = null;
 let fotoData = {};    // Almacena fotos en base64 por id de preview
-let logoData = {};    // Almacena logos en base64 (hospital y EBS)
+let logoData = {};    // Almacena logos en base64 (hospital y PIC Departamental)
 let activeF = 'todos';
 let online = navigator.onLine;
 let intCount = 0;
@@ -1041,6 +1061,17 @@ async function pushToSheet(registro, url) {
 // ── Login / Logout ──────────────────────────────────────────
 document.getElementById('inp-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 document.getElementById('inp-user').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('inp-pass').focus(); });
+
+function togglePassVisibility() {
+  const inp = document.getElementById('inp-pass');
+  const btn = document.getElementById('btn-toggle-pass');
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁️';
+  btn.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+  btn.title = show ? 'Ocultar contraseña' : 'Mostrar contraseña';
+  inp.focus();
+}
 
 function doLogin() {
   const u = document.getElementById('inp-user').value.trim().toUpperCase();
@@ -1260,28 +1291,77 @@ function getIntData(n) {
 function hogarId(section, question) { return `h-${section}-${question}`; }
 function safeHtml(text) { return String(text).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+// Preguntas de texto libre en HOGAR_SECTIONS que en realidad piden una cantidad:
+// se muestran con teclado numérico y no aceptan texto no numérico.
+const HOGAR_NUMERIC_LABELS = [
+  'Estrato', 'Grupos que cocinan por separado', 'Número de familias en la vivienda',
+  'Personas que habitan la vivienda', 'Personas con discapacidad o dependencia',
+  'Mujeres gestantes', 'Número de dormitorios', 'Número de personas para índice de hacinamiento'
+];
+
 function renderHogarForm() {
   const root = document.getElementById('hogar-form');
   if (!root || root.children.length) return;
-  root.innerHTML = HOGAR_SECTIONS.map((section, si) => {
+  root.innerHTML = hogarSpecialBlocks() + HOGAR_SECTIONS.map((section, si) => {
     const fields = section[1].map((question, qi) => {
       const id = hogarId(si, qi), options = question[1] ? question[1].split('|') : [];
-      const control = options.length
-        ? `<select id="${id}"><option value="">— Seleccionar —</option>${options.map(o => `<option>${safeHtml(o)}</option>`).join('')}</select>`
-        : (question[0].toLowerCase().includes('observaciones') ? `<textarea id="${id}" placeholder="Escriba las observaciones relevantes..."></textarea>` : `<input id="${id}" type="text">`);
+      const isMulti = options[0] === 'multiple';
+      if (isMulti) options.shift();
+      const isBinary = !isMulti && options.length === 2 && options[0] === 'Sí' && options[1] === 'No';
+      let control;
+      if (isBinary) {
+        control = `<div class="hogar-toggle">${options.map((o,i) => `<div class="hogar-toggle-opt"><input class="hogar-input" type="radio" name="${id}" id="${id}-${i}" value="${safeHtml(o)}" data-hogar-label="${safeHtml(question[0])}"><label for="${id}-${i}">${safeHtml(o)}</label></div>`).join('')}</div>`;
+      } else if (isMulti) {
+        control = `<div class="hogar-checks">${options.map((o,i) => `<label style="font-weight:400;display:flex;gap:6px;align-items:flex-start"><input class="hogar-input" data-hogar-label="${safeHtml(question[0])}" type="checkbox" value="${safeHtml(o)}">${safeHtml(o)}</label>`).join('')}</div>`;
+      } else if (options.length) {
+        control = `<select class="hogar-input" data-hogar-label="${safeHtml(question[0])}" id="${id}"><option value="">— Seleccionar —</option>${options.map(o => `<option>${safeHtml(o)}</option>`).join('')}</select>`;
+      } else if (question[0].toLowerCase().includes('observaciones')) {
+        control = `<textarea class="hogar-input" data-hogar-label="${safeHtml(question[0])}" id="${id}" placeholder="Escriba las observaciones relevantes..."></textarea>`;
+      } else if (HOGAR_NUMERIC_LABELS.includes(question[0])) {
+        control = `<input class="hogar-input" data-hogar-label="${safeHtml(question[0])}" id="${id}" type="number" min="0" inputmode="numeric" placeholder="0">`;
+      } else {
+        control = `<input class="hogar-input" data-hogar-label="${safeHtml(question[0])}" id="${id}" type="text">`;
+      }
       return `<div class="ff"><label>${safeHtml(question[0])}</label>${control}</div>`;
     }).join('');
     return `<details open style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">${si + 1}. ${safeHtml(section[0])}</summary><div class="frow" style="padding:14px">${fields}</div></details>`;
   }).join('');
+  agregarMiembroHogar();
 }
 
 function getHogarAnswers() {
   const answers = {};
-  HOGAR_SECTIONS.forEach((section, si) => section[1].forEach((question, qi) => {
-    const val = document.getElementById(hogarId(si, qi))?.value?.trim();
-    if (val) answers[question[0]] = val;
-  }));
+  document.querySelectorAll('.hogar-input').forEach(el => {
+    const label = el.dataset.hogarLabel; if (!label) return;
+    if (el.type === 'checkbox') {
+      const val = el.checked ? el.value : '';
+      if (!val) return;
+      answers[label] = [answers[label], val].filter(Boolean).join(', ');
+    } else if (el.type === 'radio') {
+      if (el.checked) answers[label] = el.value;
+    } else {
+      const val = el.value.trim();
+      if (val) answers[label] = val;
+    }
+  });
+  document.querySelectorAll('.hogar-matrix').forEach(el => { if (el.value.trim()) answers[el.dataset.hogarLabel] = el.value.trim(); });
+  const miembros = [...document.querySelectorAll('#h-miembros tbody tr')].map(row => Object.fromEntries([...row.querySelectorAll('input,select')].map(i => [i.dataset.k, i.value]).filter(([,v]) => v))).filter(x => Object.keys(x).length);
+  if (miembros.length) answers['Integrantes del hogar'] = miembros;
   return answers;
+}
+
+function hogarSpecialBlocks() {
+  return `<details open style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">2. Información demográfica por integrante</summary><div style="padding:14px;overflow:auto"><p style="font-size:.8rem;color:var(--text-muted)">Registre una fila por cada persona que reside habitualmente en la vivienda.</p><table class="apgar-table" id="h-miembros"><thead><tr><th>Apellidos y nombres</th><th>Tipo y N° documento</th><th>Fecha nac.</th><th>Género</th><th>Ocupación</th><th>Estado civil</th><th>Parentesco</th><th>SGSSS</th><th>Escolaridad</th><th>Étnica</th><th></th></tr></thead><tbody></tbody></table><button type="button" class="btn-add-int" onclick="agregarMiembroHogar()">＋ Agregar integrante</button></div></details>
+  <details style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">Matrices de movilidad, accidentes e higiene</summary><div style="padding:14px">${hogarMatrix('Medio de transporte por destino',['Vehículo particular','Transporte masivo','Bus/buseta/colectivo','Taxi','Cable aéreo','Motocicleta','Bicicleta','Bicitaxi','Semovientes','Maquinaria/camión','Tarabita','Canoa/lancha','Caminando','Otro'],['Trabajo','Estudio','Otros'])}${hogarMatrix('Accidentes domésticos atendidos en urgencias',['Primera infancia (0-5)','Infancia (6-11)','Adolescencia (12-18)','Juventud (14-26)','Adultez (27-59)','Persona mayor (60+)'],['Heridas','Intoxicación','Quemadura','Electrocución','Asfixia','Golpes','Caída','Ahogamiento','Agresión animal','Caída de altura'])}${hogarMatrix('Frecuencia de limpieza',['Todos los días','Una vez a la semana','Una vez cada 15 días','Una vez al mes','Cada 6 meses','Cada año'],['Pisos','Paredes','Techos','Muebles','Tapetes','Cortinas','Sábanas','Cobijas','Otras superficies','Baño','Cocina'])}</div></details>`;
+}
+
+function hogarMatrix(title, rows, cols) { const key = title.replace(/[^a-z0-9]/gi,''); return `<div style="overflow:auto;margin:12px 0"><strong style="font-size:.84rem;color:var(--primary-dark)">${title}</strong><table class="apgar-table" style="margin-top:7px"><thead><tr><th></th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr><th>${r}</th>${cols.map(c=>`<td><input class="hogar-matrix" data-hogar-label="${title} · ${r} · ${c}" style="width:20px" aria-label="${r} ${c}"></td>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
+
+function agregarMiembroHogar() {
+  const tr = document.createElement('tr');
+  const select = (key, opts) => `<select data-k="${key}"><option value=""></option>${opts.map(o=>`<option>${o}</option>`).join('')}</select>`;
+  tr.innerHTML = `<td><input data-k="Nombres"></td><td><input data-k="Documento"></td><td><input data-k="Nacimiento" type="date"></td><td>${select('Género',['Masculino','Femenino'])}</td><td>${select('Ocupación',['Empleado','Independiente','Ama de casa','Pensionado','Desempleado','Estudiante','No aplica'])}</td><td>${select('Estado civil',['Unión libre','Casado','Viudo','Separado/divorciado','Soltero'])}</td><td>${select('Parentesco',['Jefe','Cónyuge','Hijo','Hijastro','Nieto','Padre/madre','Hermano','Otro pariente','No pariente'])}</td><td>${select('SGSSS',['Contributivo','Subsidiado','ARL','No asegurado','Régimen especial'])}</td><td>${select('Escolaridad',['Ninguno','Primaria','Secundaria','Técnica','Tecnológica','Universitaria','Postgrado'])}</td><td>${select('Pertenencia étnica',['Indígena','Afrodescendiente','Rom','Raizal','Palenquero','Ninguna'])}</td><td><button type="button" class="btn-rm-int" onclick="this.closest('tr').remove()">✕</button></td>`;
+  document.querySelector('#h-miembros tbody').appendChild(tr);
 }
 
 // Generador PDF autónomo: no requiere conexión ni librerías externas.
@@ -1289,7 +1369,7 @@ function downloadHogarPdf() {
   const answers = getHogarAnswers();
   if (!gv('h-direccion') && !Object.keys(answers).length) { toast('⚠️ Diligencia al menos un dato antes de descargar el PDF', 'err'); return; }
   const raw = [
-    'EBS+ | CARACTERIZACIÓN ENTORNO HOGAR',
+    'PIC DEPARTAMENTAL | CARACTERIZACIÓN ENTORNO HOGAR',
     `Municipio: ${CM}`, `Fecha de visita: ${gv('h-fecha') || '—'}`,
     `Dirección: ${gv('h-direccion') || '—'}`, `Teléfono: ${gv('h-telefono') || '—'}`,
     `Diligencia: ${gv('h-diligencia') || '—'}`, `Atiende visita: ${gv('h-atiende') || '—'}`, ''
@@ -1298,6 +1378,12 @@ function downloadHogarPdf() {
     const included = section[1].filter(q => answers[q[0]]);
     if (included.length) { raw.push(section[0].toUpperCase()); included.forEach(q => raw.push(`${q[0]}: ${answers[q[0]]}`)); raw.push(''); }
   });
+  if (answers['Integrantes del hogar']) {
+    raw.push('INFORMACIÓN DEMOGRÁFICA');
+    answers['Integrantes del hogar'].forEach((m, i) => raw.push(`Integrante ${i + 1}: ${Object.entries(m).map(([k,v]) => `${k}: ${v}`).join(' | ')}`));
+    raw.push('');
+  }
+  Object.entries(answers).filter(([k]) => k.includes(' · ')).forEach(([k,v]) => raw.push(`${k}: ${v}`));
   const clean = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ').replace(/[\\()]/g, '\\$&');
   const lines = raw.flatMap(line => {
     const words = clean(line).split(/\s+/); const rows = []; let current = '';
@@ -1361,7 +1447,10 @@ function clearF(tipo) {
     intCount = 0;
     addIntegrante();
   } else if (tipo === 'hogar') {
-    document.querySelectorAll('#q-hogar input, #q-hogar select, #q-hogar textarea').forEach(el => el.value = '');
+    document.querySelectorAll('#q-hogar input, #q-hogar select, #q-hogar textarea').forEach(el => {
+      if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
+      else el.value = '';
+    });
   }
 }
 
@@ -1816,7 +1905,7 @@ function exportCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `EBS_${CM.replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `PIC_${CM.replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   toast('📊 Exportado', 'ok');
@@ -1858,7 +1947,7 @@ function showInstallBanner() {
   const banner = document.createElement('div');
   banner.id = 'install-banner';
   banner.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#005f73;color:#fff;padding:11px 16px;border-radius:11px;font-size:.82rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:9998;display:flex;align-items:center;gap:9px;white-space:nowrap;';
-  banner.innerHTML = '<span>📲 Instalar EBS+</span><button onclick="doInstall()" style="background:#d11d5b;color:#fff;border:none;border-radius:6px;padding:4px 11px;font-size:.78rem;font-weight:700;cursor:pointer;">Instalar</button><button onclick="document.getElementById(\'install-banner\').remove()" style="background:transparent;color:rgba(255,255,255,.7);border:none;font-size:.95rem;cursor:pointer;">✕</button>';
+  banner.innerHTML = '<span>📲 Instalar PIC Departamental</span><button onclick="doInstall()" style="background:#d11d5b;color:#fff;border:none;border-radius:6px;padding:4px 11px;font-size:.78rem;font-weight:700;cursor:pointer;">Instalar</button><button onclick="document.getElementById(\'install-banner\').remove()" style="background:transparent;color:rgba(255,255,255,.7);border:none;font-size:.95rem;cursor:pointer;">✕</button>';
   document.body.appendChild(banner);
 }
 
@@ -2858,7 +2947,7 @@ function cfgSelMuni(m) {
 }
 
 function cfgRefreshPreviews() {
-  // Logo EBS (global)
+  // Logo PIC Departamental (global) — internamente sigue usando la clave "ebs" por compatibilidad
   const ebsData = localStorage.getItem(logoKeyEbs());
   const ebsPrev = document.getElementById('cfg-ebs-prev');
   const ebsPlaceholder = document.getElementById('cfg-ebs-placeholder');
@@ -2920,7 +3009,7 @@ async function cfgUploadLogo(input, tipo) {
     toast('⏳ Subiendo logo al servidor…', 'ok');
 
     if (tipo === 'ebs') {
-      // Logo EBS es global: enviarlo a TODOS los municipios para que cada Drive lo tenga
+      // Logo PIC Departamental es global: enviarlo a TODOS los municipios para que cada Drive lo tenga
       let ok = 0;
       for (const m of MUNIS) {
         const u = getSheetUrl(m, 'recoleccion');
@@ -2932,9 +3021,9 @@ async function cfgUploadLogo(input, tipo) {
             body: JSON.stringify({ accion: 'guardarLogo', municipio: 'global', tipo: 'ebs', base64: dataUrl })
           });
           ok++;
-        } catch(e) { console.warn('No se pudo enviar logo EBS a ' + m); }
+        } catch(e) { console.warn('No se pudo enviar logo PIC Departamental a ' + m); }
       }
-      toast(ok > 0 ? '✅ Logo EBS sincronizado en todos los municipios' : '⚠️ Guardado solo localmente.', ok > 0 ? 'ok' : 'warn');
+      toast(ok > 0 ? '✅ Logo sincronizado en todos los municipios' : '⚠️ Guardado solo localmente.', ok > 0 ? 'ok' : 'warn');
     } else {
       // Logo hospital: solo al script del municipio seleccionado
       const u = getSheetUrl(cfgMuni || CM, 'recoleccion');
