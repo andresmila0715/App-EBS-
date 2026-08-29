@@ -6,6 +6,7 @@
  *   1. Agregar/cambiar municipios
  *   2. Agregar/cambiar usuarios y contraseñas
  *   3. Cambiar los links de Google Sheets
+ *   4. Decidir qué apartados ve cada municipio
  *
  *  ⚠️  IMPORTANTE — CADA VEZ QUE EDITES ESTE ARCHIVO:
  *      Abre sw.js y cambia el número de versión del caché:
@@ -79,14 +80,32 @@ const USERS = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────
+//  3. VISIBILIDAD DE APARTADOS POR MUNICIPIO
+//
+//     Escribe "si" o "no" para mostrar u ocultar cada apartado.
+//     El administrador BOSS también verá la configuración del municipio
+//     que tenga seleccionado. Por defecto todos quedan visibles.
+//
+//     Ejemplo: para que La Belleza vea únicamente el nuevo apartado:
+//     'La Belleza': { carto: 'no', recoleccion: 'no', macro: 'no', hogar: 'si' },
+// ─────────────────────────────────────────────────────────────
+const SECCIONES_VISIBLES = {
+  'La Belleza': { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
+  'Sucre':      { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
+  'Enciso':     { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
+  'Muestra':    { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
+};
+
 
 // ─────────────────────────────────────────────────────────────
 //  3. URLS DE GOOGLE SHEETS (Apps Script Web App)
 //
-//     Cada municipio tiene 3 spreadsheets, uno por formulario:
+//     Cada municipio tiene 4 spreadsheets, uno por formulario:
 //       - carto       → Información Cartografías
 //       - recoleccion → Instrumento de Recolección de Datos
 //       - macro       → Macro (caracterización familiar)
+//       - hogar       → Caracterización Entorno Hogar
 //
 //     Para obtener una URL:
 //       1. Abre el script en Google Sheets
@@ -106,24 +125,28 @@ const SHEETS_URLS = {
     carto:       'https://script.google.com/macros/s/REEMPLAZAR_LABELLEZA_CARTO/exec',
     recoleccion: 'https://script.google.com/macros/s/REEMPLAZAR_LABELLEZA_RECOLECCION/exec',
     macro:       'https://script.google.com/macros/s/AKfycbxIhQ29PNqvYy__USCB_fEdiSum3yF9DwybKY_u9_0T52RDODHJdx1GTqCqhEOBR8SP/exec',
+    hogar:       null, // agrega aquí la URL cuando crees el Apps Script de Hogar
   },
 
   'Sucre': {
     carto:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_CARTO/exec',
     recoleccion: 'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_RECOLECCION/exec',
     macro:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_MACRO/exec',
+    hogar:       null,
   },
 
     'Enciso': {
     carto:       'https://script.google.com/macros/s/AKfycbwEqpgAikHpJNMGuJW1m8ZQEAdkFDEmd3GBpjg4DIgTvm5m9RBeXlfAhiTxt9QYiOtv/exec',
     recoleccion: 'https://script.google.com/macros/s/AKfycbzDyWxFW8Wh804SnyNwUx6rxzv9t4PRKM6eIEV7XKIYLCiVTuObNu_u7zkyW9LrqjOd/exec',
     macro:       'https://script.google.com/macros/s/AKfycbwpJwJ-RDjT5xv2E2UCLw2xcDAWewQO9heogU7TBK1dACTQlmX8AInZYg5reTCfWzMg/exec',
+    hogar:       null,
   },
 
     'Muestra': {
     carto:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_CARTO/exec',
     recoleccion: 'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_RECOLECCION/exec',
     macro:       'https://script.google.com/macros/s/REEMPLAZAR_SUCRE_MACRO/exec',
+    hogar:       null,
   },
   // Para agregar Landázuri:
   // 'Landázuri': {
