@@ -1497,39 +1497,64 @@ function downloadHogarPdf() {
 
   const pageCommands = []; let commands = [], y = 0, pageNumber = 0, rowIndex = 0;
   const text = (fontName, size, x, top, value, color = '0 0 0') => commands.push(`${color} rg BT /${fontName} ${size} Tf ${x} ${top} Td (${clean(value)}) Tj ET`);
+  // Paleta institucional: azul noche para la cabecera, acento verde-azulado, tinta y grises neutros para el cuerpo.
+  const NAVY = '0.043 0.145 0.278', SLATE = '0.29 0.34 0.39', ACCENT = '0.02 0.55 0.52', INK = '0.10 0.12 0.14', MUTED = '0.45 0.49 0.53';
+  const folio = 'EH-' + new Date().getFullYear() + '-' + Date.now().toString(36).toUpperCase();
+  const genFecha = new Date().toLocaleString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   const beginPage = () => {
     pageNumber++; commands = [];
-    commands.push('0.02 0.29 0.45 rg 36 795 540 24 re f');
-    text('F2', 11, 47, 802, 'FICHA DE CARACTERIZACION SOCIAL Y AMBIENTAL - ENTORNO HOGAR', '1 1 1');
+    // Cabecera institucional con franja de acento
+    commands.push(`${NAVY} rg 36 782 540 34 re f`);
+    commands.push(`${ACCENT} rg 36 779 540 3 re f`);
+    text('F2', 12.5, 44, 805, 'CARACTERIZACION ENTORNO HOGAR', '1 1 1');
+    text('F1', 7.3, 44, 792, 'Ficha de Caracterizacion Social y Ambiental - PIC Departamental', '0.75 0.82 0.90');
     if (pageNumber === 1 && logoImage) {
-      const maxW = 96, maxH = 56, ratio = hogarLogoSize.width / hogarLogoSize.height;
+      const maxW = 92, maxH = 26, ratio = hogarLogoSize.width / hogarLogoSize.height;
       const drawW = Math.min(maxW, maxH * ratio), drawH = drawW / ratio;
-      commands.push(`q ${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${(568 - drawW).toFixed(2)} ${(782 - drawH).toFixed(2)} cm /ImLogo Do Q`);
-      y = 718;
-    } else y = 775;
+      commands.push(`q ${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${(568 - drawW).toFixed(2)} ${(799 - drawH / 2).toFixed(2)} cm /ImLogo Do Q`);
+    }
+    if (pageNumber === 1) {
+      // Franja de metadatos del documento: municipio, folio y fecha de generación (aporta trazabilidad y look de reporte formal)
+      commands.push('0.94 0.96 0.98 rg 36 757 540 22 re f');
+      commands.push(`${MUTED} RG 0.5 w 36 757 540 22 re S`);
+      text('F2', 7.6, 44, 771, 'MUNICIPIO', SLATE); text('F1', 7.6, 44, 762, CM || '-', INK);
+      text('F2', 7.6, 234, 771, 'FOLIO', SLATE); text('F1', 7.6, 234, 762, folio, INK);
+      text('F2', 7.6, 400, 771, 'GENERADO', SLATE); text('F1', 7.6, 400, 762, genFecha, INK);
+      y = 742;
+    } else {
+      y = 764;
+    }
   };
-  const closePage = () => {
-    commands.push(`0.35 0.40 0.45 rg BT /F1 7 Tf 36 25 Td (Documento generado desde PIC Departamental - Pagina ${pageNumber}) Tj ET`);
-    pageCommands.push(commands);
-  };
-  const ensure = height => { if (y - height < 42) { closePage(); beginPage(); } };
+  const closePage = () => { pageCommands.push(commands); };
+  const ensure = height => { if (y - height < 52) { closePage(); beginPage(); } };
   const section = title => {
-    ensure(24); commands.push(`0.11 0.41 0.56 rg 36 ${(y - 19).toFixed(2)} 540 19 re f`);
-    text('F2', 8.5, 43, y - 13, title, '1 1 1'); y -= 20; rowIndex = 0;
+    ensure(23); const top = y, bottom = y - 19;
+    commands.push(`0.91 0.94 0.97 rg 36 ${bottom.toFixed(2)} 540 19 re f`);
+    commands.push(`${ACCENT} rg 36 ${bottom.toFixed(2)} 4 19 re f`);
+    text('F2', 8.3, 48, top - 13, title, NAVY); y -= 20; rowIndex = 0;
   };
   const row = (label, value) => {
     const labels = wrap(label, 35), values = wrap(value, 57), lines = Math.max(labels.length, values.length);
-    const height = Math.max(25, 11 + lines * 10); ensure(height);
+    const height = Math.max(24, 10 + lines * 10); ensure(height);
     const bottom = y - height;
     if (rowIndex % 2 === 0) commands.push(`0.97 0.98 0.99 rg 36 ${bottom.toFixed(2)} 540 ${height.toFixed(2)} re f`);
-    commands.push(`0.68 0.73 0.77 RG 0.55 w 36 ${bottom.toFixed(2)} 540 ${height.toFixed(2)} re S 230 ${bottom.toFixed(2)} m 230 ${y.toFixed(2)} l S`);
-    labels.forEach((line, i) => text('F2', 7.4, 43, y - 11 - i * 10, line, '0.08 0.18 0.25'));
-    values.forEach((line, i) => text('F1', 7.6, 237, y - 11 - i * 10, line, '0.12 0.12 0.12'));
+    commands.push(`0.86 0.89 0.92 RG 0.5 w 36 ${bottom.toFixed(2)} m 576 ${bottom.toFixed(2)} l S`);
+    commands.push(`0.90 0.92 0.94 RG 0.4 w 230 ${bottom.toFixed(2)} m 230 ${y.toFixed(2)} l S`);
+    labels.forEach((line, i) => text('F2', 7.3, 44, y - 10 - i * 10, line, SLATE));
+    values.forEach((line, i) => text('F1', 7.5, 237, y - 10 - i * 10, line, INK));
     y = bottom; rowIndex++;
   };
   beginPage();
   blocks.forEach(block => block.type === 'section' ? section(block.title) : row(block.label, block.value));
   closePage();
+
+  // Segunda pasada: ahora que se conoce el total de páginas, se agrega un pie de página uniforme y trazable.
+  const totalPages = pageCommands.length;
+  pageCommands.forEach((cmds, idx) => {
+    cmds.push(`0.82 0.85 0.88 RG 0.6 w 36 40 m 576 40 l S`);
+    cmds.push(`${MUTED} rg BT /F1 6.8 Tf 36 29 Td (Documento generado el ${clean(genFecha)} - PIC Departamental - Folio ${clean(folio)}) Tj ET`);
+    cmds.push(`${MUTED} rg BT /F1 6.8 Tf 498 29 Td (Pagina ${idx + 1} de ${totalPages}) Tj ET`);
+  });
 
   const pageIds = pageCommands.map((contentCommands, pi) => {
     // El logo se declara como recurso, pero solo se dibuja al iniciar la primera pagina.
