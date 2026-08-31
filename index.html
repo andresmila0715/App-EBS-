@@ -242,6 +242,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 @media(max-width: 500px) { .rcard.open .rbody { grid-template-columns: 1fr; } }
 .rfield { font-size: .78rem; }
 .rfield strong { color: var(--text-muted); font-weight: 600; font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; display: block; }
+.rcard.hogar-rcard.open .rbody { display: block; }
+.hogar-rec-section { margin: 10px 0 0; border: 1px solid var(--border); border-radius: 10px; background: #fff; overflow: hidden; }
+.hogar-rec-section:first-child { margin-top: 0; }
+.hogar-rec-title { cursor: pointer; padding: 10px 12px; font-weight: 700; font-size: .82rem; color: var(--primary-dark); background: #f0f9ff; list-style: none; }
+.hogar-rec-title::-webkit-details-marker { display: none; }
+.hogar-rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; padding: 12px; }
+.hogar-rec-matrix { grid-column: 1 / -1; margin-top: 2px; padding-top: 8px; border-top: 1px dashed var(--border); }
+.hogar-rec-matrix-title { font-size: .76rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 6px; }
+@media(max-width: 600px) { .hogar-rec-grid { grid-template-columns: 1fr; } }
 .ract { grid-column: 1/-1; display: flex; gap: 7px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--border); }
 .btn-ed { padding: 5px 12px; background: var(--primary); color: #fff; border: none; border-radius: 6px; font-size: .78rem; font-weight: 600; cursor: pointer; }
 .btn-ed:hover { background: var(--primary-light); }
@@ -478,9 +487,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
               <select id="fg-relacion">
                 <option value="">—</option>
                 <option value="matrimonio">Matrimonio</option>
-                <option value="union_libre">Unión Libre</option>
+                <option value="union_libre">Unión libre</option>
                 <option value="separados">Separados</option>
-                <option value="comprometidos">Compromiso</option>
               </select>
             </div>
 
@@ -610,6 +618,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 
         <div class="factions">
           <button class="btn-sec" onclick="clearF('recoleccion')">Limpiar</button>
+          <button class="btn-sec" onclick="downloadRecoleccionPdf()">⬇ Descargar PDF</button>
           <button class="btn-pri" onclick="saveR('recoleccion')">💾 Guardar</button>
         </div>
       </div>
@@ -720,8 +729,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
         <div id="hogar-form"></div>
         <div class="factions">
           <button class="btn-sec" onclick="clearF('hogar')">Limpiar</button>
+          <button class="btn-sec" id="h-cancel-edit" style="display:none" onclick="cancelHogarEdit()">Cancelar edición</button>
           <button class="btn-sec" onclick="downloadHogarPdf()">⬇ Descargar PDF</button>
-          <button class="btn-pri" onclick="saveR('hogar')">💾 Guardar</button>
+          <button class="btn-pri" id="h-save-btn" onclick="saveR('hogar')">💾 Guardar</button>
         </div>
       </div>
     </div>
@@ -1417,6 +1427,20 @@ const HOGAR_MATRICES = {
   higiene: ['5.3.3 Con que frecuencia se realizan las siguientes actividades en la vivienda:', ['Todos los días','Una vez a la semana','Una vez cada 15 días','Una vez al mes','Cada 6 meses','Cada año'], ['Limpieza de pisos','Limpieza de paredes','Limpieza de techos','Limpieza de muebles','Limpieza de tapetes','Lavado de cortinas','Lavado de sabanas','Lavado de cobija','Limpieza de otras superficies','Limpieza de baño','Limpieza de cocina']]
 };
 
+const HOGAR_MIEMBRO_FIELDS = [
+  ['3.1 Primer apellido', 'Primer apellido'], ['3.1 Segundo apellido', 'Segundo apellido'],
+  ['3.1 Primer nombre', 'Primer nombre'], ['3.1 Segundo nombre', 'Segundo nombre'],
+  ['3.2 Tipo de documento', 'Tipo de documento'], ['3.3 Número de identificación', 'N° de identificación'],
+  ['3.4 Fecha de nacimiento', 'Fecha de nacimiento'], ['3.5 Género', 'Género'],
+  ['3.6 Ocupación', 'Ocupación'], ['3.7 Estado civil', 'Estado civil'],
+  ['3.8 Parentesco con el jefe de hogar', 'Parentesco con el jefe de hogar'],
+  ['3.9 Condición del usuario en el SGSSS (cuál)', 'Condición SGSSS'],
+  ['3.9 Régimen especial ¿cuál?', 'Régimen especial ¿cuál?'],
+  ['3.10 Escolaridad', 'Escolaridad'], ['3.11 Pertenencia étnica', 'Pertenencia étnica'],
+  ['3.12 Población en condición o situación diferencial', 'Población en condición o situación diferencial'],
+  ['3.13 Organización social a la que pertenece', 'Organización social']
+];
+
 function hogarMatrixOther(key, label) { const [title] = HOGAR_MATRICES[key]; return `<div class="ff" style="margin-top:10px"><label>${label}</label><input class="hogar-input" type="text" data-hogar-label="${title} · ${label}"></div>`; }
 function hogarMatrixFrom(key) { const [title, rows, cols] = HOGAR_MATRICES[key]; return hogarMatrix(title, rows, cols); }
 
@@ -1493,28 +1517,139 @@ function agregarMiembroHogar() {
   document.querySelector('#h-miembros tbody').appendChild(tr);
 }
 
-// Generador PDF autónomo: no requiere conexión ni librerías externas.
-function downloadHogarPdf() {
-  const answers = getHogarAnswers();
-  if (!gv('h-direccion') && !Object.keys(answers).length) { toast('⚠️ Diligencia al menos un dato antes de descargar el PDF', 'err'); return; }
-  const clean = value => String(value ?? '—').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ').replace(/[\\()]/g, '\\$&');
-  const wrap = (value, width) => {
-    const words = clean(value).split(/\s+/), rows = []; let line = '';
-    words.forEach(word => { if ((line + ' ' + word).trim().length > width && line) { rows.push(line); line = word; } else line = (line + ' ' + word).trim(); });
-    return rows.length || line ? [...rows, line].filter(Boolean) : ['—'];
+function hogarGeneralFromForm() {
+  return {
+    fecha: gv('h-fecha'), inicio: gv('h-inicio'), fin: gv('h-fin'),
+    diligencia: gv('h-diligencia'), diligenciaTipoDoc: gv('h-diligencia-tipodoc'), diligenciaNumDoc: gv('h-diligencia-numdoc'),
+    atiende: gv('h-atiende'), atiendeTipoDoc: gv('h-atiende-tipodoc'), atiendeNumDoc: gv('h-atiende-numdoc'),
+    direccion: gv('h-direccion'), telefono: gv('h-telefono')
   };
+}
+
+function hogarGeneralFromRecord(r) {
+  return {
+    fecha: r.fechaVisita || '', inicio: r.inicio || '', fin: r.fin || '',
+    diligencia: r.diligencia || '', diligenciaTipoDoc: r.diligenciaTipoDoc || '', diligenciaNumDoc: r.diligenciaNumDoc || '',
+    atiende: r.atiende || '', atiendeTipoDoc: r.atiendeTipoDoc || '', atiendeNumDoc: r.atiendeNumDoc || '',
+    direccion: r.direccion || '', telefono: r.telefono || ''
+  };
+}
+
+function clearHogarFormFields() {
+  document.querySelectorAll('#q-hogar input, #q-hogar select, #q-hogar textarea').forEach(el => {
+    if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
+    else if (el.type !== 'file') el.value = '';
+  });
+  const tbody = document.querySelector('#h-miembros tbody');
+  if (tbody) tbody.innerHTML = '';
+  hogarLogoData = ''; hogarLogoSize = null;
+  hogarFotoData = ''; hogarFotoSize = null;
+  const fotoPreview = document.getElementById('h-foto-vivienda-preview');
+  if (fotoPreview) { fotoPreview.removeAttribute('src'); fotoPreview.style.display = 'none'; }
+  const fileInput = document.getElementById('h-foto-vivienda');
+  if (fileInput) fileInput.value = '';
+}
+
+function loadHogarFotoFromData(dataUrl, size) {
+  const preview = document.getElementById('h-foto-vivienda-preview');
+  if (!dataUrl) {
+    hogarFotoData = ''; hogarFotoSize = null;
+    if (preview) { preview.removeAttribute('src'); preview.style.display = 'none'; }
+    return Promise.resolve();
+  }
+  if (size) {
+    hogarFotoData = dataUrl; hogarFotoSize = size;
+    if (preview) { preview.src = dataUrl; preview.style.display = 'block'; }
+    return Promise.resolve();
+  }
+  return new Promise(resolve => {
+    const image = new Image();
+    image.onload = () => {
+      hogarFotoData = dataUrl;
+      hogarFotoSize = { width: image.naturalWidth, height: image.naturalHeight };
+      if (preview) { preview.src = dataUrl; preview.style.display = 'block'; }
+      resolve();
+    };
+    image.onerror = () => { hogarFotoData = dataUrl; hogarFotoSize = null; resolve(); };
+    image.src = dataUrl;
+  });
+}
+
+function populateHogarForm(r) {
+  clearHogarFormFields();
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  setVal('h-fecha', r.fechaVisita);
+  setVal('h-inicio', r.inicio);
+  setVal('h-fin', r.fin);
+  setVal('h-diligencia', r.diligencia);
+  setVal('h-diligencia-tipodoc', r.diligenciaTipoDoc);
+  setVal('h-diligencia-numdoc', r.diligenciaNumDoc);
+  setVal('h-atiende', r.atiende);
+  setVal('h-atiende-tipodoc', r.atiendeTipoDoc);
+  setVal('h-atiende-numdoc', r.atiendeNumDoc);
+  setVal('h-direccion', r.direccion);
+  setVal('h-telefono', r.telefono);
+  const answers = r.respuestas || {};
+  document.querySelectorAll('.hogar-input').forEach(el => {
+    const label = el.dataset.hogarLabel;
+    if (!label || answers[label] === undefined) return;
+    const val = answers[label];
+    if (el.type === 'checkbox') {
+      const selected = String(val).split(/,\s*/);
+      el.checked = selected.includes(el.value);
+    } else if (el.type === 'radio') {
+      el.checked = el.value === val;
+    } else {
+      el.value = val;
+    }
+  });
+  document.querySelectorAll('.hogar-matrix').forEach(el => {
+    const label = el.dataset.hogarLabel;
+    if (answers[label]) el.value = answers[label];
+  });
+  const tbody = document.querySelector('#h-miembros tbody');
+  const miembros = answers['Integrantes del hogar'];
+  if (tbody && Array.isArray(miembros)) {
+    miembros.forEach(m => {
+      agregarMiembroHogar();
+      const row = tbody.lastElementChild;
+      [...row.querySelectorAll('input,select')].forEach(inp => {
+        if (inp.dataset.k && m[inp.dataset.k] !== undefined) inp.value = m[inp.dataset.k];
+      });
+    });
+  }
+  return loadHogarFotoFromData(r.logoDepartamento, r.logoDepartamentoSize);
+}
+
+function updateHogarSaveBtn() {
+  const btn = document.getElementById('h-save-btn');
+  const cancel = document.getElementById('h-cancel-edit');
+  const editing = editId && editTipo === 'hogar';
+  if (btn) btn.textContent = editing ? '💾 Actualizar registro' : '💾 Guardar';
+  if (cancel) cancel.style.display = editing ? '' : 'none';
+}
+
+function cancelHogarEdit() {
+  clearHogarFormFields();
+  editId = null;
+  editTipo = null;
+  updateHogarSaveBtn();
+  toast('Edición cancelada');
+}
+
+function buildHogarPdfBlocks(answers, general) {
   const blocks = [{ type: 'section', title: 'GENERALIDADES' }];
   [
-    ['Fecha (Día/mes/año)', gv('h-fecha')], ['Hora Inicio', gv('h-inicio')], ['Hora Culminación', gv('h-fin')],
-    ['Nombre de quien diligencia la ficha', gv('h-diligencia')],
-    ['Tipo de documento de identificación de quien diligencia la ficha', gv('h-diligencia-tipodoc')],
-    ['Número de Identificación de quien diligencia la ficha (No. de identificación sin puntos, comas o guiones.)', gv('h-diligencia-numdoc')]
+    ['Fecha (Día/mes/año)', general.fecha], ['Hora Inicio', general.inicio], ['Hora Culminación', general.fin],
+    ['Nombre de quien diligencia la ficha', general.diligencia],
+    ['Tipo de documento de identificación de quien diligencia la ficha', general.diligenciaTipoDoc],
+    ['Número de Identificación de quien diligencia la ficha (No. de identificación sin puntos, comas o guiones.)', general.diligenciaNumDoc]
   ].forEach(([label, value]) => blocks.push({ type: 'row', label, value }));
   [
-    ['Nombre de la Persona que Atiende la Visita (MAYUSCULA)', gv('h-atiende')],
-    ['Tipo de documento de identificación de quien atiende la visita', gv('h-atiende-tipodoc')],
-    ['Número de Identificación de quien atiende la visita (No. de identificación sin puntos, comas o guiones.)', gv('h-atiende-numdoc')],
-    ['Dirección de la vivienda', gv('h-direccion')], ['Teléfono de contacto', gv('h-telefono')]
+    ['Nombre de la Persona que Atiende la Visita (MAYUSCULA)', general.atiende],
+    ['Tipo de documento de identificación de quien atiende la visita', general.atiendeTipoDoc],
+    ['Número de Identificación de quien atiende la visita (No. de identificación sin puntos, comas o guiones.)', general.atiendeNumDoc],
+    ['Dirección de la vivienda', general.direccion], ['Teléfono de contacto', general.telefono]
   ].forEach(([label, value]) => blocks.push({ type: 'row', label, value }));
   const appendMatrix = (matrixKey) => {
     const [title] = HOGAR_MATRICES[matrixKey];
@@ -1546,6 +1681,22 @@ function downloadHogarPdf() {
       }
     }
   });
+  return blocks;
+}
+
+// Generador PDF institucional reutilizable (misma estética en todos los cuestionarios).
+function renderInstitutionalPdf(opts) {
+  const {
+    title, subtitle, blocks, filename,
+    headerLogoData = '', headerLogoSize = null,
+    sideImageData = '', sideImageSize = null
+  } = opts;
+  const clean = value => String(value ?? '—').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ').replace(/[\\()]/g, '\\$&');
+  const wrap = (value, width) => {
+    const words = clean(value).split(/\s+/), rows = []; let line = '';
+    words.forEach(word => { if ((line + ' ' + word).trim().length > width && line) { rows.push(line); line = word; } else line = (line + ' ' + word).trim(); });
+    return rows.length || line ? [...rows, line].filter(Boolean) : ['—'];
+  };
 
   const objects = []; const add = text => { objects.push(text); return objects.length; };
   const catalog = add(''), pagesObj = add('');
@@ -1559,34 +1710,37 @@ function downloadHogarPdf() {
       return add(`<< /Type /XObject /Subtype /Image /Width ${size.width} /Height ${size.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length ${hex.length + 1} >>\nstream\n${hex}>\nendstream`);
     } catch (error) { console.warn(`No se pudo incluir ${name} en el PDF:`, error); return null; }
   };
-  const logoImage = addJpegImage(hogarLogoData, hogarLogoSize, 'el logo');
-  const fotoImage = addJpegImage(hogarFotoData, hogarFotoSize, 'la foto de la vivienda');
+  const logoImage = addJpegImage(headerLogoData, headerLogoSize, 'el logo');
+  const sideImage = addJpegImage(sideImageData, sideImageSize, 'imagen lateral');
+  const embeddedImages = [];
+  blocks.forEach((block, idx) => {
+    if (block.type === 'image' && block.data && block.size) {
+      const ref = addJpegImage(block.data, block.size, block.title || `img-${idx}`);
+      if (ref) embeddedImages.push({ name: `ImE${embeddedImages.length}`, ref, block });
+    }
+  });
 
   const pageCommands = []; let commands = [], y = 0, pageNumber = 0, rowIndex = 0;
   const text = (fontName, size, x, top, value, color = '0 0 0') => commands.push(`${color} rg BT /${fontName} ${size} Tf ${x} ${top} Td (${clean(value)}) Tj ET`);
-  // Paleta institucional: azul noche para la cabecera, acento verde-azulado, tinta y grises neutros para el cuerpo.
   const NAVY = '0.043 0.145 0.278', SLATE = '0.29 0.34 0.39', ACCENT = '0.02 0.55 0.52', INK = '0.10 0.12 0.14', MUTED = '0.45 0.49 0.53';
   const beginPage = () => {
     pageNumber++; commands = [];
-    // Cabecera institucional con franja de acento
     commands.push(`${NAVY} rg 36 782 540 34 re f`);
     commands.push(`${ACCENT} rg 36 779 540 3 re f`);
-    text('F2', 12.5, 44, 805, 'CARACTERIZACION ENTORNO HOGAR', '1 1 1');
-    text('F1', 7.3, 44, 792, 'Ficha de Caracterizacion Social y Ambiental - PIC Departamental', '0.75 0.82 0.90');
+    text('F2', 12.5, 44, 805, title, '1 1 1');
+    text('F1', 7.3, 44, 792, subtitle, '0.75 0.82 0.90');
     if (pageNumber === 1 && logoImage) {
-      const maxW = 92, maxH = 26, ratio = hogarLogoSize.width / hogarLogoSize.height;
+      const maxW = 92, maxH = 26, ratio = headerLogoSize.width / headerLogoSize.height;
       const drawW = Math.min(maxW, maxH * ratio), drawH = drawW / ratio;
       commands.push(`q ${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${(568 - drawW).toFixed(2)} ${(799 - drawH / 2).toFixed(2)} cm /ImLogo Do Q`);
     }
     if (pageNumber === 1) {
-      // Franja de metadatos del documento: municipio
       commands.push('0.94 0.96 0.98 rg 36 757 540 22 re f');
       commands.push(`${MUTED} RG 0.5 w 36 757 540 22 re S`);
       text('F2', 7.6, 44, 771, 'MUNICIPIO', SLATE); text('F1', 7.6, 44, 762, CM || '-', INK);
-      if (fotoImage) {
-        // Marco fijo: 112 × 76 pt. La foto conserva su proporción y nunca modifica el diseño del PDF.
+      if (sideImage) {
         const frameX = 456, frameY = 658, frameW = 112, frameH = 76;
-        const ratio = hogarFotoSize.width / hogarFotoSize.height;
+        const ratio = sideImageSize.width / sideImageSize.height;
         const drawW = Math.min(frameW, frameH * ratio), drawH = drawW / ratio;
         const drawX = frameX + (frameW - drawW) / 2, drawY = frameY + (frameH - drawH) / 2;
         commands.push('0.94 0.96 0.98 rg 456 658 112 76 re f');
@@ -1594,17 +1748,15 @@ function downloadHogarPdf() {
         commands.push(`q ${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${drawX.toFixed(2)} ${drawY.toFixed(2)} cm /ImFoto Do Q`);
         y = 646;
       } else y = 742;
-    } else {
-      y = 764;
-    }
+    } else y = 764;
   };
   const closePage = () => { pageCommands.push(commands); };
   const ensure = height => { if (y - height < 52) { closePage(); beginPage(); } };
-  const section = title => {
+  const section = titleSec => {
     ensure(23); const top = y, bottom = y - 19;
     commands.push(`0.91 0.94 0.97 rg 36 ${bottom.toFixed(2)} 540 19 re f`);
     commands.push(`${ACCENT} rg 36 ${bottom.toFixed(2)} 4 19 re f`);
-    text('F2', 8.3, 48, top - 13, title, NAVY); y -= 20; rowIndex = 0;
+    text('F2', 8.3, 48, top - 13, titleSec, NAVY); y -= 20; rowIndex = 0;
   };
   const row = (label, value) => {
     const labels = wrap(label, 35), values = wrap(value, 57), lines = Math.max(labels.length, values.length);
@@ -1617,22 +1769,40 @@ function downloadHogarPdf() {
     values.forEach((line, i) => text('F1', 7.5, 237, y - 10 - i * 10, line, INK));
     y = bottom; rowIndex++;
   };
+  const imageBlock = (img) => {
+    const maxW = 520;
+    const ratio = img.size.width / img.size.height;
+    const drawW = Math.min(maxW, img.size.width);
+    const drawH = drawW / ratio;
+    ensure(drawH + 28);
+    if (img.title) { text('F2', 8, 44, y - 10, img.title, NAVY); y -= 16; }
+    const drawY = y - drawH;
+    commands.push(`q ${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} 46 ${drawY.toFixed(2)} cm /${img.name} Do Q`);
+    y = drawY - 14; rowIndex = 0;
+  };
+
   beginPage();
-  blocks.forEach(block => block.type === 'section' ? section(block.title) : row(block.label, block.value));
+  blocks.forEach(block => {
+    if (block.type === 'section') section(block.title);
+    else if (block.type === 'row') row(block.label, block.value);
+    else if (block.type === 'image') {
+      const img = embeddedImages.find(e => e.block === block);
+      if (img) imageBlock(img);
+    }
+  });
   closePage();
 
-  // Segunda pasada: ahora que se conoce el total de páginas, se agrega un pie de página uniforme.
   const totalPages = pageCommands.length;
   pageCommands.forEach((cmds, idx) => {
     cmds.push(`0.82 0.85 0.88 RG 0.6 w 36 40 m 576 40 l S`);
     cmds.push(`${MUTED} rg BT /F1 6.8 Tf 498 29 Td (Pagina ${idx + 1} de ${totalPages}) Tj ET`);
   });
 
-  const pageIds = pageCommands.map((contentCommands, pi) => {
-    // Logo y foto se declaran como recursos; solo se dibujan en la primera página.
+  const embeddedResource = embeddedImages.map(img => `/${img.name} ${img.ref} 0 R`).join(' ');
+  const pageIds = pageCommands.map((contentCommands) => {
     const contentText = contentCommands.join('\n');
     const content = add(`<< /Length ${contentText.length} >>\nstream\n${contentText}\nendstream`);
-    const xObjects = [logoImage ? `/ImLogo ${logoImage} 0 R` : '', fotoImage ? `/ImFoto ${fotoImage} 0 R` : ''].filter(Boolean).join(' ');
+    const xObjects = [logoImage ? `/ImLogo ${logoImage} 0 R` : '', sideImage ? `/ImFoto ${sideImage} 0 R` : '', embeddedResource].filter(Boolean).join(' ');
     const imageResource = xObjects ? ` /XObject << ${xObjects} >>` : '';
     return add(`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 ${font} 0 R /F2 ${fontBold} 0 R >>${imageResource} >> /Contents ${content} 0 R >>`);
   });
@@ -1641,8 +1811,174 @@ function downloadHogarPdf() {
   let pdf = '%PDF-1.4\n'; const offsets = [0]; objects.forEach((obj, i) => { offsets.push(pdf.length); pdf += `${i + 1} 0 obj\n${obj}\nendobj\n`; });
   const xref = pdf.length; pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map(o => String(o).padStart(10, '0') + ' 00000 n ').join('\n')}\ntrailer\n<< /Size ${objects.length + 1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`;
   const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' })); const a = document.createElement('a');
-  a.href = url; a.download = `Caracterizacion_Entorno_Hogar_${CM.replace(/\s/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  a.href = url; a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   toast('✅ PDF descargado', 'ok');
+}
+
+function generateHogarPdfFile(answers, general, logoData, logoSize, fotoData, fotoSize) {
+  renderInstitutionalPdf({
+    title: 'CARACTERIZACION ENTORNO HOGAR',
+    subtitle: 'Ficha de Caracterizacion Social y Ambiental - PIC Departamental',
+    blocks: buildHogarPdfBlocks(answers, general),
+    filename: `Caracterizacion_Entorno_Hogar_${CM.replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`,
+    headerLogoData: logoData, headerLogoSize: logoSize,
+    sideImageData: fotoData, sideImageSize: fotoSize
+  });
+}
+
+function downloadHogarPdf() {
+  const answers = getHogarAnswers();
+  const general = hogarGeneralFromForm();
+  if (!general.direccion && !Object.keys(answers).length) { toast('⚠️ Diligencia al menos un dato antes de descargar el PDF', 'err'); return; }
+  generateHogarPdfFile(answers, general, hogarLogoData, hogarLogoSize, hogarFotoData, hogarFotoSize);
+}
+
+async function downloadHogarPdfRecord(id) {
+  const r = getRecs(CM, 'hogar').find(x => x.id == id);
+  if (!r) return;
+  const general = hogarGeneralFromRecord(r);
+  if (!general.direccion && !Object.keys(r.respuestas || {}).length) { toast('⚠️ El registro no tiene datos suficientes para generar el PDF', 'err'); return; }
+  let fotoSize = r.logoDepartamentoSize || null;
+  if (r.logoDepartamento && !fotoSize) {
+    fotoSize = await new Promise(resolve => {
+      const image = new Image();
+      image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+      image.onerror = () => resolve(null);
+      image.src = r.logoDepartamento;
+    });
+  }
+  generateHogarPdfFile(r.respuestas || {}, general, '', null, r.logoDepartamento || '', fotoSize);
+}
+
+const FG_RELACION_LABELS = { matrimonio: 'Matrimonio', union_libre: 'Unión libre', separados: 'Separados', comprometidos: 'Unión libre' };
+const FG_PARENTESCO_LABELS = {
+  pareja: 'Pareja', padre_jefe: 'Padre del jefe del hogar', madre_jefe: 'Madre del jefe del hogar',
+  padre_pareja: 'Padre de la pareja', madre_pareja: 'Madre de la pareja', hijo: 'Hijo o hija del jefe del hogar'
+};
+const FG_CONV_LABELS = {
+  armoniosa: 'Armoniosa', con_conflictos: 'Con conflictos ocasionales',
+  muy_conflictiva: 'Muy conflictiva', distante: 'Distante o indiferente'
+};
+const APGAR_PREGUNTAS = [
+  'P.1 Ayuda familiar ante problemas', 'P.2 Comunicación y problemas compartidos',
+  'P.3 Apoyo a nuevas actividades', 'P.4 Afecto y emociones',
+  'P.5 Tiempo, espacios y dinero compartidos'
+];
+
+async function pdfImageSize(dataUrl) {
+  if (!dataUrl) return null;
+  return new Promise(resolve => {
+    const image = new Image();
+    image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+    image.onerror = () => resolve(null);
+    image.src = dataUrl;
+  });
+}
+
+function buildRecoleccionPdfBlocks(data, imageSizes) {
+  const blocks = [];
+  const pushRow = (label, value) => { if (value) blocks.push({ type: 'row', label, value }); };
+  const fg = data.familiograma || {};
+  const p = fg.principal || {};
+
+  blocks.push({ type: 'section', title: 'DATOS INSTITUCIONALES' });
+  pushRow('Hospital', data.hospital);
+  pushRow('Microterritorio', data.microterritorio);
+
+  blocks.push({ type: 'section', title: 'FAMILIOGRAMA' });
+  pushRow('Familia', fg.familia);
+  pushRow('Vereda / Sector', fg.vereda);
+  pushRow('Jefe del hogar', p.nombre);
+  pushRow('Año de nacimiento', p.anio);
+  pushRow('Género', p.genero === 'F' ? 'Femenino' : p.genero === 'M' ? 'Masculino' : p.genero);
+  pushRow('Estado de salud', p.estado);
+  pushRow('Enfermedad relevante', p.enf);
+  pushRow('Teléfono', p.telefono);
+  pushRow('Relación de pareja', FG_RELACION_LABELS[fg.relacionPareja] || fg.relacionPareja);
+  (fg.miembros || []).forEach((m, i) => {
+    blocks.push({ type: 'row', label: `Familiar ${i + 1}`, value: [
+      FG_PARENTESCO_LABELS[m.parentesco] || m.parentesco,
+      m.nombre, m.anio ? `Nac. ${m.anio}` : '',
+      m.estado, m.nucleo ? `Núcleo: ${m.nucleo}` : '',
+      m.convivencia ? `Convivencia: ${FG_CONV_LABELS[m.convivencia] || m.convivencia}` : '',
+      m.nota
+    ].filter(Boolean).join(' · ') });
+  });
+  pushRow('Observaciones del familiograma', fg.obs);
+  if (fg.imagenBase64 && imageSizes.fam) {
+    blocks.push({ type: 'image', title: 'Diagrama del familiograma', data: fg.imagenBase64, size: imageSizes.fam });
+  }
+
+  blocks.push({ type: 'section', title: 'APGAR FAMILIAR' });
+  (data.apgar?.miembros || []).forEach((m, i) => {
+    if (!m.nombres && m.total == null) return;
+    const det = APGAR_PREGUNTAS.map((q, qi) => `${q}: ${m[`p${qi + 1}`] || '—'}`).join(' | ');
+    blocks.push({ type: 'row', label: `${i + 1}. ${m.nombres || 'Integrante'}`, value: `${det} | Total: ${m.total ?? '—'} | ${m.interpretacion || ''}` });
+  });
+  pushRow('Análisis APGAR', data.apgar?.analisis);
+
+  blocks.push({ type: 'section', title: 'ESCALA DE ZARIT' });
+  (data.zarit?.respuestas || []).forEach((val, i) => {
+    if (val === null || val === '') return;
+    blocks.push({ type: 'row', label: `${i + 1}. ${ZARIT_ITEMS[i]}`, value: String(val) });
+  });
+  pushRow('Puntuación total', data.zarit?.puntaje != null ? `${data.zarit.puntaje} / 88` : '');
+  pushRow('Observaciones Zarit', data.zarit?.obs);
+
+  blocks.push({ type: 'section', title: 'ECOMAPA' });
+  ECOMAPA_CATS.forEach(cat => {
+    const val = data.ecomapa?.valores?.[cat.id] || '';
+    if (val !== '') pushRow(cat.label, ecoValorTexto(val) || val);
+  });
+  pushRow('Observaciones del ecomapa', data.ecomapa?.obs);
+  if (data.ecomapa?.imagenBase64 && imageSizes.eco) {
+    blocks.push({ type: 'image', title: 'Diagrama del ecomapa', data: data.ecomapa.imagenBase64, size: imageSizes.eco });
+  }
+  return blocks;
+}
+
+async function downloadRecoleccionPdf() {
+  dibujarFamiliograma();
+  if (typeof dibujarEcomapa === 'function') dibujarEcomapa();
+  const data = getRecoleccionData();
+  const jefe = data.familiograma?.principal?.nombre || '';
+  if (!jefe && !data.hospital && !(data.familiograma?.familia)) {
+    toast('⚠️ Diligencia al menos el hospital o los datos del familiograma antes de descargar el PDF', 'err');
+    return;
+  }
+  const logoUrl = logoData['r-logo-ebs-prev'] || '';
+  const [sizes, logoSize] = await Promise.all([
+    Promise.all([pdfImageSize(data.familiograma?.imagenBase64), pdfImageSize(data.ecomapa?.imagenBase64)]).then(([fam, eco]) => ({ fam, eco })),
+    pdfImageSize(logoUrl)
+  ]);
+  const famName = (data.familiograma?.familia || jefe || 'Recoleccion').replace(/\s/g, '_');
+  renderInstitutionalPdf({
+    title: 'INSTRUMENTO DE RECOLECCION DE DATOS',
+    subtitle: 'Condiciones socioeconomicas del hogar - PIC Departamental',
+    blocks: buildRecoleccionPdfBlocks(data, sizes),
+    filename: `Recoleccion_${CM.replace(/\s/g, '_')}_${famName}_${new Date().toISOString().slice(0, 10)}.pdf`,
+    headerLogoData: logoUrl, headerLogoSize: logoSize
+  });
+}
+
+async function downloadRecoleccionPdfRecord(id) {
+  const r = getRecs(CM, 'recoleccion').find(x => x.id == id);
+  if (!r?.subData) return;
+  const data = r.subData;
+  const sizes = await Promise.all([
+    pdfImageSize(data.familiograma?.imagenBase64),
+    pdfImageSize(data.ecomapa?.imagenBase64)
+  ]).then(([fam, eco]) => ({ fam, eco }));
+  const logoUrl = data.logoEbs || logoData['r-logo-ebs-prev'] || '';
+  const logoSize = await pdfImageSize(logoUrl);
+  const famName = (data.familiograma?.familia || data.familiograma?.principal?.nombre || 'Registro').replace(/\s/g, '_');
+  renderInstitutionalPdf({
+    title: 'INSTRUMENTO DE RECOLECCION DE DATOS',
+    subtitle: 'Condiciones socioeconomicas del hogar - PIC Departamental',
+    blocks: buildRecoleccionPdfBlocks(data, sizes),
+    filename: `Recoleccion_${CM.replace(/\s/g, '_')}_${famName}_${new Date().toISOString().slice(0, 10)}.pdf`,
+    headerLogoData: logoUrl, headerLogoSize: logoSize
+  });
 }
 
 function clearF(tipo) {
@@ -1683,16 +2019,10 @@ function clearF(tipo) {
     intCount = 0;
     addIntegrante();
   } else if (tipo === 'hogar') {
-    document.querySelectorAll('#q-hogar input, #q-hogar select, #q-hogar textarea').forEach(el => {
-      if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
-      else el.value = '';
-    });
-    hogarLogoData = ''; hogarLogoSize = null;
-    const logoPreview = document.getElementById('h-logo-departamento-preview');
-    if (logoPreview) { logoPreview.removeAttribute('src'); logoPreview.style.display = 'none'; }
-    hogarFotoData = ''; hogarFotoSize = null;
-    const fotoPreview = document.getElementById('h-foto-vivienda-preview');
-    if (fotoPreview) { fotoPreview.removeAttribute('src'); fotoPreview.style.display = 'none'; }
+    clearHogarFormFields();
+    editId = null;
+    editTipo = null;
+    updateHogarSaveBtn();
   }
 }
 
@@ -1714,7 +2044,11 @@ async function saveR(tipo) {
     synced: tipo === 'hogar'
   };
 
-  const restoreBtn = () => btns.forEach(b => { b.disabled = false; b.textContent = '💾 Guardar'; });
+  const restoreBtn = () => {
+    btns.forEach(b => { b.disabled = false; });
+    if (tipo === 'hogar') updateHogarSaveBtn();
+    else btns.forEach(b => { b.textContent = '💾 Guardar'; });
+  };
 
   if (tipo === 'carto') {
     if (!gv('c1-casa') || !gv('c1-familia')) { toast('⚠️ Casa y familia son obligatorios', 'err'); restoreBtn(); return; }
@@ -1773,8 +2107,30 @@ async function saveR(tipo) {
       diligenciaTipoDoc: gv('h-diligencia-tipodoc'), diligenciaNumDoc: gv('h-diligencia-numdoc'),
       atiendeTipoDoc: gv('h-atiende-tipodoc'), atiendeNumDoc: gv('h-atiende-numdoc'),
       respuestas: getHogarAnswers(),
-      logoDepartamento: hogarFotoData
+      logoDepartamento: hogarFotoData,
+      logoDepartamentoSize: hogarFotoSize
     });
+  }
+
+  const recs = getRecs(CM, tipo);
+  const editingHogar = tipo === 'hogar' && editId && editTipo === 'hogar';
+  if (editingHogar) {
+    const idx = recs.findIndex(x => x.id == editId);
+    if (idx < 0) { toast('⚠️ No se encontró el registro a actualizar', 'err'); restoreBtn(); return; }
+    registro.id = editId;
+    registro.fecha = recs[idx].fecha;
+    registro.editada = new Date().toLocaleString('es-CO');
+    recs[idx] = { ...recs[idx], ...registro };
+    setRecs(CM, tipo, recs);
+    editId = null;
+    editTipo = null;
+    updateHogarSaveBtn();
+    toast('✅ Registro actualizado', 'ok');
+    restoreBtn();
+    updateSync();
+    clearF(tipo);
+    showTab('registros');
+    return;
   }
 
   const registroLocal = { ...registro };
@@ -1783,7 +2139,6 @@ async function saveR(tipo) {
     familiograma: { ...registroLocal.subData.familiograma, imagenBase64: '' },
     ecomapa: { ...registroLocal.subData.ecomapa, imagenBase64: '' }
   };
-  const recs = getRecs(CM, tipo);
   recs.unshift(registroLocal);
   setRecs(CM, tipo, recs);
 
@@ -1865,7 +2220,7 @@ function renderRecs() {
       ? `<span class="rbadge ${r.riesgo === 'Riesgo Bajo' ? 'bajo' : r.riesgo === 'Riesgo Medio' ? 'medio' : r.riesgo === 'Riesgo Alto' ? 'alto' : 'vacia'}">${r.riesgo || '—'}</span>`
       : '';
 
-    return `<div class="rcard" id="rc-${r.id}">
+    return `<div class="rcard${r.tipo === 'hogar' ? ' hogar-rcard' : ''}" id="rc-${r.id}">
       <div class="rcard-head" onclick="togRec('${r.id}')">
         <div class="rcard-left">
           <span class="tbadge ${TCSS[r.tipo]}">${TLABELS[r.tipo]}</span>
@@ -1880,12 +2235,157 @@ function renderRecs() {
       <div class="rbody">
         ${buildFields(r)}
         <div class="ract">
+          ${r.tipo === 'hogar' ? `<button class="btn-ed" onclick="downloadHogarPdfRecord('${r.id}')">⬇ PDF</button>` : ''}
+          ${r.tipo === 'recoleccion' ? `<button class="btn-ed" onclick="downloadRecoleccionPdfRecord('${r.id}')">⬇ PDF</button>` : ''}
           <button class="btn-ed" onclick="openEdit('${r.id}','${r.tipo}')">✏️ Editar</button>
           <button class="btn-del" onclick="delRec('${r.id}','${r.tipo}')">🗑️ Eliminar</button>
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+function hogarFormatAnswer(value) {
+  if (value === null || value === undefined || value === '') return '';
+  if (Array.isArray(value)) {
+    return value.map((m, i) => {
+      const parts = Object.entries(m).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(' · ');
+      return parts ? `Integrante ${i + 1}: ${parts}` : '';
+    }).filter(Boolean).join('<br>');
+  }
+  return String(value);
+}
+
+function hogarRecField(label, value) {
+  const shown = hogarFormatAnswer(value);
+  if (!shown) return '';
+  return `<div class="rfield"><strong>${safeHtml(label)}</strong>${safeHtml(shown).replace(/&lt;br&gt;/g, '<br>')}</div>`;
+}
+
+function hogarRecSection(title, fieldsHtml, open = true) {
+  if (!fieldsHtml.trim()) return '';
+  return `<details class="hogar-rec-section"${open ? ' open' : ''}><summary class="hogar-rec-title">${safeHtml(title)}</summary><div class="hogar-rec-grid">${fieldsHtml}</div></details>`;
+}
+
+function hogarRecMatrixGroup(answers, matrixKey, usedKeys) {
+  const [title, rows, cols] = HOGAR_MATRICES[matrixKey];
+  const orderedLabels = rows.flatMap(row => cols.map(col => `${title} · ${row} · ${col}`));
+  const extraLabels = Object.keys(answers).filter(label => label.startsWith(title + ' · ') && !orderedLabels.includes(label));
+  const labels = [...orderedLabels, ...extraLabels].filter(label => answers[label]);
+  if (!labels.length) return '';
+  labels.forEach(label => usedKeys.add(label));
+  const items = labels.map(label => hogarRecField(label, answers[label])).join('');
+  return `<div class="hogar-rec-matrix"><div class="hogar-rec-matrix-title">${safeHtml(title)}</div>${items}</div>`;
+}
+
+function hogarRecIntegrantes(miembros, usedKeys) {
+  if (!Array.isArray(miembros) || !miembros.length) return '';
+  usedKeys.add('Integrantes del hogar');
+  const items = miembros.map((m, i) => {
+    const rows = HOGAR_MIEMBRO_FIELDS.map(([label, key]) => hogarRecField(label, m[key])).join('');
+    return rows ? `<div class="hogar-rec-matrix"><div class="hogar-rec-matrix-title">Integrante ${i + 1}</div>${rows}</div>` : '';
+  }).join('');
+  return `<div class="hogar-rec-matrix"><div class="hogar-rec-matrix-title">2. INFORMACIÓN DEMOGRÁFICA</div>${items}</div>`;
+}
+
+function appendHogarMatrixOrder(order, matrixKey) {
+  const [title, rows, cols] = HOGAR_MATRICES[matrixKey];
+  rows.forEach(row => cols.forEach(col => order.push(`${title} · ${row} · ${col}`)));
+}
+
+function hogarQuestionOrder() {
+  const order = [];
+  HOGAR_SECTIONS.forEach(([sectionTitle, questions]) => {
+    questions.forEach(q => {
+      if (q[0] === '__MATRIX_MOVILIDAD__') {
+        appendHogarMatrixOrder(order, 'movilidad');
+        appendHogarMatrixOrder(order, 'demora');
+        return;
+      }
+      if (q[0] === '__MATRIX_ACCIDENTES__') {
+        appendHogarMatrixOrder(order, 'accidentes');
+        return;
+      }
+      if (!q[0].startsWith('__MATRIX_')) order.push(q[0]);
+      if (q[0].startsWith('5.3.3 ¿Cómo se realiza')) appendHogarMatrixOrder(order, 'higiene');
+      if (q[0].startsWith('5.3.7 ¿Se comparten')) order.push('5.3.7 Otro ¿Cuál? (si aplica)');
+    });
+    if (sectionTitle === 'Información de la vivienda') appendHogarMatrixOrder(order, 'cursoVida');
+  });
+  return order;
+}
+
+const HOGAR_QUESTION_ORDER = hogarQuestionOrder();
+
+function buildHogarRecordFields(r) {
+  const answers = { ...(r.respuestas || {}) };
+  const usedKeys = new Set();
+  let html = '';
+
+  // Generalidades siempre va primero, con el mismo orden del formulario.
+  html += hogarRecSection('GENERALIDADES', [
+    hogarRecField('Fecha (Día/mes/año)', r.fechaVisita),
+    hogarRecField('Hora Inicio', r.inicio),
+    hogarRecField('Hora Culminación', r.fin),
+    hogarRecField('Nombre de quien diligencia la ficha', r.diligencia),
+    hogarRecField('Tipo de documento de identificación de quien diligencia la ficha', r.diligenciaTipoDoc),
+    hogarRecField('Número de Identificación de quien diligencia la ficha (No. de identificación sin puntos, comas o guiones.)', r.diligenciaNumDoc),
+    hogarRecField('Nombre de la Persona que Atiende la Visita (MAYUSCULA)', r.atiende),
+    hogarRecField('Tipo de documento de identificación de quien atiende la visita', r.atiendeTipoDoc),
+    hogarRecField('Número de Identificación de quien atiende la visita (No. de identificación sin puntos, comas o guiones.)', r.atiendeNumDoc),
+    hogarRecField('Dirección de la vivienda', r.direccion),
+    hogarRecField('Teléfono de contacto', r.telefono),
+    r.logoDepartamento ? `<div class="rfield" style="grid-column:1/-1"><strong>Logo departamento</strong><img src="${r.logoDepartamento}" style="width:120px;height:70px;object-fit:contain;border:1px solid var(--border);border-radius:8px;margin-top:5px;background:#fff"></div>` : ''
+  ].join(''), true);
+
+  HOGAR_SECTIONS.forEach(([sectionTitle, questions]) => {
+    let fields = '';
+    questions.forEach(q => {
+      if (q[0] === '__MATRIX_MOVILIDAD__') {
+        fields += hogarRecMatrixGroup(answers, 'movilidad', usedKeys);
+        fields += hogarRecMatrixGroup(answers, 'demora', usedKeys);
+        return;
+      }
+      if (q[0] === '__MATRIX_ACCIDENTES__') {
+        fields += hogarRecMatrixGroup(answers, 'accidentes', usedKeys);
+        return;
+      }
+      if (answers[q[0]]) {
+        usedKeys.add(q[0]);
+        fields += hogarRecField(q[0], answers[q[0]]);
+      }
+      if (q[0].startsWith('5.3.3 ¿Cómo se realiza')) fields += hogarRecMatrixGroup(answers, 'higiene', usedKeys);
+      if (q[0].startsWith('5.3.7 ¿Se comparten') && answers['5.3.7 Otro ¿Cuál? (si aplica)']) {
+        usedKeys.add('5.3.7 Otro ¿Cuál? (si aplica)');
+        fields += hogarRecField('5.3.7 Otro ¿Cuál? (si aplica)', answers['5.3.7 Otro ¿Cuál? (si aplica)']);
+      }
+    });
+    if (sectionTitle === 'Información de la vivienda') {
+      fields += hogarRecMatrixGroup(answers, 'cursoVida', usedKeys);
+      fields += hogarRecIntegrantes(answers['Integrantes del hogar'], usedKeys);
+    }
+    html += hogarRecSection(sectionTitle, fields);
+  });
+
+  const extra = Object.entries(answers)
+    .filter(([key]) => !usedKeys.has(key))
+    .sort(([a], [b]) => {
+      const ia = HOGAR_QUESTION_ORDER.indexOf(a);
+      const ib = HOGAR_QUESTION_ORDER.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b, 'es');
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+  if (extra.length) {
+    html += hogarRecSection('Otras respuestas', extra.map(([label, value]) => hogarRecField(label, value)).join(''), false);
+  }
+
+  if (r.editada) {
+    html += `<div class="rfield" style="margin-top:10px"><strong>Última edición</strong>${safeHtml(r.editada)}</div>`;
+  }
+
+  return html || '<div class="rfield">Sin respuestas diligenciadas</div>';
 }
 
 function buildFields(r) {
@@ -1921,13 +2421,7 @@ function buildFields(r) {
       ${r.editada ? `<div class="rfield" style="grid-column:1/-1"><strong>Última edición</strong>${r.editada}</div>` : ''}`;
   }
   if (r.tipo === 'hogar') {
-    const answers = Object.entries(r.respuestas || {});
-    return `
-      <div class="rfield"><strong>Dirección</strong>${r.direccion || '—'}</div>
-      <div class="rfield"><strong>Teléfono</strong>${r.telefono || '—'}</div>
-      <div class="rfield"><strong>Diligencia</strong>${r.diligencia || '—'}</div>
-      <div class="rfield"><strong>Atiende</strong>${r.atiende || '—'}</div>
-      <div class="rfield" style="grid-column:1/-1"><strong>Respuestas (${answers.length})</strong>${answers.map(([k,v]) => `<p style="margin:5px 0"><b>${k}:</b> ${v}</p>`).join('') || '—'}</div>`;
+    return buildHogarRecordFields(r);
   }
   const viv = r.vivienda || {};
   const ints = r.integrantes || [];
@@ -2031,19 +2525,17 @@ function openEdit(id, tipo) {
     }, 10);
 
   } else if (tipo === 'hogar') {
-    const answerFields = Object.entries(r.respuestas || {}).map(([label, value]) => {
-      const isJson = value !== null && typeof value === 'object';
-      const shown = isJson ? JSON.stringify(value, null, 2) : String(value ?? '');
-      return `<div class="ff"><label>${safeHtml(label)}</label><textarea class="e-h-answer" data-label="${safeHtml(label)}" data-json="${isJson ? '1' : '0'}">${safeHtml(shown)}</textarea></div>`;
-    }).join('') || '<p style="color:var(--text-muted)">No hay respuestas diligenciadas todavía.</p>';
-    body.innerHTML = `<div class="sdiv">GENERALIDADES</div>
-      <div class="frow"><div class="ff"><label>Fecha (Día/mes/año)</label><input id="e-h-fecha" type="date" value="${safeHtml(r.fechaVisita || '')}"></div><div class="ff"><label>Hora Inicio</label><input id="e-h-inicio" type="time" value="${safeHtml(r.inicio || '')}"></div><div class="ff"><label>Hora Culminación</label><input id="e-h-fin" type="time" value="${safeHtml(r.fin || '')}"></div></div>
-      <div class="ff"><label>Nombre de quien diligencia la ficha</label><input id="e-h-diligencia" value="${safeHtml(r.diligencia || '')}"></div>
-      <div class="frow"><div class="ff"><label>Tipo de documento de identificación de quien diligencia la ficha</label><input id="e-h-diligencia-doc" value="${safeHtml(r.diligenciaTipoDoc || '')}"></div><div class="ff"><label>Número de Identificación de quien diligencia la ficha</label><input id="e-h-diligencia-num" value="${safeHtml(r.diligenciaNumDoc || '')}"></div></div>
-      <div class="ff"><label>Nombre de la Persona que Atiende la Visita (MAYUSCULA)</label><input id="e-h-atiende" value="${safeHtml(r.atiende || '')}"></div>
-      <div class="frow"><div class="ff"><label>Tipo de documento de identificación de quien atiende la visita</label><input id="e-h-atiende-doc" value="${safeHtml(r.atiendeTipoDoc || '')}"></div><div class="ff"><label>Número de Identificación de quien atiende la visita</label><input id="e-h-atiende-num" value="${safeHtml(r.atiendeNumDoc || '')}"></div></div>
-      <div class="frow"><div class="ff"><label>Dirección de la vivienda</label><input id="e-h-direccion" value="${safeHtml(r.direccion || '')}"></div><div class="ff"><label>Teléfono de contacto</label><input id="e-h-telefono" value="${safeHtml(r.telefono || '')}"></div></div>
-      <div class="sdiv">RESPUESTAS DEL CUESTIONARIO</div>${answerFields}`;
+    populateHogarForm(r).then(() => {
+      editId = parseInt(id);
+      editTipo = 'hogar';
+      updateHogarSaveBtn();
+      showTab('nuevo');
+      document.querySelectorAll('.qblock').forEach(x => x.classList.remove('open'));
+      document.getElementById('q-hogar').classList.add('open');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast('✏️ Registro cargado para editar', 'ok');
+    });
+    return;
   } else {
     body.innerHTML = `
       <div class="frow">
@@ -2343,7 +2835,7 @@ function dibujarFamiliograma() {
   const DPR = 2;
   const W = (canvas.offsetWidth || 400);
 
-  const LEGEND_H    = 260;
+  const LEGEND_H    = 300;
   const yPadres     = 130;
   const yCore       = 310;
   const yHijos      = 500;
@@ -2457,23 +2949,49 @@ function dibujarFamiliograma() {
     }
   }
 
-  function drawLine(x1, y1, x2, y2, style) {
+  function drawStyledLine(x1, y1, x2, y2, cfg) {
     ctx.save();
-    ctx.strokeStyle = colorLine; ctx.lineWidth = 1.8;
-    if (style === 'dashed') { ctx.setLineDash([6,4]); ctx.strokeStyle = '#2563eb'; }
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.strokeStyle = cfg.color;
+    ctx.lineWidth = cfg.width || 2;
+    if (cfg.dash?.length) ctx.setLineDash(cfg.dash);
+    if (cfg.style === 'double') {
+      const gap = 3;
+      ctx.beginPath(); ctx.moveTo(x1, y1 - gap); ctx.lineTo(x2, y2 - gap); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x1, y1 + gap); ctx.lineTo(x2, y2 + gap); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    }
+    if (cfg.style === 'separated') {
+      const cx = (x1 + x2) / 2;
+      ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2.5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(cx - 5, y1 - 8); ctx.lineTo(cx - 1, y1 + 8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + 1, y1 - 8); ctx.lineTo(cx + 5, y1 + 8); ctx.stroke();
+    }
     ctx.restore();
   }
 
-  function drawCouple(p1x, p2x, y, relationType) {
-    drawLine(p1x+PERSON_SIZE/2, y, p2x-PERSON_SIZE/2, y, relationType==='comprometidos'?'dashed':'solid');
-    if (relationType === 'separados') {
-      const cx = (p1x+p2x)/2;
-      ctx.save(); ctx.strokeStyle='#dc2626'; ctx.lineWidth=2.5;
-      ctx.beginPath(); ctx.moveTo(cx-5,y-8); ctx.lineTo(cx+3,y+8); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(cx+3,y-8); ctx.lineTo(cx+11,y+8); ctx.stroke();
-      ctx.restore();
+  const FG_COUPLE = {
+    matrimonio:  { color: '#334155', style: 'double', dash: [], width: 1.6 },
+    union_libre: { color: '#7c3aed', style: 'dashed', dash: [10, 6], width: 2 },
+    separados:   { color: '#334155', style: 'separated', dash: [], width: 2 },
+    comprometidos: { color: '#7c3aed', style: 'dashed', dash: [10, 6], width: 2 }
+  };
+
+  function drawLine(x1, y1, x2, y2, style) {
+    if (style === 'distant_conv') {
+      drawStyledLine(x1, y1, x2, y2, { color: '#0891b2', style: 'dashed', dash: [5, 4], width: 1.8 });
+      return;
     }
+    if (style === 'distant_nucleo') {
+      drawStyledLine(x1, y1, x2, y2, { color: '#c026d3', style: 'dashed', dash: [8, 5], width: 1.8 });
+      return;
+    }
+    drawStyledLine(x1, y1, x2, y2, { color: colorLine, style: 'solid', dash: [], width: 1.8 });
+  }
+
+  function drawCouple(p1x, p2x, y, relationType) {
+    const rel = FG_COUPLE[relationType] || FG_COUPLE.matrimonio;
+    drawStyledLine(p1x + PERSON_SIZE / 2, y, p2x - PERSON_SIZE / 2, y, rel);
   }
 
   function drawParentChildLink(p1,x1,p2,x2,yP,childX,childY) {
@@ -2522,21 +3040,23 @@ function dibujarFamiliograma() {
     ctx.restore();
   }
 
-  if (hasData(padreJefe)&&hasData(madreJefe)) drawCouple(padreJefeX, madreJefeX, yPadres, 'matrimonio');
-  if (hasData(padreJefe))   drawPerson(padreJefeX,   yPadres, padreJefe,   'M', false);
-  if (hasData(madreJefe))   drawPerson(madreJefeX,   yPadres, madreJefe,   'F', false);
+  const placedPeople = [];
+
+  if (hasData(padreJefe) && hasData(madreJefe)) drawCouple(padreJefeX, madreJefeX, yPadres, 'matrimonio');
+  if (hasData(padreJefe))   { drawPerson(padreJefeX,   yPadres, padreJefe,   'M', false); placedPeople.push({ x: padreJefeX, y: yPadres, person: padreJefe }); }
+  if (hasData(madreJefe))   { drawPerson(madreJefeX,   yPadres, madreJefe,   'F', false); placedPeople.push({ x: madreJefeX, y: yPadres, person: madreJefe }); }
   drawParentChildLink(padreJefe, padreJefeX, madreJefe, madreJefeX, yPadres, principalX, yCore);
 
   if (hasData(pareja)) {
     if (hasData(padrePareja)&&hasData(madrePareja)) drawCouple(padreParejaX, madreParejaX, yPadres, 'matrimonio');
-    if (hasData(padrePareja)) drawPerson(padreParejaX, yPadres, padrePareja, 'M', false);
-    if (hasData(madrePareja)) drawPerson(madreParejaX, yPadres, madrePareja, 'F', false);
+    if (hasData(padrePareja)) { drawPerson(padreParejaX, yPadres, padrePareja, 'M', false); placedPeople.push({ x: padreParejaX, y: yPadres, person: padrePareja }); }
+    if (hasData(madrePareja)) { drawPerson(madreParejaX, yPadres, madrePareja, 'F', false); placedPeople.push({ x: madreParejaX, y: yPadres, person: madrePareja }); }
     drawParentChildLink(padrePareja, padreParejaX, madrePareja, madreParejaX, yPadres, parejaX, yCore);
   }
 
   if (hasData(principal)&&hasData(pareja)) drawCouple(principalX, parejaX, yCore, relacion);
-  if (hasData(principal)) drawPerson(principalX, yCore, principal, principal.genero||'M', true);
-  if (hasData(pareja))    drawPerson(parejaX,    yCore, pareja,    pareja.genero||'F',    false);
+  if (hasData(principal)) { drawPerson(principalX, yCore, principal, principal.genero||'M', true); placedPeople.push({ x: principalX, y: yCore, person: principal }); }
+  if (hasData(pareja))    { drawPerson(parejaX,    yCore, pareja,    pareja.genero||'F',    false); placedPeople.push({ x: parejaX, y: yCore, person: pareja }); }
 
   const hijosConDatos = hijos.filter(h => hasData(h));
   if (hijosConDatos.length && (hasData(principal)||hasData(pareja))) {
@@ -2551,8 +3071,18 @@ function dibujarFamiliograma() {
       const hx = hijosConDatos.length===1 ? coupleMidX : startX+spacing*idx;
       drawLine(hx, dropY, hx, yHijos-PERSON_SIZE/2);
       drawPerson(hx, yHijos, h, h.genero, false);
+      placedPeople.push({ x: hx, y: yHijos, person: h });
     });
   }
+
+  const coreX = hasData(pareja) ? (principalX + parejaX) / 2 : principalX;
+  const coreY = yCore;
+  placedPeople.forEach(({ x, y, person }) => {
+    if (person.convivencia === 'distante')
+      drawLine(x, y + PERSON_SIZE / 2, coreX, coreY - PERSON_SIZE / 2, 'distant_conv');
+    else if (person.nucleo === 'NO')
+      drawLine(x, y, coreX, coreY, 'distant_nucleo');
+  });
 
   // ❌ ELIMINADO: Ya no pintamos blanco aquí (borraba el dibujo)
 
@@ -2574,11 +3104,13 @@ function dibujarFamiliograma() {
       { label: 'Enfermedad crónica',  type: 'double',   color: '#f97316' },
       { label: 'En el núcleo',        type: 'nucleo',   color: '#0a9396' },
       { label: 'Fuera del núcleo',    type: 'nonucleo', color: '#94a3b8' },
-      { label: 'Matrimonio / Unión',  type: 'line',     color: '#334155', dash: [] },
-      { label: 'Compromiso',          type: 'line',     color: '#2563eb', dash: [4,3] },
-      { label: 'Separados',           type: 'break',    color: '#dc2626' },
-      { label: 'Conviv. armoniosa',   type: 'convline', color: '#16a34a' },
-      { label: 'Conviv. conflictiva', type: 'convline', color: '#dc2626' },
+      { label: 'Matrimonio',              type: 'doubleline', color: '#334155' },
+      { label: 'Unión libre',             type: 'line',       color: '#7c3aed', dash: [10, 6] },
+      { label: 'Separados',               type: 'break',      color: '#dc2626' },
+      { label: 'Relación distante',       type: 'line',       color: '#0891b2', dash: [5, 4] },
+      { label: 'Poco contacto / fuera núcleo', type: 'line',  color: '#c026d3', dash: [8, 5] },
+      { label: 'Conviv. armoniosa',       type: 'convline',   color: '#16a34a' },
+      { label: 'Conviv. conflictiva',     type: 'convline',   color: '#dc2626' },
     ];
 
     const ROWS = Math.ceil(items.length / COLS);
@@ -2649,6 +3181,10 @@ function dibujarFamiliograma() {
       } else if (item.type==='line') {
         ctx.strokeStyle=item.color; ctx.lineWidth=2; ctx.setLineDash(item.dash||[]);
         ctx.beginPath(); ctx.moveTo(ix,iy); ctx.lineTo(ix+SYM_W,iy); ctx.stroke(); ctx.setLineDash([]);
+      } else if (item.type==='doubleline') {
+        ctx.strokeStyle=item.color; ctx.lineWidth=1.6; ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(ix, iy - 3); ctx.lineTo(ix + SYM_W, iy - 3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ix, iy + 3); ctx.lineTo(ix + SYM_W, iy + 3); ctx.stroke();
       } else if (item.type==='break') {
         ctx.strokeStyle='#334155'; ctx.lineWidth=1.5;
         ctx.beginPath(); ctx.moveTo(ix,iy); ctx.lineTo(ix+SYM_W,iy); ctx.stroke();
