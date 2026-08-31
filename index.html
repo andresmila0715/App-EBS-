@@ -1680,8 +1680,15 @@ function buildHogarPdfBlocks(answers, general) {
     if (section[0] === 'Información de la vivienda') {
       appendMatrix('cursoVida');
       if (answers['Integrantes del hogar']) {
-        blocks.push({ type: 'section', title: '2. INFORMACIÓN DEMOGRÁFICA' });
-        answers['Integrantes del hogar'].forEach((m, i) => blocks.push({ type: 'row', label: `Integrante ${i + 1}`, value: Object.entries(m).map(([k,v]) => `${k}: ${v}`).join(' | ') }));
+        // Cada integrante se muestra como su propio sub-bloque, con la pregunta
+        // exacta de la ficha (3.1 Primer apellido, 3.2 Tipo de documento, etc.)
+        // en vez de una sola línea con todo mezclado.
+        answers['Integrantes del hogar'].forEach((m, i) => {
+          blocks.push({ type: 'section', title: `2. INFORMACIÓN DEMOGRÁFICA — Integrante ${i + 1}` });
+          HOGAR_MIEMBRO_FIELDS.forEach(([label, key]) => {
+            if (m[key]) blocks.push({ type: 'row', label, value: m[key] });
+          });
+        });
       }
     }
   });
@@ -1874,11 +1881,45 @@ function sanitizeSheetName(name, usedNames) {
   return finalName;
 }
 
+// Preguntas de opción múltiple (checkboxes) de la ficha: sus respuestas se
+// guardan como "Opción A, Opción B, ..." y en el Excel se muestran una por
+// línea (con viñeta) para que se lean fácilmente en vez de un solo párrafo.
+const HOGAR_MULTISELECT_LABELS = new Set(
+  HOGAR_SECTIONS.flatMap(([, preguntas]) => preguntas
+    .filter(q => q[1] && q[1].split('|')[0] === 'multiple')
+    .map(q => q[0]))
+);
+
+// Da formato de lectura a una respuesta antes de escribirla en la celda:
+// las respuestas de selección múltiple pasan a una línea por opción.
+function hogarExcelFormatValue(label, value) {
+  if (typeof value !== 'string') return { text: String(value ?? ''), lines: 1 };
+  if (HOGAR_MULTISELECT_LABELS.has(label) && value.includes(', ')) {
+    const opciones = value.split(', ').filter(Boolean);
+    return { text: opciones.map(o => '• ' + o).join('\n'), lines: opciones.length };
+  }
+  return { text: value, lines: value.split('\n').length };
+}
+
+// Calcula un alto de fila razonable según cuánto texto hay que envolver,
+// para que ninguna pregunta o respuesta quede cortada visualmente.
+function hogarExcelRowHeight(labelText, valueLines, valueText) {
+  const CHARS_POR_LINEA_LABEL = 60; // ancho columna A (48) aprox.
+  const CHARS_POR_LINEA_VALOR = 95; // ancho columna B (75) aprox.
+  const lineasLabel = String(labelText || '').split('\n')
+    .reduce((s, l) => s + Math.max(1, Math.ceil(l.length / CHARS_POR_LINEA_LABEL)), 0);
+  const lineasValorTexto = String(valueText || '').split('\n')
+    .reduce((s, l) => s + Math.max(1, Math.ceil(l.length / CHARS_POR_LINEA_VALOR)), 0);
+  const lineas = Math.max(lineasLabel, valueLines, lineasValorTexto, 1);
+  return Math.max(15, lineas * 13 + 4);
+}
+
 // Descarga un Excel (.xlsx) con TODOS los registros guardados de
 // "Caracterización Entorno Hogar" del municipio activo: una hoja
 // nueva por cada cuestionario guardado, respetando el mismo diseño
 // (encabezado institucional, secciones y filas etiqueta/valor) que
-// usa el PDF descargable de ese formulario.
+// usa el PDF descargable de ese formulario, y con las preguntas
+// escritas tal cual aparecen en la ficha.
 async function downloadHogarExcelAll() {
   if (typeof ExcelJS === 'undefined') { toast('⚠️ No se pudo cargar el módulo de Excel. Verifica tu conexión.', 'err'); return; }
   const recs = getRecs(CM, 'hogar');
@@ -1940,8 +1981,9 @@ async function downloadHogarExcelAll() {
       } else if (block.type === 'row') {
         const c1 = ws.getCell(`A${rowIdx}`);
         const c2 = ws.getCell(`B${rowIdx}`);
-        c1.value = block.label;
-        c2.value = block.value;
+        const formatted = hogarExcelFormatValue(block.label, block.value);
+        c1.value = block.label; // pregunta tal cual aparece en el cuestionario
+        c2.value = formatted.text;
         c1.font = { bold: true, size: 8.5, color: { argb: 'FF475569' } };
         c2.font = { size: 9, color: { argb: 'FF1A2332' } };
         c1.alignment = { wrapText: true, vertical: 'top' };
@@ -1952,6 +1994,7 @@ async function downloadHogarExcelAll() {
         }
         c1.border = { bottom: THIN_BORDER };
         c2.border = { bottom: THIN_BORDER };
+        ws.getRow(rowIdx).height = hogarExcelRowHeight(block.label, formatted.lines, formatted.text);
         rowIdx++; stripe++;
       }
       // Los bloques tipo 'image' (diagramas) no aplican a este cuestionario y se omiten.
