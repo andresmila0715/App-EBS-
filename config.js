@@ -56,7 +56,7 @@ const USERS = {
     role: 'user'
   },
   'ENCISO': {
-    password: 'Encis02026',
+    password: 'Encis02027',
     municipio: 'Enciso',
     role: 'user'
   },
