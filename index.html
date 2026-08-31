@@ -708,17 +708,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       </div>
       <div class="qbody">
         <div class="apgar-ref"><strong>Ficha de caracterización social y ambiental.</strong><br>Complete las secciones que correspondan a la visita. El PDF final se descarga directamente en el dispositivo.</div>
-        <div class="frow">
-          <div class="ff"><label>Fecha de visita</label><input type="date" id="h-fecha"></div>
-          <div class="ff"><label>Hora de inicio</label><input type="time" id="h-inicio"></div>
-          <div class="ff"><label>Hora de culminación</label><input type="time" id="h-fin"></div>
-        </div>
-        <div class="frow"><div class="ff"><label>Nombre de quien diligencia</label><input id="h-diligencia" type="text"></div></div>
-        <div class="frow"><div class="ff"><label>Tipo doc. de quien diligencia</label><select id="h-diligencia-tipodoc"><option value="">—</option><option>CC</option><option>CD</option><option>CE</option><option>PE</option><option>TI</option><option>SC</option><option>PA</option></select></div><div class="ff"><label>N° documento de quien diligencia</label><input id="h-diligencia-numdoc" type="text" inputmode="numeric"></div></div>
-        <div class="frow"><div class="ff"><label>Persona que atiende la visita (MAYÚSCULA)</label><input id="h-atiende" type="text" style="text-transform:uppercase"></div></div>
-        <div class="frow"><div class="ff"><label>Tipo doc. de quien atiende</label><select id="h-atiende-tipodoc"><option value="">—</option><option>CC</option><option>CD</option><option>CE</option><option>PE</option><option>TI</option><option>SC</option><option>PA</option></select></div><div class="ff"><label>N° documento de quien atiende</label><input id="h-atiende-numdoc" type="text" inputmode="numeric"></div></div>
-        <div class="frow"><div class="ff"><label>Dirección de la vivienda</label><input id="h-direccion" type="text" autocomplete="street-address"></div><div class="ff"><label>Teléfono de contacto</label><input id="h-telefono" type="tel" autocomplete="tel"></div></div>
-        <div class="hogar-logo-upload" style="margin:0 0 16px"><label for="h-foto-vivienda">Logo del hospital (opcional)</label><input id="h-foto-vivienda" type="file" accept="image/*" onchange="handleHogarFoto(this)"><small style="display:block;margin-top:6px;color:var(--text-muted)">Puede seleccionar cualquier imagen compatible con el navegador. En el PDF se ajustará a un marco fijo de 112 × 76 puntos en la primera página, sin deformarse.</small><img id="h-foto-vivienda-preview" class="hogar-logo-preview" alt="Vista previa de la foto de la vivienda"></div>
+        <details open style="margin:0 0 16px;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">GENERALIDADES</summary><div style="padding:14px">
+          <div class="frow3"><div class="ff"><label>Fecha (Día/mes/año)</label><input type="date" id="h-fecha"></div><div class="ff"><label>Hora Inicio</label><input type="time" id="h-inicio"></div><div class="ff"><label>Hora Culminación</label><input type="time" id="h-fin"></div></div>
+          <div class="ff"><label>Nombre de quien diligencia la ficha</label><input id="h-diligencia" type="text"></div>
+          <div class="frow"><div class="ff"><label>Tipo de documento de identificación de quien diligencia la ficha</label><select id="h-diligencia-tipodoc"><option value="">—</option><option>CC</option><option>CD</option><option>CE</option><option>PE</option><option>TI</option><option>SC</option><option>PA</option></select></div><div class="ff"><label>Número de Identificación de quien diligencia la ficha (No. de identificación sin puntos, comas o guiones.)</label><input id="h-diligencia-numdoc" type="text" inputmode="numeric"></div></div>
+          <div class="ff"><label>Nombre de la Persona que Atiende la Visita (MAYUSCULA)</label><input id="h-atiende" type="text" style="text-transform:uppercase"></div>
+          <div class="frow"><div class="ff"><label>Tipo de documento de identificación de quien atiende la visita</label><select id="h-atiende-tipodoc"><option value="">—</option><option>CC</option><option>CD</option><option>CE</option><option>PE</option><option>TI</option><option>SC</option><option>PA</option></select></div><div class="ff"><label>Número de Identificación de quien atiende la visita (No. de identificación sin puntos, comas o guiones.)</label><input id="h-atiende-numdoc" type="text" inputmode="numeric"></div></div>
+          <div class="frow"><div class="ff"><label>Dirección de la vivienda</label><input id="h-direccion" type="text" autocomplete="street-address"></div><div class="ff"><label>Teléfono de contacto</label><input id="h-telefono" type="tel" autocomplete="tel"></div></div>
+          <div class="hogar-logo-upload"><label for="h-foto-vivienda">Logo departamento</label><input id="h-foto-vivienda" type="file" accept="image/*" onchange="handleHogarFoto(this)"><small style="display:block;margin-top:6px;color:var(--text-muted)">Puede seleccionar cualquier imagen compatible con el navegador. En el PDF se ajustará a un marco fijo de 112 × 76 puntos en la primera página, sin deformarse.</small><img id="h-foto-vivienda-preview" class="hogar-logo-preview" alt="Vista previa del logo del departamento"></div>
+        </div></details>
         <div id="hogar-form"></div>
         <div class="factions">
           <button class="btn-sec" onclick="clearF('hogar')">Limpiar</button>
@@ -1023,6 +1021,7 @@ async function syncAll() {
 
   for (const m of munis) {
     for (const t of TIPOS) {
+      if (t === 'hogar') continue;
       const pendientes = getPend(m, t);
       if (!pendientes.length) continue;
 
@@ -1050,6 +1049,7 @@ async function syncAll() {
   // Sincronizar eliminaciones pendientes offline
   for (const m of munis) {
     for (const t of TIPOS) {
+      if (t === 'hogar') continue;
       const delKey = `ebs_del_${m}_${t}`;
       const elims = JSON.parse(localStorage.getItem(delKey) || '[]');
       if (!elims.length) continue;
@@ -1350,9 +1350,11 @@ function renderHogarForm() {
   if (!root || root.children.length) return;
   const renderSection = (section, si) => {
     const fields = section[1].map((question, qi) => {
-      if (question[0] === '__MATRIX_MOVILIDAD__') return `<div style="grid-column:1/-1">${hogarMatrixFrom('movilidad')}${hogarMatrixFrom('demora')}</div>`;
+      if (question[0] === '__MATRIX_MOVILIDAD__') return `<div style="grid-column:1/-1">${hogarMatrixFrom('movilidad')}${hogarMatrixOther('movilidad', '4.2.1 Otros, ¿Cuáles?')}${hogarMatrixFrom('demora')}${hogarMatrixOther('demora', '4.2.2 Otros, ¿Cuál?')}</div>`;
       if (question[0] === '__MATRIX_ACCIDENTES__') return `<div style="grid-column:1/-1">${hogarMatrixFrom('accidentes')}</div>`;
-      const id = hogarId(si, qi), options = question[1] ? question[1].split('|') : [];
+      const id = hogarId(si, qi); let options = question[1] ? question[1].split('|') : [];
+      const isHigienePersonal = question[0].startsWith('5.3.7 ¿Se comparten implementos');
+      if (isHigienePersonal) options = ['Sí', 'No'];
       const isMulti = options[0] === 'multiple';
       if (isMulti) options.shift();
       const isBinary = !isMulti && options.length === 2 && options[0] === 'Sí' && options[1] === 'No';
@@ -1371,7 +1373,9 @@ function renderHogarForm() {
         control = `<input class="hogar-input" data-hogar-label="${safeHtml(question[0])}" id="${id}" type="text">`;
       }
       const field = `<div class="ff"><label>${safeHtml(question[0])}</label>${control}</div>`;
-      return question[0].startsWith('5.3.3 ¿Cómo se realiza') ? field + `<div style="grid-column:1/-1">${hogarMatrixFrom('higiene')}</div>` : field;
+      if (question[0].startsWith('5.3.3 ¿Cómo se realiza')) return field + `<div style="grid-column:1/-1">${hogarMatrixFrom('higiene')}</div>`;
+      if (isHigienePersonal) return field + `<div class="ff"><label>5.3.7 Otro ¿Cuál? (si aplica)</label><input class="hogar-input" type="text" data-hogar-label="5.3.7 Otro ¿Cuál? (si aplica)"></div>`;
+      return field;
     }).join('');
     return `<details open style="margin:14px 0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden"><summary style="cursor:pointer;padding:13px 15px;font-weight:700;color:var(--primary-dark);background:#f0f9ff">${safeHtml(section[0])}</summary><div class="frow" style="padding:14px">${fields}</div></details>`;
   };
@@ -1413,12 +1417,12 @@ const HOGAR_MATRICES = {
   higiene: ['5.3.3 Con que frecuencia se realizan las siguientes actividades en la vivienda:', ['Todos los días','Una vez a la semana','Una vez cada 15 días','Una vez al mes','Cada 6 meses','Cada año'], ['Limpieza de pisos','Limpieza de paredes','Limpieza de techos','Limpieza de muebles','Limpieza de tapetes','Lavado de cortinas','Lavado de sabanas','Lavado de cobija','Limpieza de otras superficies','Limpieza de baño','Limpieza de cocina']]
 };
 
+function hogarMatrixOther(key, label) { const [title] = HOGAR_MATRICES[key]; return `<div class="ff" style="margin-top:10px"><label>${label}</label><input class="hogar-input" type="text" data-hogar-label="${title} · ${label}"></div>`; }
 function hogarMatrixFrom(key) { const [title, rows, cols] = HOGAR_MATRICES[key]; return hogarMatrix(title, rows, cols); }
 
 function hogarBlocksAfter(sectionTitle) {
   if (sectionTitle === 'Información de la vivienda') return hogarDetails('2.7 Cuántas personas hay en la vivienda por curso de vida', hogarMatrixFrom('cursoVida')) +
-    hogarDetails('2. INFORMACIÓN DEMOGRÁFICA', `<div style="overflow:auto"><p style="font-size:.8rem;color:var(--text-muted)">La siguiente información debe ser diligenciada para cada una de las integrantes que residen en la vivienda.</p><table class="apgar-table" id="h-miembros"><thead><tr><th>3.1 Primer apellido</th><th>3.1 Segundo apellido</th><th>3.1 Primer nombre</th><th>3.1 Segundo nombre</th><th>3.2 Tipo de documento</th><th>3.3 Número de identificación</th><th>3.4 Fecha de nacimiento</th><th>3.5 Género</th><th>3.6 Ocupación</th><th>3.7 Estado civil</th><th>3.8 Parentesco con el jefe de hogar</th><th>3.9 Condición del usuario en el SGSSS (cuál)</th><th>3.9 Régimen especial ¿cuál?</th><th>3.10 Escolaridad</th><th>3.11 Pertenencia étnica</th><th>3.12 Población en condición o situación diferencial</th><th>3.13 Organización social a la que pertenece</th><th></th></tr></thead><tbody></tbody></table><button type="button" class="btn-add-int" onclick="agregarMiembroHogar()">＋ Agregar integrante</button></div>`, true) +
-    `<div class="ff hogar-logo-upload"><label for="h-logo-departamento">Logo del departamento</label><input id="h-logo-departamento" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" onchange="handleHogarLogo(this)"><small style="display:block;margin-top:6px;color:var(--text-muted)">Admite PNG, JPG, WebP, GIF y BMP. Se ajustará automáticamente al espacio reservado en la esquina superior derecha del PDF.</small><img id="h-logo-departamento-preview" class="hogar-logo-preview" alt="Vista previa del logo del departamento"></div>`;
+    hogarDetails('2. INFORMACIÓN DEMOGRÁFICA', `<div style="overflow:auto"><p style="font-size:.8rem;color:var(--text-muted)">La siguiente información debe ser diligenciada para cada una de las integrantes que residen en la vivienda.</p><table class="apgar-table" id="h-miembros"><thead><tr><th>3.1 Primer apellido</th><th>3.1 Segundo apellido</th><th>3.1 Primer nombre</th><th>3.1 Segundo nombre</th><th>3.2 Tipo de documento</th><th>3.3 Número de identificación</th><th>3.4 Fecha de nacimiento</th><th>3.5 Género</th><th>3.6 Ocupación</th><th>3.7 Estado civil</th><th>3.8 Parentesco con el jefe de hogar</th><th>3.9 Condición del usuario en el SGSSS (cuál)</th><th>3.9 Régimen especial ¿cuál?</th><th>3.10 Escolaridad</th><th>3.11 Pertenencia étnica</th><th>3.12 Población en condición o situación diferencial</th><th>3.13 Organización social a la que pertenece</th><th></th></tr></thead><tbody></tbody></table><button type="button" class="btn-add-int" onclick="agregarMiembroHogar()">＋ Agregar integrante</button></div>`, true);
   return '';
 }
 
@@ -1532,6 +1536,7 @@ function downloadHogarPdf() {
       if (q[0] === '__MATRIX_ACCIDENTES__') { appendMatrix('accidentes'); return; }
       if (answers[q[0]]) blocks.push({ type: 'row', label: q[0], value: answers[q[0]] });
       if (q[0].startsWith('5.3.3 ¿Cómo se realiza')) appendMatrix('higiene');
+      if (q[0].startsWith('5.3.7 ¿Se comparten') && answers['5.3.7 Otro ¿Cuál? (si aplica)']) blocks.push({ type: 'row', label: '5.3.7 Otro ¿Cuál? (si aplica)', value: answers['5.3.7 Otro ¿Cuál? (si aplica)'] });
     });
     if (section[0] === 'Información de la vivienda') {
       appendMatrix('cursoVida');
@@ -1561,8 +1566,6 @@ function downloadHogarPdf() {
   const text = (fontName, size, x, top, value, color = '0 0 0') => commands.push(`${color} rg BT /${fontName} ${size} Tf ${x} ${top} Td (${clean(value)}) Tj ET`);
   // Paleta institucional: azul noche para la cabecera, acento verde-azulado, tinta y grises neutros para el cuerpo.
   const NAVY = '0.043 0.145 0.278', SLATE = '0.29 0.34 0.39', ACCENT = '0.02 0.55 0.52', INK = '0.10 0.12 0.14', MUTED = '0.45 0.49 0.53';
-  const folio = 'EH-' + new Date().getFullYear() + '-' + Date.now().toString(36).toUpperCase();
-  const genFecha = new Date().toLocaleString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   const beginPage = () => {
     pageNumber++; commands = [];
     // Cabecera institucional con franja de acento
@@ -1576,12 +1579,10 @@ function downloadHogarPdf() {
       commands.push(`q ${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${(568 - drawW).toFixed(2)} ${(799 - drawH / 2).toFixed(2)} cm /ImLogo Do Q`);
     }
     if (pageNumber === 1) {
-      // Franja de metadatos del documento: municipio, folio y fecha de generación (aporta trazabilidad y look de reporte formal)
+      // Franja de metadatos del documento: municipio
       commands.push('0.94 0.96 0.98 rg 36 757 540 22 re f');
       commands.push(`${MUTED} RG 0.5 w 36 757 540 22 re S`);
       text('F2', 7.6, 44, 771, 'MUNICIPIO', SLATE); text('F1', 7.6, 44, 762, CM || '-', INK);
-      text('F2', 7.6, 234, 771, 'FOLIO', SLATE); text('F1', 7.6, 234, 762, folio, INK);
-      text('F2', 7.6, 400, 771, 'GENERADO', SLATE); text('F1', 7.6, 400, 762, genFecha, INK);
       if (fotoImage) {
         // Marco fijo: 112 × 76 pt. La foto conserva su proporción y nunca modifica el diseño del PDF.
         const frameX = 456, frameY = 658, frameW = 112, frameH = 76;
@@ -1620,11 +1621,10 @@ function downloadHogarPdf() {
   blocks.forEach(block => block.type === 'section' ? section(block.title) : row(block.label, block.value));
   closePage();
 
-  // Segunda pasada: ahora que se conoce el total de páginas, se agrega un pie de página uniforme y trazable.
+  // Segunda pasada: ahora que se conoce el total de páginas, se agrega un pie de página uniforme.
   const totalPages = pageCommands.length;
   pageCommands.forEach((cmds, idx) => {
     cmds.push(`0.82 0.85 0.88 RG 0.6 w 36 40 m 576 40 l S`);
-    cmds.push(`${MUTED} rg BT /F1 6.8 Tf 36 29 Td (Documento generado el ${clean(genFecha)} - PIC Departamental - Folio ${clean(folio)}) Tj ET`);
     cmds.push(`${MUTED} rg BT /F1 6.8 Tf 498 29 Td (Pagina ${idx + 1} de ${totalPages}) Tj ET`);
   });
 
@@ -1710,7 +1710,8 @@ async function saveR(tipo) {
     fecha: new Date().toLocaleString('es-CO'),
     municipio: CM,
     tipo,
-    synced: false
+    // Hogar no se sincroniza con Google Sheets: se conserva como registro local, no como pendiente.
+    synced: tipo === 'hogar'
   };
 
   const restoreBtn = () => btns.forEach(b => { b.disabled = false; b.textContent = '💾 Guardar'; });
@@ -1772,8 +1773,7 @@ async function saveR(tipo) {
       diligenciaTipoDoc: gv('h-diligencia-tipodoc'), diligenciaNumDoc: gv('h-diligencia-numdoc'),
       atiendeTipoDoc: gv('h-atiende-tipodoc'), atiendeNumDoc: gv('h-atiende-numdoc'),
       respuestas: getHogarAnswers(),
-      logoDepartamento: hogarLogoData,
-      fotoVivienda: hogarFotoData
+      logoDepartamento: hogarFotoData
     });
   }
 
@@ -1788,14 +1788,15 @@ async function saveR(tipo) {
   setRecs(CM, tipo, recs);
 
   const paraSheets = { ...registro, foto: registro.foto ? '✅ Tiene foto' : 'Sin foto' };
-  // Hogar se guarda localmente hasta que se configure su URL de Apps Script.
-  if (getSheetUrl(CM, tipo)) {
+  if (tipo !== 'hogar' && getSheetUrl(CM, tipo)) {
     const pendientes = getPend(CM, tipo);
     pendientes.push(paraSheets);
     setPend(CM, tipo, pendientes);
   }
 
-  if (online && getSheetUrl(CM, tipo)) {
+  if (tipo === 'hogar') {
+    toast('💾 Guardado en Registros', 'ok');
+  } else if (online && getSheetUrl(CM, tipo)) {
     toast('💾 Guardado · Subiendo...', 'ok');
     await syncAll();
   } else if (!getSheetUrl(CM, tipo)) {
@@ -1838,9 +1839,9 @@ function renderRecs() {
   }
 
   lista.innerHTML = todos.map(r => {
-    const syncBadge = r.synced
+    const syncBadge = r.tipo === 'hogar' ? '' : (r.synced
       ? `<span class="sbadge s" title="Sincronizado">☁️</span>`
-      : `<span class="sbadge p" title="Pendiente de subir">⏳ Pendiente</span>`;
+      : `<span class="sbadge p" title="Pendiente de subir">⏳ Pendiente</span>`);
     const editBadge = r.editada
       ? `<span class="sbadge e" title="Editado el ${r.editada}">✏️</span>`
       : '';
@@ -1962,7 +1963,7 @@ async function delRec(id, tipo) {
   toast('🗑️ Eliminado localmente…');
 
   // Enviar al servidor para borrar fila y documento
-  const url = getSheetUrl(CM, tipo);
+  const url = tipo === 'hogar' ? '' : getSheetUrl(CM, tipo);
   if (url && online) {
     try {
       await fetch(url, {
@@ -2029,6 +2030,20 @@ function openEdit(id, tipo) {
       document.getElementById('e-sal').value = r.salud || '';
     }, 10);
 
+  } else if (tipo === 'hogar') {
+    const answerFields = Object.entries(r.respuestas || {}).map(([label, value]) => {
+      const isJson = value !== null && typeof value === 'object';
+      const shown = isJson ? JSON.stringify(value, null, 2) : String(value ?? '');
+      return `<div class="ff"><label>${safeHtml(label)}</label><textarea class="e-h-answer" data-label="${safeHtml(label)}" data-json="${isJson ? '1' : '0'}">${safeHtml(shown)}</textarea></div>`;
+    }).join('') || '<p style="color:var(--text-muted)">No hay respuestas diligenciadas todavía.</p>';
+    body.innerHTML = `<div class="sdiv">GENERALIDADES</div>
+      <div class="frow"><div class="ff"><label>Fecha (Día/mes/año)</label><input id="e-h-fecha" type="date" value="${safeHtml(r.fechaVisita || '')}"></div><div class="ff"><label>Hora Inicio</label><input id="e-h-inicio" type="time" value="${safeHtml(r.inicio || '')}"></div><div class="ff"><label>Hora Culminación</label><input id="e-h-fin" type="time" value="${safeHtml(r.fin || '')}"></div></div>
+      <div class="ff"><label>Nombre de quien diligencia la ficha</label><input id="e-h-diligencia" value="${safeHtml(r.diligencia || '')}"></div>
+      <div class="frow"><div class="ff"><label>Tipo de documento de identificación de quien diligencia la ficha</label><input id="e-h-diligencia-doc" value="${safeHtml(r.diligenciaTipoDoc || '')}"></div><div class="ff"><label>Número de Identificación de quien diligencia la ficha</label><input id="e-h-diligencia-num" value="${safeHtml(r.diligenciaNumDoc || '')}"></div></div>
+      <div class="ff"><label>Nombre de la Persona que Atiende la Visita (MAYUSCULA)</label><input id="e-h-atiende" value="${safeHtml(r.atiende || '')}"></div>
+      <div class="frow"><div class="ff"><label>Tipo de documento de identificación de quien atiende la visita</label><input id="e-h-atiende-doc" value="${safeHtml(r.atiendeTipoDoc || '')}"></div><div class="ff"><label>Número de Identificación de quien atiende la visita</label><input id="e-h-atiende-num" value="${safeHtml(r.atiendeNumDoc || '')}"></div></div>
+      <div class="frow"><div class="ff"><label>Dirección de la vivienda</label><input id="e-h-direccion" value="${safeHtml(r.direccion || '')}"></div><div class="ff"><label>Teléfono de contacto</label><input id="e-h-telefono" value="${safeHtml(r.telefono || '')}"></div></div>
+      <div class="sdiv">RESPUESTAS DEL CUESTIONARIO</div>${answerFields}`;
   } else {
     body.innerHTML = `
       <div class="frow">
@@ -2078,6 +2093,16 @@ async function saveEdit() {
     r.salud = document.getElementById('e-sal').value;
     r.enfermedades = gv('e-enf');
     r.obs = gv('e-obs');
+  } else if (editTipo === 'hogar') {
+    r.fechaVisita = gv('e-h-fecha'); r.inicio = gv('e-h-inicio'); r.fin = gv('e-h-fin');
+    r.diligencia = gv('e-h-diligencia'); r.diligenciaTipoDoc = gv('e-h-diligencia-doc'); r.diligenciaNumDoc = gv('e-h-diligencia-num');
+    r.atiende = gv('e-h-atiende'); r.atiendeTipoDoc = gv('e-h-atiende-doc'); r.atiendeNumDoc = gv('e-h-atiende-num');
+    r.direccion = gv('e-h-direccion'); r.telefono = gv('e-h-telefono');
+    r.respuestas = Object.fromEntries([...document.querySelectorAll('.e-h-answer')].map(el => {
+      let value = el.value;
+      if (el.dataset.json === '1') { try { value = JSON.parse(value); } catch { /* Se conserva como texto editable si el usuario cambió el formato. */ } }
+      return [el.dataset.label, value];
+    }));
   } else {
     r.vereda = gv('e-ver');
     r.auxiliar = gv('e-aux');
@@ -2087,7 +2112,7 @@ async function saveEdit() {
     r.vivienda.sisben = gv('e-sisben');
   }
 
-  r.synced = false;
+  r.synced = editTipo === 'hogar';
   r.editada = new Date().toLocaleString('es-CO');
   setRecs(CM, editTipo, recs);
 
@@ -2098,7 +2123,7 @@ async function saveEdit() {
 
   // Enviar accion:actualizar directo — NO agregar a pendientes para evitar doble envío
   const url = getSheetUrl(CM, editTipo);
-  if (url && online) {
+  if (editTipo !== 'hogar' && url && online) {
     const paraSheets = { ...r, accion: 'actualizar', foto: r.foto ? '✅ Tiene foto' : 'Sin foto' };
     try {
       await fetch(url, {
@@ -2117,7 +2142,7 @@ async function saveEdit() {
       setPend(CM, editTipo, pendientes);
       toast('⚠️ Guardado localmente. Se actualizará con señal.', 'warn');
     }
-  } else if (!online) {
+  } else if (editTipo !== 'hogar' && !online) {
     // Sin señal: encolar como pendiente de actualización
     const pendientes = getPend(CM, editTipo).filter(p => p.id !== r.id);
     pendientes.push({ ...r, accion: 'actualizar', foto: r.foto ? '✅ Tiene foto' : 'Sin foto' });
