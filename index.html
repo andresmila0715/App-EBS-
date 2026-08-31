@@ -718,14 +718,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
         <div class="frow"><div class="ff"><label>Persona que atiende la visita (MAYÚSCULA)</label><input id="h-atiende" type="text" style="text-transform:uppercase"></div></div>
         <div class="frow"><div class="ff"><label>Tipo doc. de quien atiende</label><select id="h-atiende-tipodoc"><option value="">—</option><option>CC</option><option>CD</option><option>CE</option><option>PE</option><option>TI</option><option>SC</option><option>PA</option></select></div><div class="ff"><label>N° documento de quien atiende</label><input id="h-atiende-numdoc" type="text" inputmode="numeric"></div></div>
         <div class="frow"><div class="ff"><label>Dirección de la vivienda</label><input id="h-direccion" type="text" autocomplete="street-address"></div><div class="ff"><label>Teléfono de contacto</label><input id="h-telefono" type="tel" autocomplete="tel"></div></div>
-        <details class="hogar-delivery">
-          <summary>✉️ Entrega digital del formato <span style="font-weight:400;color:var(--text-muted);font-size:.78rem">(opcional)</span></summary>
-          <div class="hogar-delivery-body">
-            <p class="hogar-delivery-note">Además de descargar el PDF, puede solicitar una copia al correo indicado. Requiere que el administrador haya configurado el servicio de Hogar en Google Apps Script.</p>
-            <div class="ff"><label for="h-correo-pdf">Correo Gmail para recibir el PDF</label><input id="h-correo-pdf" type="email" inputmode="email" autocomplete="email" placeholder="nombre@gmail.com"></div>
-            <label class="hogar-email-opt"><input id="h-enviar-correo" type="checkbox"><span><strong>Enviar copia del PDF por correo</strong><br><small style="color:var(--text-muted)">La solicitud se guarda junto con el formulario y se procesa al sincronizar.</small></span></label>
-          </div>
-        </details>
+        <div class="hogar-logo-upload" style="margin:0 0 16px"><label for="h-foto-vivienda">Foto de la vivienda (opcional)</label><input id="h-foto-vivienda" type="file" accept="image/*" onchange="handleHogarFoto(this)"><small style="display:block;margin-top:6px;color:var(--text-muted)">Puede seleccionar cualquier imagen compatible con el navegador. En el PDF se ajustará a un marco fijo de 112 × 76 puntos en la primera página, sin deformarse.</small><img id="h-foto-vivienda-preview" class="hogar-logo-preview" alt="Vista previa de la foto de la vivienda"></div>
         <div id="hogar-form"></div>
         <div class="factions">
           <button class="btn-sec" onclick="clearF('hogar')">Limpiar</button>
@@ -917,6 +910,8 @@ let fotoData = {};    // Almacena fotos en base64 por id de preview
 let logoData = {};    // Almacena logos en base64 (hospital y PIC Departamental)
 let hogarLogoData = ''; // Logo cargado específicamente para el PDF de Entorno Hogar
 let hogarLogoSize = null;
+let hogarFotoData = ''; // Foto de la vivienda para la primera página del PDF
+let hogarFotoSize = null;
 let activeF = 'todos';
 let online = navigator.onLine;
 let intCount = 0;
@@ -1456,6 +1451,35 @@ function handleHogarLogo(input) {
   reader.readAsDataURL(file);
 }
 
+function handleHogarFoto(input) {
+  const file = input.files && input.files[0];
+  const preview = document.getElementById('h-foto-vivienda-preview');
+  if (!file) { hogarFotoData = ''; hogarFotoSize = null; if (preview) preview.style.display = 'none'; return; }
+  if (!file.type.startsWith('image/')) { toast('⚠️ Selecciona un archivo de imagen', 'err'); input.value = ''; return; }
+  if (file.size > 12 * 1024 * 1024) { toast('⚠️ La imagen supera el límite de 12 MB', 'err'); input.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = event => {
+    const image = new Image();
+    image.onload = () => {
+      // Se convierte a JPEG y se limita su resolución: el marco final del PDF siempre es fijo.
+      const maxSide = 1200;
+      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      hogarFotoData = canvas.toDataURL('image/jpeg', 0.88);
+      hogarFotoSize = { width: canvas.width, height: canvas.height };
+      preview.src = hogarFotoData; preview.style.display = 'block';
+    };
+    image.onerror = () => { toast('⚠️ No fue posible leer la imagen seleccionada', 'err'); input.value = ''; };
+    image.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 function hogarMatrix(title, rows, cols) { const key = title.replace(/[^a-z0-9]/gi,''); return `<div style="overflow:auto;margin:12px 0"><strong style="font-size:.84rem;color:var(--primary-dark)">${title}</strong><table class="apgar-table" style="margin-top:7px"><thead><tr><th></th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr><th>${r}</th>${cols.map(c=>`<td><input class="hogar-matrix" data-hogar-label="${title} · ${r} · ${c}" style="width:20px" aria-label="${r} ${c}"></td>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
 
 function agregarMiembroHogar() {
@@ -1522,14 +1546,16 @@ function downloadHogarPdf() {
   const catalog = add(''), pagesObj = add('');
   const font = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
   const fontBold = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
-  let logoImage = null;
-  if (hogarLogoData && hogarLogoSize) {
+  const addJpegImage = (data, size, name) => {
+    if (!data || !size) return null;
     try {
-      const binary = atob(hogarLogoData.split(',')[1]); let hex = '';
+      const binary = atob(data.split(',')[1]); let hex = '';
       for (let i = 0; i < binary.length; i++) hex += binary.charCodeAt(i).toString(16).padStart(2, '0');
-      logoImage = add(`<< /Type /XObject /Subtype /Image /Width ${hogarLogoSize.width} /Height ${hogarLogoSize.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length ${hex.length + 1} >>\nstream\n${hex}>\nendstream`);
-    } catch (error) { console.warn('No se pudo incluir el logo en el PDF:', error); }
-  }
+      return add(`<< /Type /XObject /Subtype /Image /Width ${size.width} /Height ${size.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length ${hex.length + 1} >>\nstream\n${hex}>\nendstream`);
+    } catch (error) { console.warn(`No se pudo incluir ${name} en el PDF:`, error); return null; }
+  };
+  const logoImage = addJpegImage(hogarLogoData, hogarLogoSize, 'el logo');
+  const fotoImage = addJpegImage(hogarFotoData, hogarFotoSize, 'la foto de la vivienda');
 
   const pageCommands = []; let commands = [], y = 0, pageNumber = 0, rowIndex = 0;
   const text = (fontName, size, x, top, value, color = '0 0 0') => commands.push(`${color} rg BT /${fontName} ${size} Tf ${x} ${top} Td (${clean(value)}) Tj ET`);
@@ -1556,7 +1582,17 @@ function downloadHogarPdf() {
       text('F2', 7.6, 44, 771, 'MUNICIPIO', SLATE); text('F1', 7.6, 44, 762, CM || '-', INK);
       text('F2', 7.6, 234, 771, 'FOLIO', SLATE); text('F1', 7.6, 234, 762, folio, INK);
       text('F2', 7.6, 400, 771, 'GENERADO', SLATE); text('F1', 7.6, 400, 762, genFecha, INK);
-      y = 742;
+      if (fotoImage) {
+        // Marco fijo: 112 × 76 pt. La foto conserva su proporción y nunca modifica el diseño del PDF.
+        const frameX = 456, frameY = 658, frameW = 112, frameH = 76;
+        const ratio = hogarFotoSize.width / hogarFotoSize.height;
+        const drawW = Math.min(frameW, frameH * ratio), drawH = drawW / ratio;
+        const drawX = frameX + (frameW - drawW) / 2, drawY = frameY + (frameH - drawH) / 2;
+        commands.push('0.94 0.96 0.98 rg 456 658 112 76 re f');
+        commands.push(`${MUTED} RG 0.65 w 456 658 112 76 re S`);
+        commands.push(`q ${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${drawX.toFixed(2)} ${drawY.toFixed(2)} cm /ImFoto Do Q`);
+        y = 646;
+      } else y = 742;
     } else {
       y = 764;
     }
@@ -1593,10 +1629,11 @@ function downloadHogarPdf() {
   });
 
   const pageIds = pageCommands.map((contentCommands, pi) => {
-    // El logo se declara como recurso, pero solo se dibuja al iniciar la primera pagina.
+    // Logo y foto se declaran como recursos; solo se dibujan en la primera página.
     const contentText = contentCommands.join('\n');
     const content = add(`<< /Length ${contentText.length} >>\nstream\n${contentText}\nendstream`);
-    const imageResource = logoImage ? ` /XObject << /ImLogo ${logoImage} 0 R >>` : '';
+    const xObjects = [logoImage ? `/ImLogo ${logoImage} 0 R` : '', fotoImage ? `/ImFoto ${fotoImage} 0 R` : ''].filter(Boolean).join(' ');
+    const imageResource = xObjects ? ` /XObject << ${xObjects} >>` : '';
     return add(`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 ${font} 0 R /F2 ${fontBold} 0 R >>${imageResource} >> /Contents ${content} 0 R >>`);
   });
   objects[pagesObj - 1] = `<< /Type /Pages /Kids [${pageIds.map(id => id + ' 0 R').join(' ')}] /Count ${pageIds.length} >>`;
@@ -1653,6 +1690,9 @@ function clearF(tipo) {
     hogarLogoData = ''; hogarLogoSize = null;
     const logoPreview = document.getElementById('h-logo-departamento-preview');
     if (logoPreview) { logoPreview.removeAttribute('src'); logoPreview.style.display = 'none'; }
+    hogarFotoData = ''; hogarFotoSize = null;
+    const fotoPreview = document.getElementById('h-foto-vivienda-preview');
+    if (fotoPreview) { fotoPreview.removeAttribute('src'); fotoPreview.style.display = 'none'; }
   }
 }
 
@@ -1726,11 +1766,6 @@ async function saveR(tipo) {
     });
   } else if (tipo === 'hogar') {
     if (!gv('h-direccion')) { toast('⚠️ La dirección de la vivienda es obligatoria', 'err'); restoreBtn(); return; }
-    const enviarCorreo = document.getElementById('h-enviar-correo')?.checked || false;
-    const correoPdf = gv('h-correo-pdf').trim();
-    if (enviarCorreo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoPdf)) {
-      toast('⚠️ Escribe un correo válido para enviar el PDF', 'err'); restoreBtn(); return;
-    }
     Object.assign(registro, {
       fechaVisita: gv('h-fecha'), direccion: gv('h-direccion'), telefono: gv('h-telefono'),
       diligencia: gv('h-diligencia'), atiende: gv('h-atiende'), inicio: gv('h-inicio'), fin: gv('h-fin'),
@@ -1738,8 +1773,7 @@ async function saveR(tipo) {
       atiendeTipoDoc: gv('h-atiende-tipodoc'), atiendeNumDoc: gv('h-atiende-numdoc'),
       respuestas: getHogarAnswers(),
       logoDepartamento: hogarLogoData,
-      correoDestino: correoPdf,
-      enviarCorreo
+      fotoVivienda: hogarFotoData
     });
   }
 
@@ -1892,7 +1926,6 @@ function buildFields(r) {
       <div class="rfield"><strong>Teléfono</strong>${r.telefono || '—'}</div>
       <div class="rfield"><strong>Diligencia</strong>${r.diligencia || '—'}</div>
       <div class="rfield"><strong>Atiende</strong>${r.atiende || '—'}</div>
-      ${r.enviarCorreo ? `<div class="rfield"><strong>Copia por correo</strong>${r.correoDestino || 'Pendiente de correo válido'}</div>` : ''}
       <div class="rfield" style="grid-column:1/-1"><strong>Respuestas (${answers.length})</strong>${answers.map(([k,v]) => `<p style="margin:5px 0"><b>${k}:</b> ${v}</p>`).join('') || '—'}</div>`;
   }
   const viv = r.vivienda || {};
