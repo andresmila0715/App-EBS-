@@ -18,6 +18,9 @@
      ══════════════════════════════════════════════════════ -->
 <script src="config.js"></script>
 
+<!-- Librería para generar el Excel (.xlsx) de Caracterización Entorno Hogar con estilos -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+
 <style>
 /* ── Variables y reset ─────────────────────────────────── */
 :root {
@@ -731,6 +734,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
           <button class="btn-sec" onclick="clearF('hogar')">Limpiar</button>
           <button class="btn-sec" id="h-cancel-edit" style="display:none" onclick="cancelHogarEdit()">Cancelar edición</button>
           <button class="btn-sec" onclick="downloadHogarPdf()">⬇ Descargar PDF</button>
+          <button class="btn-sec" onclick="downloadHogarExcelAll()">📊 Descargar Excel (Todos)</button>
           <button class="btn-pri" id="h-save-btn" onclick="saveR('hogar')">💾 Guardar</button>
         </div>
       </div>
@@ -1363,7 +1367,7 @@ function renderHogarForm() {
       if (question[0] === '__MATRIX_MOVILIDAD__') return `<div style="grid-column:1/-1">${hogarMatrixFrom('movilidad')}${hogarMatrixOther('movilidad', '4.2.1 Otros, ¿Cuáles?')}${hogarMatrixFrom('demora')}${hogarMatrixOther('demora', '4.2.2 Otros, ¿Cuál?')}</div>`;
       if (question[0] === '__MATRIX_ACCIDENTES__') return `<div style="grid-column:1/-1">${hogarMatrixFrom('accidentes')}</div>`;
       const id = hogarId(si, qi); let options = question[1] ? question[1].split('|') : [];
-      const isHigienePersonal = question[0].startsWith('5.3.7 ¿Se comparten implementos');
+      const isHigienePersonal = question[0].startsWith('5.3.7 ¿Se comparten');
       if (isHigienePersonal) options = ['Sí', 'No'];
       const isMulti = options[0] === 'multiple';
       if (isMulti) options.shift();
@@ -1848,6 +1852,127 @@ async function downloadHogarPdfRecord(id) {
     });
   }
   generateHogarPdfFile(r.respuestas || {}, general, '', null, r.logoDepartamento || '', fotoSize);
+}
+
+// ════════════════════════════════════════════════════════════
+//  EXCEL — Caracterización Entorno Hogar (una hoja por registro)
+// ════════════════════════════════════════════════════════════
+
+// Genera un nombre de hoja válido y único (máx. 31 caracteres, sin
+// caracteres prohibidos por Excel: \ / ? * [ ] :)
+function sanitizeSheetName(name, usedNames) {
+  let clean = String(name || 'Registro').replace(/[\\\/\?\*\[\]:]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!clean) clean = 'Registro';
+  clean = clean.substring(0, 28);
+  let finalName = clean, i = 2;
+  while (usedNames.has(finalName.toLowerCase())) {
+    const suffix = '_' + i;
+    finalName = clean.substring(0, 31 - suffix.length) + suffix;
+    i++;
+  }
+  usedNames.add(finalName.toLowerCase());
+  return finalName;
+}
+
+// Descarga un Excel (.xlsx) con TODOS los registros guardados de
+// "Caracterización Entorno Hogar" del municipio activo: una hoja
+// nueva por cada cuestionario guardado, respetando el mismo diseño
+// (encabezado institucional, secciones y filas etiqueta/valor) que
+// usa el PDF descargable de ese formulario.
+async function downloadHogarExcelAll() {
+  if (typeof ExcelJS === 'undefined') { toast('⚠️ No se pudo cargar el módulo de Excel. Verifica tu conexión.', 'err'); return; }
+  const recs = getRecs(CM, 'hogar');
+  if (!recs.length) { toast('⚠️ No hay registros de Entorno Hogar guardados en ' + CM, 'err'); return; }
+
+  toast('⏳ Generando Excel con ' + recs.length + ' hoja(s)...', 'ok');
+
+  const NAVY = 'FF003D4D', ACCENT_BORDER = 'FF0A9396', SECTION_BG = 'FFE0F2FE', ROW_ALT = 'FFF8FAFC';
+  const THIN_BORDER = { style: 'thin', color: { argb: 'FFCBD5E1' } };
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'PIC Departamental';
+  wb.created = new Date();
+
+  const usedNames = new Set();
+  // Orden cronológico ascendente (los registros se guardan más nuevos primero)
+  const ordered = recs.slice().reverse();
+
+  ordered.forEach((r, idx) => {
+    const general = hogarGeneralFromRecord(r);
+    const answers = r.respuestas || {};
+    const blocks = buildHogarPdfBlocks(answers, general);
+
+    const label = r.direccion || r.atiende || `Registro ${idx + 1}`;
+    const sheetName = sanitizeSheetName(label, usedNames);
+    const ws = wb.addWorksheet(sheetName, { views: [{ state: 'frozen', ySplit: 3 }] });
+    ws.columns = [{ width: 48 }, { width: 75 }];
+
+    // Encabezado institucional (mismo estilo que el PDF)
+    ws.mergeCells('A1:B1');
+    const title = ws.getCell('A1');
+    title.value = 'CARACTERIZACIÓN ENTORNO HOGAR';
+    title.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 13, name: 'Calibri' };
+    title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
+    title.alignment = { vertical: 'middle' };
+    ws.getRow(1).height = 26;
+
+    ws.mergeCells('A2:B2');
+    const sub = ws.getCell('A2');
+    sub.value = `Ficha de Caracterización Social y Ambiental · Municipio: ${r.municipio || CM} · Fecha registro: ${r.fecha || ''}`;
+    sub.font = { italic: true, color: { argb: 'FF475569' }, size: 9 };
+    ws.getRow(2).height = 16;
+
+    ws.getRow(3).height = 6; // separador
+
+    let rowIdx = 4;
+    let stripe = 0;
+    blocks.forEach(block => {
+      if (block.type === 'section') {
+        ws.mergeCells(`A${rowIdx}:B${rowIdx}`);
+        const cell = ws.getCell(`A${rowIdx}`);
+        cell.value = block.title;
+        cell.font = { bold: true, color: { argb: NAVY }, size: 10 };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: SECTION_BG } };
+        cell.border = { left: { style: 'medium', color: { argb: ACCENT_BORDER } } };
+        cell.alignment = { vertical: 'middle', indent: 1 };
+        ws.getRow(rowIdx).height = 18;
+        rowIdx++; stripe = 0;
+      } else if (block.type === 'row') {
+        const c1 = ws.getCell(`A${rowIdx}`);
+        const c2 = ws.getCell(`B${rowIdx}`);
+        c1.value = block.label;
+        c2.value = block.value;
+        c1.font = { bold: true, size: 8.5, color: { argb: 'FF475569' } };
+        c2.font = { size: 9, color: { argb: 'FF1A2332' } };
+        c1.alignment = { wrapText: true, vertical: 'top' };
+        c2.alignment = { wrapText: true, vertical: 'top' };
+        if (stripe % 2 === 0) {
+          c1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ROW_ALT } };
+          c2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ROW_ALT } };
+        }
+        c1.border = { bottom: THIN_BORDER };
+        c2.border = { bottom: THIN_BORDER };
+        rowIdx++; stripe++;
+      }
+      // Los bloques tipo 'image' (diagramas) no aplican a este cuestionario y se omiten.
+    });
+
+    if (r.editada) {
+      const c1 = ws.getCell(`A${rowIdx}`), c2 = ws.getCell(`B${rowIdx}`);
+      c1.value = 'Última edición'; c2.value = r.editada;
+      c1.font = { bold: true, size: 8.5, color: { argb: 'FF475569' } };
+    }
+  });
+
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Entorno_Hogar_${(CM || '').replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('✅ Excel descargado con ' + ordered.length + ' hoja(s)', 'ok');
 }
 
 const FG_RELACION_LABELS = { matrimonio: 'Matrimonio', union_libre: 'Unión libre', separados: 'Separados', comprometidos: 'Unión libre' };
