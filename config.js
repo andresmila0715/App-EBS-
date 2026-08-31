@@ -91,7 +91,7 @@ const USERS = {
 //     'La Belleza': { carto: 'no', recoleccion: 'no', macro: 'no', hogar: 'si' },
 // ─────────────────────────────────────────────────────────────
 const SECCIONES_VISIBLES = {
-  'La Belleza': { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
+  'La Belleza': { carto: 'no', recoleccion: 'no', macro: 'no', hogar: 'si' },
   'Sucre':      { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
   'Enciso':     { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
   'Muestra':    { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
