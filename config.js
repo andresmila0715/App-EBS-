@@ -27,6 +27,7 @@ const MUNIS = [
   'Sucre',
   'Enciso',
   'Muestra',
+  'Concepción',
   // 'Landázuri',   // <-- para agregar un nuevo municipio:
   //                //     1) descomenta esta línea
   //                //     2) agrega su usuario abajo
@@ -65,6 +66,11 @@ const USERS = {
     municipio: 'Muestra',
     role: 'user'
   },
+      'CONCEPCION': {
+    password: 'C0ncepci0n',
+    municipio: 'Concepción',
+    role: 'user'
+  },
   // Para agregar un nuevo usuario de municipio:
   // 'LANDAZURI': {
   //   password: 'Land@2026',
@@ -91,10 +97,11 @@ const USERS = {
 //     'La Belleza': { carto: 'no', recoleccion: 'no', macro: 'no', hogar: 'si' },
 // ─────────────────────────────────────────────────────────────
 const SECCIONES_VISIBLES = {
-  'La Belleza': { carto: 'no', recoleccion: 'no', macro: 'no', hogar: 'si' },
+  'La Belleza': { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
   'Sucre':      { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
-  'Enciso':     { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
+  'Enciso':     { carto: 'no', recoleccion: 'no', macro: 'no', hogar: 'si' },
   'Muestra':    { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
+  'Concepción': { carto: 'no', recoleccion: 'no', macro: 'no', hogar: 'si' },
 };
 
 
