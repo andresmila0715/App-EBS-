@@ -98,7 +98,7 @@ const USERS = {
 // ─────────────────────────────────────────────────────────────
 const SECCIONES_VISIBLES = {
   'La Belleza': { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
-  'Sucre':      { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
+  'Sucre':      { carto: 'no', recoleccion: 'no', macro: 'mo', hogar: 'si' },
   'Enciso':     { carto: 'no', recoleccion: 'no', macro: 'no', hogar: 'si' },
   'Muestra':    { carto: 'si', recoleccion: 'si', macro: 'si', hogar: 'si' },
   'Concepción': { carto: 'no', recoleccion: 'no', macro: 'no', hogar: 'si' },
