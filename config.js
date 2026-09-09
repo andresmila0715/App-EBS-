@@ -165,6 +165,32 @@ const SHEETS_URLS = {
 
 
 // ─────────────────────────────────────────────────────────────
+//  4. FIREBASE · Sincronización de "Hogar" entre dispositivos
+//
+//     Reemplaza los valores de abajo con los que te da Firebase
+//     Console al registrar tu app web:
+//       Firebase Console → tu proyecto → ⚙️ Configuración del
+//       proyecto → baja hasta "Tus apps" → app web → "Config"
+//
+//     Mientras quede en null, la app sigue funcionando 100%
+//     local (como hoy) sin romper nada.
+//
+//     ⚠️ No necesitas activar Storage/plan Blaze para esto —
+//     Firestore solo (gratis, sin tarjeta) es suficiente, ya
+//     que las fotos comprimidas viajan dentro del mismo registro.
+// ─────────────────────────────────────────────────────────────
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCIIRDbgdR2DdEgFULxreNOWhnKt5b9D40",
+  authDomain: "pic-departamental.firebaseapp.com",
+  projectId: "pic-departamental",
+  storageBucket: "pic-departamental.firebasestorage.app",
+  messagingSenderId: "610922083462",
+  appId: "1:610922083462:web:67b34db948122261fd4d07",
+  measurementId: "G-VFMD0EC9RL"
+};
+
+
+// ─────────────────────────────────────────────────────────────
 //  (No editar abajo de esta línea)
 // ─────────────────────────────────────────────────────────────
 
