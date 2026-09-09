@@ -818,7 +818,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
         <h3>Registros</h3>
         <span class="rec-count" id="rec-cnt">0</span>
       </div>
-      <button class="btn-exp" onclick="exportCSV()">📊 CSV</button>
+      <button class="btn-exp" onclick="exportCSV()" title="Descarga el CSV del formulario que tengas seleccionado abajo">📊 CSV</button>
     </div>
     <div class="ftabs">
       <button class="fbtn active" onclick="setFilter('todos')" id="f-todos">Todos</button>
@@ -2968,35 +2968,114 @@ async function saveEdit() {
 }
 
 
-// ── Exportar CSV ────────────────────────────────────────────
-function exportCSV() {
-  const tipos = activeF === 'todos' ? TIPOS : [activeF];
-  let todos = [];
-  tipos.forEach(t => {
-    getRecs(CM, t).forEach(r => { if (!r.tipo) r.tipo = t; todos.push(r); });
-  });
-  todos.sort((a, b) => b.id - a.id);
-  if (!todos.length) { toast('No hay registros para exportar', 'err'); return; }
+// ── Exportar CSV (uno por tipo de encuesta, con sus propias columnas) ──
 
-  const filas = [['Fecha','Municipio','Tipo','Campo1','Campo2','Campo3','Campo4','Estado'].join(',')];
-  todos.forEach(r => {
-    let f1 = '', f2 = '', f3 = '', f4 = '';
-    if (r.tipo === 'carto')       { f1 = `Casa ${r.casa}`; f2 = `Fam ${r.familia}`; f3 = r.idFam || ''; f4 = r.riesgo || ''; }
-    if (r.tipo === 'recoleccion') { f1 = r.codigo || ''; f2 = `${r.personas} pers`; f3 = r.estrato || ''; f4 = r.salud || ''; }
-    if (r.tipo === 'macro')       { f1 = r.familia || ''; f2 = r.vereda || ''; f3 = r.microterritorio || ''; f4 = `${(r.integrantes || []).length} int.`; }
-    if (r.tipo === 'hogar')       { f1 = r.direccion || ''; f2 = r.atiende || ''; f3 = r.telefono || ''; f4 = `${Object.keys(r.respuestas || {}).length} resp.`; }
-    filas.push([r.fecha, r.municipio, TLABELS[r.tipo], f1, f2, f3, f4, r.synced ? 'Sync' : 'Pendiente'].map(v => `"${v}"`).join(','));
-  });
-
+function csvDescargar(nombreArchivo, filas) {
   const blob = new Blob(['\uFEFF' + filas.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `PIC_${CM.replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = nombreArchivo;
   a.click();
   URL.revokeObjectURL(url);
-  toast('📊 Exportado', 'ok');
 }
+const csvEscapar = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+const csvFecha = () => new Date().toISOString().slice(0, 10);
+
+function exportCSV() {
+  if (activeF === 'todos') {
+    toast('⚠️ Elige un formulario específico (Carto, Recolección, Macro u Hogar) para descargar su CSV', 'warn');
+    return;
+  }
+  const exportadores = {
+    carto: exportCartoCSV,
+    recoleccion: exportRecoleccionCSV,
+    macro: exportMacroCSV,
+    hogar: exportHogarCSV
+  };
+  exportadores[activeF]();
+}
+
+// ── CSV · Cartografía ───────────────────────────────────────
+function exportCartoCSV() {
+  const recs = getRecs(CM, 'carto');
+  if (!recs.length) { toast('No hay registros de Cartografía para exportar', 'err'); return; }
+  const cols = ['Fecha','Municipio','Casa','Familia','Vereda','Coordenadas','Riesgo','Convivientes','Patologías','Observaciones','ID Familia','Tiene foto','Estado'];
+  const filas = [cols.join(',')];
+  recs.slice().sort((a, b) => b.id - a.id).forEach(r => {
+    filas.push([
+      r.fecha, r.municipio, r.casa, r.familia, r.vereda, r.coord, r.riesgo,
+      r.conv, r.patologias, r.obs, r.idFam, r.foto ? 'Sí' : 'No',
+      r.synced ? 'Sincronizado' : 'Pendiente'
+    ].map(csvEscapar).join(','));
+  });
+  csvDescargar(`Cartografia_${CM.replace(/\s/g, '_')}_${csvFecha()}.csv`, filas);
+  toast('📊 CSV de Cartografía exportado', 'ok');
+}
+
+// ── CSV · Recolección ───────────────────────────────────────
+function exportRecoleccionCSV() {
+  const recs = getRecs(CM, 'recoleccion');
+  if (!recs.length) { toast('No hay registros de Recolección para exportar', 'err'); return; }
+  const cols = ['Fecha','Municipio','Hospital','Microterritorio','Familia','Vereda','Jefe de hogar','Año nacimiento jefe','Género jefe','Estado civil jefe','Teléfono','Puntaje Zarit','N° miembros familiograma','Estado'];
+  const filas = [cols.join(',')];
+  recs.slice().sort((a, b) => b.id - a.id).forEach(r => {
+    const fg = r.subData?.familiograma || {};
+    const pr = fg.principal || {};
+    filas.push([
+      r.fecha, r.municipio, r.hospital, r.microterritorio,
+      fg.familia, fg.vereda, pr.nombre, pr.anio, pr.genero, pr.estado,
+      r.telefono, r.subData?.zarit?.puntaje ?? '', (fg.miembros || []).length,
+      r.synced ? 'Sincronizado' : 'Pendiente'
+    ].map(csvEscapar).join(','));
+  });
+  csvDescargar(`Recoleccion_${CM.replace(/\s/g, '_')}_${csvFecha()}.csv`, filas);
+  toast('📊 CSV de Recolección exportado · el detalle clínico completo (familiograma, Zarit, APGAR, ecomapa) va mejor en el PDF individual', 'ok');
+}
+
+// ── CSV · Macro ──────────────────────────────────────────────
+function exportMacroCSV() {
+  const recs = getRecs(CM, 'macro');
+  if (!recs.length) { toast('No hay registros de Macro para exportar', 'err'); return; }
+  const cols = ['Fecha','Municipio','Fecha visita','Vereda','Microterritorio','Auxiliar','Familia','Casa','Teléfono','Cargado','Tel. segundo','Médico segundo',
+    'Acueducto','Pozo','Sanitaria','Ducha','Cocina','Residuos','Paredes','Piso','Techo','Electricidad','Riesgo entorno','Nivel riesgo','Ingresos','Sisbén',
+    'N° integrantes','Estado'];
+  const filas = [cols.join(',')];
+  recs.slice().sort((a, b) => b.id - a.id).forEach(r => {
+    const v = r.vivienda || {};
+    filas.push([
+      r.fecha, r.municipio, r.fechaVisita, r.vereda, r.microterritorio, r.auxiliar,
+      r.familia, r.casa, r.telefono, r.cargado, r.segTelf, r.segMedico,
+      v.acueducto, v.pozo, v.sanitaria, v.ducha, v.cocina, v.residuos, v.paredes,
+      v.piso, v.techo, v.electricidad, v.riesgoEntorno, v.nivelRiesgo, v.ingresos, v.sisben,
+      (r.integrantes || []).length,
+      r.synced ? 'Sincronizado' : 'Pendiente'
+    ].map(csvEscapar).join(','));
+  });
+  csvDescargar(`Macro_${CM.replace(/\s/g, '_')}_${csvFecha()}.csv`, filas);
+  toast('📊 CSV de Macro exportado', 'ok');
+}
+
+// ── CSV · Hogar (una columna por cada pregunta de la ficha) ──
+function exportHogarCSV() {
+  const recs = getRecs(CM, 'hogar');
+  if (!recs.length) { toast('No hay registros de Hogar para exportar', 'err'); return; }
+  const preguntas = HOGAR_QUESTION_ORDER; // mismo orden que usa el Excel/PDF
+  const colsFijas = ['Fecha','Municipio','Dirección','Teléfono','Quien diligencia','Quien atiende','Hora inicio','Hora fin'];
+  const filas = [[...colsFijas, ...preguntas].map(csvEscapar).join(',')];
+  recs.slice().sort((a, b) => b.id - a.id).forEach(r => {
+    const resp = r.respuestas || {};
+    const fila = [
+      r.fecha, r.municipio, r.direccion, r.telefono, r.diligencia, r.atiende, r.inicio, r.fin,
+      ...preguntas.map(p => resp[p] ?? '')
+    ];
+    filas.push(fila.map(csvEscapar).join(','));
+  });
+  csvDescargar(`Hogar_${CM.replace(/\s/g, '_')}_${csvFecha()}.csv`, filas);
+  toast('📊 CSV de Hogar exportado', 'ok');
+}
+
+
 
 
 // ── Toast de notificaciones ─────────────────────────────────
