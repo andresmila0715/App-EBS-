@@ -18,6 +18,74 @@
      ══════════════════════════════════════════════════════ -->
 <script src="config.js"></script>
 
+<!-- ══════════════════════════════════════════════════════
+     FIREBASE · Sincronización de "Hogar" entre dispositivos
+     (Firestore + Auth anónima). No requiere Storage ni Blaze:
+     las fotos van comprimidas dentro del mismo documento.
+     ══════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import {
+    getFirestore, enableIndexedDbPersistence,
+    doc, setDoc, deleteDoc, collection, getDocs
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import {
+    getAuth, signInAnonymously, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+  // FIREBASE_CONFIG se define en config.js. Si no está configurado
+  // (todavía en null), la app sigue funcionando 100% local, igual que hoy.
+  window.fbEnabled = false;
+
+  if (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG) {
+    try {
+      const fbApp = initializeApp(FIREBASE_CONFIG);
+      const db = getFirestore(fbApp);
+      const auth = getAuth(fbApp);
+
+      // Cache local automática: si no hay señal, Firestore guarda en
+      // IndexedDB y sincroniza solo cuando vuelve la conexión.
+      enableIndexedDbPersistence(db).catch(() => { /* varias pestañas abiertas: se ignora */ });
+
+      let authReady = null;
+      function waitAuth() {
+        if (authReady) return authReady;
+        authReady = new Promise(resolve => {
+          const unsub = onAuthStateChanged(auth, user => {
+            if (user) { unsub(); resolve(user); }
+          });
+        });
+        signInAnonymously(auth).catch(err => console.warn('Firebase auth anónima falló:', err.message));
+        return authReady;
+      }
+      waitAuth();
+      window.fbEnabled = true;
+
+      // Guarda o actualiza un registro de Hogar (por id, dentro del municipio)
+      window.fbSaveHogar = async function (municipio, registro) {
+        await waitAuth();
+        const ref = doc(db, 'municipios', municipio, 'hogar', String(registro.id));
+        await setDoc(ref, registro, { merge: true });
+      };
+
+      // Elimina un registro de Hogar
+      window.fbDeleteHogar = async function (municipio, id) {
+        await waitAuth();
+        await deleteDoc(doc(db, 'municipios', municipio, 'hogar', String(id)));
+      };
+
+      // Trae todos los registros de Hogar guardados en Firestore para un municipio
+      window.fbFetchHogar = async function (municipio) {
+        await waitAuth();
+        const snap = await getDocs(collection(db, 'municipios', municipio, 'hogar'));
+        return snap.docs.map(d => d.data());
+      };
+    } catch (err) {
+      console.warn('Firebase no se pudo inicializar (revisa FIREBASE_CONFIG en config.js):', err.message);
+    }
+  }
+</script>
+
 <!-- Librería para generar el Excel (.xlsx) de Caracterización Entorno Hogar con estilos -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
@@ -1218,8 +1286,31 @@ function showTab(t) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + t).classList.add('active');
   document.getElementById('panel-' + t).classList.add('active');
-  if (t === 'registros') renderRecs();
+  if (t === 'registros') { renderRecs(); refreshHogarFromCloud(); }
   if (t === 'config') initConfigPanel();
+}
+
+// Trae los registros de Hogar guardados por CUALQUIER dispositivo (Firestore)
+// y los mezcla con lo que ya hay guardado localmente, para que "Registros"
+// se vea igual sin importar en qué celular/tablet se abra.
+async function refreshHogarFromCloud() {
+  if (!window.fbEnabled || !online || !CM) return;
+  try {
+    const remotos = await window.fbFetchHogar(CM);
+    const locales = getRecs(CM, 'hogar');
+    const fusion = [...locales];
+    remotos.forEach(r => {
+      const idx = fusion.findIndex(x => x.id == r.id);
+      if (idx >= 0) fusion[idx] = r; // la nube manda una vez que ya sincronizó
+      else fusion.push(r); // registro nuevo hecho en otro dispositivo
+    });
+    fusion.sort((a, b) => b.id - a.id);
+    setRecs(CM, 'hogar', fusion);
+    renderRecs();
+    updateSync();
+  } catch (err) {
+    console.warn('refreshHogarFromCloud falló:', err.message);
+  }
 }
 
 function toggleQ(id) {
@@ -1236,11 +1327,33 @@ function handlePhoto(input, prevId) {
   if (!f) return;
   const reader = new FileReader();
   reader.onload = e => {
-    fotoData[prevId] = e.target.result;
-    const img = document.getElementById(prevId);
-    img.src = e.target.result;
-    img.style.display = 'block';
-    getGPS('c1-coord', 'c1-cst');
+    const image = new Image();
+    image.onload = () => {
+      // Redimensiona y comprime igual que las fotos de Hogar, para que
+      // el registro completo (texto + foto) quepa en un documento de Firestore.
+      const maxSide = 1200;
+      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const compressed = canvas.toDataURL('image/jpeg', 0.85);
+      fotoData[prevId] = compressed;
+      const img = document.getElementById(prevId);
+      img.src = compressed;
+      img.style.display = 'block';
+      getGPS('c1-coord', 'c1-cst');
+    };
+    image.onerror = () => {
+      // Si por algo falla la compresión, se guarda la original como respaldo
+      fotoData[prevId] = e.target.result;
+      const img = document.getElementById(prevId);
+      img.src = e.target.result;
+      img.style.display = 'block';
+      getGPS('c1-coord', 'c1-cst');
+    };
+    image.src = e.target.result;
   };
   reader.readAsDataURL(f);
 }
@@ -2297,7 +2410,12 @@ async function saveR(tipo) {
     editId = null;
     editTipo = null;
     updateHogarSaveBtn();
-    toast('✅ Registro actualizado', 'ok');
+    if (window.fbEnabled) {
+      toast(online ? '✅ Actualizado · Sincronizando...' : '✅ Actualizado localmente · pendiente de sincronizar', 'ok');
+      window.fbSaveHogar(CM, recs[idx]).catch(err => console.warn('fbSaveHogar (edición) falló:', err.message));
+    } else {
+      toast('✅ Registro actualizado', 'ok');
+    }
     restoreBtn();
     updateSync();
     clearF(tipo);
@@ -2322,7 +2440,20 @@ async function saveR(tipo) {
   }
 
   if (tipo === 'hogar') {
-    toast('💾 Guardado en Registros', 'ok');
+    if (window.fbEnabled && online) {
+      toast('💾 Guardado · Sincronizando...', 'ok');
+      window.fbSaveHogar(CM, registroLocal).then(() => {
+        toast('☁️ Registro disponible en todos los dispositivos', 'ok');
+      }).catch(err => {
+        console.warn('fbSaveHogar falló:', err.message);
+        toast('⚠️ Guardado aquí. Se sincronizará cuando haya conexión.', 'warn');
+      });
+    } else if (window.fbEnabled && !online) {
+      toast('💾 Guardado · Se sincronizará cuando haya señal', 'warn');
+      window.fbSaveHogar(CM, registroLocal).catch(() => {}); // Firestore lo encola offline solo
+    } else {
+      toast('💾 Guardado en Registros', 'ok');
+    }
   } else if (online && getSheetUrl(CM, tipo)) {
     toast('💾 Guardado · Subiendo...', 'ok');
     await syncAll();
@@ -2636,8 +2767,21 @@ async function delRec(id, tipo) {
   renderRecs();
   toast('🗑️ Eliminado localmente…');
 
+  // Hogar se elimina de Firestore (no usa Google Sheets)
+  if (tipo === 'hogar') {
+    if (window.fbEnabled) {
+      try {
+        await window.fbDeleteHogar(CM, id);
+        toast('🗑️ Registro eliminado en todos los dispositivos', 'ok');
+      } catch (err) {
+        toast('⚠️ Eliminado aquí. Se borrará de la nube cuando haya señal.', 'warn');
+      }
+    }
+    return;
+  }
+
   // Enviar al servidor para borrar fila y documento
-  const url = tipo === 'hogar' ? '' : getSheetUrl(CM, tipo);
+  const url = getSheetUrl(CM, tipo);
   if (url && online) {
     try {
       await fetch(url, {
