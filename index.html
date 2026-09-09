@@ -1290,19 +1290,34 @@ function showTab(t) {
   if (t === 'config') initConfigPanel();
 }
 
+// Marca un registro de Hogar como confirmado en la nube (para poder
+// distinguir "pendiente de subir" de "ya se borró en otro dispositivo")
+function marcarHogarSincronizado(id) {
+  const recs = getRecs(CM, 'hogar');
+  const idx = recs.findIndex(x => x.id == id);
+  if (idx >= 0) { recs[idx].synced = true; setRecs(CM, 'hogar', recs); }
+}
+
 // Trae los registros de Hogar guardados por CUALQUIER dispositivo (Firestore)
 // y los mezcla con lo que ya hay guardado localmente, para que "Registros"
-// se vea igual sin importar en qué celular/tablet se abra.
+// se vea igual sin importar en qué celular/tablet se abra. También quita
+// localmente lo que ya se haya borrado desde otro dispositivo.
 async function refreshHogarFromCloud() {
   if (!window.fbEnabled || !online || !CM) return;
   try {
     const remotos = await window.fbFetchHogar(CM);
+    const remotoIds = new Set(remotos.map(r => String(r.id)));
     const locales = getRecs(CM, 'hogar');
-    const fusion = [...locales];
+
+    // Conserva: (a) lo que sigue existiendo en la nube (se actualiza con esa versión)
+    //           (b) lo que aún no ha logrado subir (pendiente, no se borra por error)
+    // Descarta: lo que ya estaba sincronizado antes y ya no aparece en la nube
+    //           → significa que se borró desde otro dispositivo.
+    let fusion = locales.filter(r => remotoIds.has(String(r.id)) || r.synced !== true);
     remotos.forEach(r => {
       const idx = fusion.findIndex(x => x.id == r.id);
-      if (idx >= 0) fusion[idx] = r; // la nube manda una vez que ya sincronizó
-      else fusion.push(r); // registro nuevo hecho en otro dispositivo
+      if (idx >= 0) fusion[idx] = { ...r, synced: true };
+      else fusion.push({ ...r, synced: true }); // registro nuevo hecho en otro dispositivo
     });
     fusion.sort((a, b) => b.id - a.id);
     setRecs(CM, 'hogar', fusion);
@@ -2405,14 +2420,15 @@ async function saveR(tipo) {
     registro.id = editId;
     registro.fecha = recs[idx].fecha;
     registro.editada = new Date().toLocaleString('es-CO');
-    recs[idx] = { ...recs[idx], ...registro };
+    recs[idx] = { ...recs[idx], ...registro, synced: false };
     setRecs(CM, tipo, recs);
     editId = null;
     editTipo = null;
     updateHogarSaveBtn();
     if (window.fbEnabled) {
       toast(online ? '✅ Actualizado · Sincronizando...' : '✅ Actualizado localmente · pendiente de sincronizar', 'ok');
-      window.fbSaveHogar(CM, recs[idx]).catch(err => console.warn('fbSaveHogar (edición) falló:', err.message));
+      window.fbSaveHogar(CM, recs[idx]).then(() => marcarHogarSincronizado(recs[idx].id))
+        .catch(err => console.warn('fbSaveHogar (edición) falló:', err.message));
     } else {
       toast('✅ Registro actualizado', 'ok');
     }
@@ -2443,6 +2459,7 @@ async function saveR(tipo) {
     if (window.fbEnabled && online) {
       toast('💾 Guardado · Sincronizando...', 'ok');
       window.fbSaveHogar(CM, registroLocal).then(() => {
+        marcarHogarSincronizado(registroLocal.id);
         toast('☁️ Registro disponible en todos los dispositivos', 'ok');
       }).catch(err => {
         console.warn('fbSaveHogar falló:', err.message);
@@ -2450,7 +2467,7 @@ async function saveR(tipo) {
       });
     } else if (window.fbEnabled && !online) {
       toast('💾 Guardado · Se sincronizará cuando haya señal', 'warn');
-      window.fbSaveHogar(CM, registroLocal).catch(() => {}); // Firestore lo encola offline solo
+      window.fbSaveHogar(CM, registroLocal).then(() => marcarHogarSincronizado(registroLocal.id)).catch(() => {}); // Firestore lo encola offline solo
     } else {
       toast('💾 Guardado en Registros', 'ok');
     }
