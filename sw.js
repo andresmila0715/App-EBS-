@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ebs-app-v63';
+const CACHE_NAME = 'ebs-app-v64';
 
 // Archivos precacheados al instalar — config.js incluido para login offline
 const ASSETS = [
