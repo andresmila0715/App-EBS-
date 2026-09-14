@@ -1534,7 +1534,11 @@ function getHogarAnswers() {
     if (el.type === 'checkbox') {
       const val = el.checked ? el.value : '';
       if (!val) return;
-      answers[label] = [answers[label], val].filter(Boolean).join(', ');
+      // Se usa ' | ' como separador (y no ', ') porque las opciones se definen
+      // separadas por '|' en HOGAR_SECTIONS, así que ninguna opción puede contenerlo;
+      // una coma normal sí puede aparecer dentro del texto de una opción y volvería
+      // ambiguo el listado cuando se marca más de una respuesta.
+      answers[label] = [answers[label], val].filter(Boolean).join(' | ');
     } else if (el.type === 'radio') {
       if (el.checked) answers[label] = el.value;
     } else {
@@ -2619,7 +2623,9 @@ function hogarQuestionOrder() {
     questions.forEach(q => {
       if (q[0] === '__MATRIX_MOVILIDAD__') {
         appendHogarMatrixOrder(order, 'movilidad');
+        order.push(`${HOGAR_MATRICES.movilidad[0]} · 4.2.1 Otros, ¿Cuáles?`);
         appendHogarMatrixOrder(order, 'demora');
+        order.push(`${HOGAR_MATRICES.demora[0]} · 4.2.2 Otros, ¿Cuál?`);
         return;
       }
       if (q[0] === '__MATRIX_ACCIDENTES__') {
@@ -2640,6 +2646,81 @@ function hogarQuestionOrder() {
 }
 
 const HOGAR_QUESTION_ORDER = hogarQuestionOrder();
+
+// ── Plan de columnas para el Excel de Hogar ──────────────────────────
+// A diferencia de HOGAR_QUESTION_ORDER (una entrada de texto por celda de
+// matriz), este plan agrupa cada pregunta de tabla/varias-respuestas en un
+// "grupo" de columnas con un encabezado de dos niveles:
+//   fila 1 → el número y texto completo de la pregunta (una sola vez, combinada)
+//   fila 2 → un encabezado corto por columna, siempre iniciando con el mismo
+//            número de pregunta (ej. "4.2.1 · Vehículo particular · Trabajo")
+// Así cada respuesta posible queda en su propia columna y se puede filtrar,
+// sin repetir el texto completo de la pregunta decenas de veces.
+function hogarNum(texto) {
+  const m = String(texto).match(/^([0-9]+(?:\.[0-9]+)*)/);
+  return m ? m[1] : '';
+}
+
+function hogarAnswerHasOption(raw, option) {
+  if (!raw) return false;
+  const text = String(raw);
+  if (text.split(' | ').includes(option)) return true;
+  // Compatibilidad con registros antiguos guardados con ', ' como separador
+  // (antes de que se usara ' | ', ver getHogarAnswers).
+  return text.split(', ').map(s => s.trim()).includes(option);
+}
+
+function hogarMatrixGroupPlan(matrixKey, extraCols = []) {
+  const [title, rows, cols] = HOGAR_MATRICES[matrixKey];
+  const num = hogarNum(title);
+  const subcols = rows.flatMap(row => cols.map(col => ({
+    header: `${num} · ${row} · ${col}`,
+    get: r => (r.respuestas || {})[`${title} · ${row} · ${col}`] ?? ''
+  })));
+  extraCols.forEach(({ label, key }) => subcols.push({
+    header: `${num} · ${label}`,
+    get: r => (r.respuestas || {})[key] ?? ''
+  }));
+  return { kind: 'group', groupTitle: title, subcols };
+}
+
+function hogarChecklistGroupPlan(question) {
+  const [label, opts] = question;
+  const options = opts.split('|').slice(1);
+  const num = hogarNum(label);
+  const subcols = options.map(o => ({
+    header: `${num} · ${o}`,
+    get: r => hogarAnswerHasOption((r.respuestas || {})[label], o) ? 'X' : ''
+  }));
+  return { kind: 'group', groupTitle: label, subcols };
+}
+
+function hogarSimplePlan(key, header) {
+  return { kind: 'simple', header: header ?? key, get: r => (r.respuestas || {})[key] ?? '' };
+}
+
+function hogarExcelColumnPlan() {
+  const plan = [];
+  HOGAR_SECTIONS.forEach(([sectionTitle, questions]) => {
+    questions.forEach(q => {
+      if (q[0] === '__MATRIX_MOVILIDAD__') {
+        plan.push(hogarMatrixGroupPlan('movilidad', [{ label: 'Otros, ¿Cuáles?', key: `${HOGAR_MATRICES.movilidad[0]} · 4.2.1 Otros, ¿Cuáles?` }]));
+        plan.push(hogarMatrixGroupPlan('demora', [{ label: 'Otros, ¿Cuál?', key: `${HOGAR_MATRICES.demora[0]} · 4.2.2 Otros, ¿Cuál?` }]));
+        return;
+      }
+      if (q[0] === '__MATRIX_ACCIDENTES__') { plan.push(hogarMatrixGroupPlan('accidentes')); return; }
+      if (q[0] === '__MATRIX_4114__') { plan.push(hogarMatrixGroupPlan('usosElementos')); return; }
+      if (q[0].startsWith('__MATRIX_')) return;
+      const isHigienePersonal = q[0].startsWith('5.3.7 ¿Se comparten');
+      const isMulti = !isHigienePersonal && q[1] && q[1].split('|')[0] === 'multiple';
+      plan.push(isMulti ? hogarChecklistGroupPlan(q) : hogarSimplePlan(q[0]));
+      if (q[0].startsWith('5.3.3 ¿Cómo se realiza')) plan.push(hogarMatrixGroupPlan('higiene'));
+      if (isHigienePersonal) plan.push(hogarSimplePlan('5.3.7 Otro ¿Cuál? (si aplica)'));
+    });
+    if (sectionTitle === 'Información de la vivienda') plan.push(hogarMatrixGroupPlan('cursoVida'));
+  });
+  return plan;
+}
 
 function buildHogarRecordFields(r) {
   const answers = { ...(r.respuestas || {}) };
@@ -3073,39 +3154,91 @@ function exportMacroCSV() {
   toast('📊 CSV de Macro exportado', 'ok');
 }
 
-// ── Excel · Hogar (una fila por registro, una columna por cada pregunta) ──
-// El botón "CSV" de Hogar genera un .xlsx tabular: fila 1 = encabezados
-// (datos generales + preguntas en el mismo orden que el PDF/Excel por hoja),
-// y cada fila siguiente es un registro completo con sus respuestas.
+// ── Excel · Hogar (una fila por registro; encabezado de dos niveles) ──
+// El botón "CSV" de Hogar genera un .xlsx con dos hojas:
+//  · "Hogar": una fila por visita. Las preguntas de tabla (matrices) y las
+//    de varias respuestas (checkboxes) ya no comparten una sola celda: cada
+//    posible respuesta tiene su propia columna. Para que eso no vuelva
+//    ilegible el encabezado (la misma pregunta repetida decenas de veces),
+//    se usa un encabezado de DOS filas: la fila 1 trae el número y texto de
+//    la pregunta una sola vez (combinada sobre todas sus columnas) y la
+//    fila 2 trae, en cada columna, ese mismo número seguido del dato puntual
+//    (ej. "4.2.1 · Vehículo particular · Trabajo"). Las preguntas normales
+//    (una sola respuesta) siguen ocupando una única columna.
+//  · "Integrantes del hogar": una fila por persona (antes no se exportaba),
+//    con columnas de referencia (fecha/dirección/teléfono) para saber a qué
+//    visita pertenece cada integrante.
+const HOGAR_EXCEL_HEADER_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF003D4D' } };
+const HOGAR_EXCEL_HEADER_FONT = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
+const HOGAR_EXCEL_SUBHEADER_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F5C70' } };
+
+function hogarExcelStyleHeaderCell(cell, fill) {
+  cell.font = HOGAR_EXCEL_HEADER_FONT;
+  cell.fill = fill;
+  cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+}
+
 async function exportHogarCSV() {
   if (typeof ExcelJS === 'undefined') { toast('⚠️ No se pudo cargar el módulo de Excel. Verifica tu conexión.', 'err'); return; }
-  const recs = getRecs(CM, 'hogar');
+  const recs = getRecs(CM, 'hogar').slice().sort((a, b) => a.id - b.id);
   if (!recs.length) { toast('No hay registros de Hogar para exportar', 'err'); return; }
-  const preguntas = HOGAR_QUESTION_ORDER; // mismo orden que usa el Excel/PDF
+
   const colsFijas = ['Fecha','Municipio','Dirección','Teléfono','Quien diligencia','Quien atiende','Hora inicio','Hora fin'];
-  const headers = [...colsFijas, ...preguntas];
+  const getFijas = [r=>r.fecha, r=>r.municipio, r=>r.direccion, r=>r.telefono, r=>r.diligencia, r=>r.atiende, r=>r.inicio, r=>r.fin];
+  const plan = hogarExcelColumnPlan();
+
+  // Aplanamos el plan a una sola lista de columnas, guardando dónde empieza
+  // y termina cada grupo para poder combinar celdas en la fila 1.
+  const cols = colsFijas.map((h, i) => ({ header2: h, get: getFijas[i], grouped: false }));
+  const groupRanges = []; // { title, start, end } en índice de columna (1-based)
+  plan.forEach(item => {
+    if (item.kind === 'simple') {
+      cols.push({ header2: item.header, get: item.get, grouped: false });
+    } else {
+      const start = cols.length + 1;
+      item.subcols.forEach(sc => cols.push({ header2: sc.header, get: sc.get, grouped: true }));
+      groupRanges.push({ title: item.groupTitle, start, end: cols.length });
+    }
+  });
+  const totalCols = cols.length;
 
   const wb = new ExcelJS.Workbook();
   wb.creator = 'PIC Departamental';
   wb.created = new Date();
-  const ws = wb.addWorksheet('Hogar', { views: [{ state: 'frozen', ySplit: 1 }] });
-  ws.columns = headers.map(h => ({ header: h, width: Math.min(Math.max(h.length + 4, 14), 40) }));
+  const ws = wb.addWorksheet('Hogar', { views: [{ state: 'frozen', xSplit: colsFijas.length, ySplit: 2 }] });
 
-  const headerRow = ws.getRow(1);
-  headerRow.height = 30;
-  headerRow.eachCell(cell => {
-    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF003D4D' } };
-    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+  cols.forEach((c, i) => { ws.getColumn(i + 1).width = Math.min(Math.max(c.header2.length + 2, 11), c.grouped ? 30 : 40); });
+
+  const row1 = ws.getRow(1), row2 = ws.getRow(2);
+  row1.height = 46; row2.height = 62;
+
+  // Columnas simples: encabezado combinado verticalmente (filas 1 y 2 en una sola celda).
+  cols.forEach((c, i) => {
+    if (c.grouped) return;
+    const col = i + 1;
+    ws.mergeCells(1, col, 2, col);
+    const cell = ws.getCell(1, col);
+    cell.value = c.header2;
+    hogarExcelStyleHeaderCell(cell, HOGAR_EXCEL_HEADER_FILL);
+  });
+  // Grupos (matrices y preguntas de varias respuestas): título combinado en la fila 1,
+  // detalle de cada columna en la fila 2.
+  groupRanges.forEach(g => {
+    ws.mergeCells(1, g.start, 1, g.end);
+    const cell = ws.getCell(1, g.start);
+    cell.value = g.title;
+    hogarExcelStyleHeaderCell(cell, HOGAR_EXCEL_HEADER_FILL);
+  });
+  cols.forEach((c, i) => {
+    if (!c.grouped) return;
+    const cell = ws.getCell(2, i + 1);
+    cell.value = c.header2;
+    hogarExcelStyleHeaderCell(cell, HOGAR_EXCEL_SUBHEADER_FILL);
   });
 
   const THIN_BORDER = { style: 'thin', color: { argb: 'FFE2E8F0' } };
-  recs.slice().sort((a, b) => a.id - b.id).forEach((r, idx) => {
-    const resp = r.respuestas || {};
-    const fila = [
-      r.fecha, r.municipio, r.direccion, r.telefono, r.diligencia, r.atiende, r.inicio, r.fin,
-      ...preguntas.map(p => resp[p] ?? '')
-    ];
+  recs.forEach((r, idx) => {
+    const fila = cols.map(c => c.get(r));
     const row = ws.addRow(fila);
     const bg = idx % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC';
     row.eachCell(cell => {
@@ -3115,7 +3248,29 @@ async function exportHogarCSV() {
     });
   });
 
-  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
+  ws.autoFilter = { from: { row: 2, column: 1 }, to: { row: 2, column: totalCols } };
+
+  // ── Hoja 2 · Integrantes del hogar (antes no se incluía en ningún export) ──
+  const wsInt = wb.addWorksheet('Integrantes del hogar', { views: [{ state: 'frozen', ySplit: 1 }] });
+  const intHeaders = ['Fecha','Dirección','Teléfono','Integrante N°', ...HOGAR_MIEMBRO_FIELDS.map(([label]) => label)];
+  wsInt.columns = intHeaders.map(h => ({ header: h, width: Math.min(Math.max(h.length + 2, 12), 32) }));
+  const intHeaderRow = wsInt.getRow(1);
+  intHeaderRow.height = 30;
+  intHeaderRow.eachCell(cell => hogarExcelStyleHeaderCell(cell, HOGAR_EXCEL_HEADER_FILL));
+  let intIdx = 0;
+  recs.forEach(r => {
+    const miembros = (r.respuestas || {})['Integrantes del hogar'];
+    if (!Array.isArray(miembros)) return;
+    miembros.forEach((m, i) => {
+      if (!Object.values(m).some(Boolean)) return;
+      const fila = [r.fecha, r.direccion, r.telefono, i + 1, ...HOGAR_MIEMBRO_FIELDS.map(([, key]) => m[key] ?? '')];
+      const row = wsInt.addRow(fila);
+      const bg = intIdx % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC';
+      row.eachCell(cell => { cell.alignment = { vertical: 'top' }; cell.border = { bottom: THIN_BORDER }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } }; });
+      intIdx++;
+    });
+  });
+  wsInt.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: intHeaders.length } };
 
   const buf = await wb.xlsx.writeBuffer();
   const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
