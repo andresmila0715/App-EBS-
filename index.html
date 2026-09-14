@@ -818,7 +818,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
         <h3>Registros</h3>
         <span class="rec-count" id="rec-cnt">0</span>
       </div>
-      <button class="btn-exp" onclick="exportCSV()" title="Descarga el CSV del formulario que tengas seleccionado abajo">📊 CSV</button>
+      <button class="btn-exp" onclick="exportCSV()" title="Descarga el CSV del formulario seleccionado (para Hogar descarga un Excel tabular: un registro por fila)">📊 CSV</button>
     </div>
     <div class="ftabs">
       <button class="fbtn active" onclick="setFilter('todos')" id="f-todos">Todos</button>
@@ -3001,7 +3001,7 @@ const csvFecha = () => new Date().toISOString().slice(0, 10);
 
 function exportCSV() {
   if (activeF === 'todos') {
-    toast('⚠️ Elige un formulario específico (Carto, Recolección, Macro u Hogar) para descargar su CSV', 'warn');
+    toast('⚠️ Elige un formulario específico (Carto, Recolección, Macro u Hogar) para descargar su CSV/Excel', 'warn');
     return;
   }
   const exportadores = {
@@ -3073,23 +3073,59 @@ function exportMacroCSV() {
   toast('📊 CSV de Macro exportado', 'ok');
 }
 
-// ── CSV · Hogar (una columna por cada pregunta de la ficha) ──
-function exportHogarCSV() {
+// ── Excel · Hogar (una fila por registro, una columna por cada pregunta) ──
+// El botón "CSV" de Hogar genera un .xlsx tabular: fila 1 = encabezados
+// (datos generales + preguntas en el mismo orden que el PDF/Excel por hoja),
+// y cada fila siguiente es un registro completo con sus respuestas.
+async function exportHogarCSV() {
+  if (typeof ExcelJS === 'undefined') { toast('⚠️ No se pudo cargar el módulo de Excel. Verifica tu conexión.', 'err'); return; }
   const recs = getRecs(CM, 'hogar');
   if (!recs.length) { toast('No hay registros de Hogar para exportar', 'err'); return; }
   const preguntas = HOGAR_QUESTION_ORDER; // mismo orden que usa el Excel/PDF
   const colsFijas = ['Fecha','Municipio','Dirección','Teléfono','Quien diligencia','Quien atiende','Hora inicio','Hora fin'];
-  const filas = [[...colsFijas, ...preguntas].map(csvEscapar).join(',')];
-  recs.slice().sort((a, b) => b.id - a.id).forEach(r => {
+  const headers = [...colsFijas, ...preguntas];
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'PIC Departamental';
+  wb.created = new Date();
+  const ws = wb.addWorksheet('Hogar', { views: [{ state: 'frozen', ySplit: 1 }] });
+  ws.columns = headers.map(h => ({ header: h, width: Math.min(Math.max(h.length + 4, 14), 40) }));
+
+  const headerRow = ws.getRow(1);
+  headerRow.height = 30;
+  headerRow.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF003D4D' } };
+    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+  });
+
+  const THIN_BORDER = { style: 'thin', color: { argb: 'FFE2E8F0' } };
+  recs.slice().sort((a, b) => a.id - b.id).forEach((r, idx) => {
     const resp = r.respuestas || {};
     const fila = [
       r.fecha, r.municipio, r.direccion, r.telefono, r.diligencia, r.atiende, r.inicio, r.fin,
       ...preguntas.map(p => resp[p] ?? '')
     ];
-    filas.push(fila.map(csvEscapar).join(','));
+    const row = ws.addRow(fila);
+    const bg = idx % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC';
+    row.eachCell(cell => {
+      cell.alignment = { vertical: 'top', wrapText: false };
+      cell.border = { bottom: THIN_BORDER };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+    });
   });
-  csvDescargar(`Hogar_${CM.replace(/\s/g, '_')}_${csvFecha()}.csv`, filas);
-  toast('📊 CSV de Hogar exportado', 'ok');
+
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Hogar_${CM.replace(/\s/g, '_')}_${csvFecha()}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('📊 Excel de Hogar exportado (' + recs.length + ' registro' + (recs.length === 1 ? '' : 's') + ')', 'ok');
 }
 
 
