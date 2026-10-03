@@ -1853,8 +1853,8 @@ function buildHogarPdfBlocks(answers, general) {
     const otroLabel = HOGAR_MATRIZ_OTROS[matrixKey];
     const otroKey = otroLabel ? prefix + otroLabel : null;
     const marcadas = Object.entries(answers).filter(([label, v]) => label.startsWith(prefix) && label !== otroKey && !hogarVacio(v));
-    if (!marcadas.length) blocks.push({ type: 'row', label: 'Respuesta', value: HOGAR_DEF_NINGUNO });
-    else marcadas.forEach(([label, value]) => blocks.push({ type: 'row', label: label.slice(prefix.length).replace(' · ', ' - '), value: hogarPick(value, HOGAR_DEF_NINGUNO) }));
+    // Matrices de X: solo aparece lo que marcó el usuario (no se rellena nada por defecto).
+    marcadas.forEach(([label, value]) => blocks.push({ type: 'row', label: label.slice(prefix.length).replace(' · ', ' - '), value: hogarPick(value, HOGAR_DEF_NINGUNO) }));
     if (otroKey) blocks.push({ type: 'row', label: otroLabel, value: hogarPick(answers[otroKey], HOGAR_DEF_NINGUNO) });
   };
 
@@ -1895,19 +1895,38 @@ function renderInstitutionalPdf(opts) {
   const {
     title, subtitle, blocks, filename,
     headerLogoData = '', headerLogoSize = null,
-    sideImageData = '', sideImageSize = null
+    sideImageData = '', sideImageSize = null,
+    fullText = false // true: conserva tildes, Ñ, ¿ y ¡ (codificación WinAnsi). Solo lo usa Hogar.
   } = opts;
-  const clean = value => String(value ?? '—').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ').replace(/[\\()]/g, '\\$&');
+  // Caracteres de Windows-1252 fuera de Latin-1 (guion largo, viñeta, comillas, etc.)
+  const CP1252 = { '€':128,'‚':130,'ƒ':131,'„':132,'…':133,'†':134,'‡':135,'ˆ':136,'‰':137,'Š':138,'‹':139,'Œ':140,'Ž':142,'‘':145,'’':146,'“':147,'”':148,'•':149,'–':150,'—':151,'˜':152,'™':153,'š':154,'›':155,'œ':156,'ž':158,'Ÿ':159 };
+  // norm: texto plano listo para medir y dibujar (sin escapes de PDF).
+  const norm = value => {
+    const str = String(value ?? '—');
+    if (!fullText) return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ');
+    return Array.from(str.normalize('NFC').replace(/[\r\n\t]+/g, ' ')).map(ch => {
+      const c = ch.codePointAt(0);
+      return (c >= 0x20 && c <= 0x7E) || (c >= 0xA0 && c <= 0xFF) || CP1252[ch] ? ch : '?';
+    }).join('');
+  };
+  // esc: escapa para la cadena literal del PDF; lo que no es ASCII sale como \ooo (octal) para que el archivo siga siendo ASCII.
+  const esc = plain => Array.from(plain).map(ch => {
+    const c = ch.codePointAt(0);
+    if (ch === '\\' || ch === '(' || ch === ')') return '\\' + ch;
+    if (c < 128) return ch;
+    return '\\' + (c <= 255 ? c : CP1252[ch]).toString(8).padStart(3, '0');
+  }).join('');
   const wrap = (value, width) => {
-    const words = clean(value).replace(/\\([\\()])/g, '$1').split(/\s+/), rows = []; let line = ''; // text() vuelve a escapar: se evita el doble escape que mostraba \( \)
+    const words = norm(value).split(/\s+/), rows = []; let line = '';
     words.forEach(word => { if ((line + ' ' + word).trim().length > width && line) { rows.push(line); line = word; } else line = (line + ' ' + word).trim(); });
     return rows.length || line ? [...rows, line].filter(Boolean) : ['—'];
   };
 
   const objects = []; const add = text => { objects.push(text); return objects.length; };
   const catalog = add(''), pagesObj = add('');
-  const font = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
-  const fontBold = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
+  const fontEnc = fullText ? ' /Encoding /WinAnsiEncoding' : '';
+  const font = add(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica${fontEnc} >>`);
+  const fontBold = add(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold${fontEnc} >>`);
   const addJpegImage = (data, size, name) => {
     if (!data || !size) return null;
     try {
@@ -1927,7 +1946,7 @@ function renderInstitutionalPdf(opts) {
   });
 
   const pageCommands = []; let commands = [], y = 0, pageNumber = 0, rowIndex = 0;
-  const text = (fontName, size, x, top, value, color = '0 0 0') => commands.push(`${color} rg BT /${fontName} ${size} Tf ${x} ${top} Td (${clean(value)}) Tj ET`);
+  const text = (fontName, size, x, top, value, color = '0 0 0') => commands.push(`${color} rg BT /${fontName} ${size} Tf ${x} ${top} Td (${esc(norm(value))}) Tj ET`);
   const NAVY = '0.043 0.145 0.278', SLATE = '0.29 0.34 0.39', ACCENT = '0.02 0.55 0.52', INK = '0.10 0.12 0.14', MUTED = '0.45 0.49 0.53';
   const beginPage = () => {
     pageNumber++; commands = [];
@@ -2001,7 +2020,7 @@ function renderInstitutionalPdf(opts) {
   const totalPages = pageCommands.length;
   pageCommands.forEach((cmds, idx) => {
     cmds.push(`0.82 0.85 0.88 RG 0.6 w 36 40 m 576 40 l S`);
-    cmds.push(`${MUTED} rg BT /F1 6.8 Tf 498 29 Td (Pagina ${idx + 1} de ${totalPages}) Tj ET`);
+    cmds.push(`${MUTED} rg BT /F1 6.8 Tf 498 29 Td (${fullText ? 'P\\341gina' : 'Pagina'} ${idx + 1} de ${totalPages}) Tj ET`);
   });
 
   const embeddedResource = embeddedImages.map(img => `/${img.name} ${img.ref} 0 R`).join(' ');
@@ -2023,8 +2042,9 @@ function renderInstitutionalPdf(opts) {
 
 function generateHogarPdfFile(answers, general, logoData, logoSize, fotoData, fotoSize) {
   renderInstitutionalPdf({
-    title: 'CARACTERIZACION ENTORNO HOGAR',
-    subtitle: 'Ficha de Caracterizacion Social y Ambiental - PIC Departamental',
+    title: 'CARACTERIZACIÓN ENTORNO HOGAR',
+    subtitle: 'Ficha de Caracterización Social y Ambiental - PIC Departamental',
+    fullText: true,
     blocks: buildHogarPdfBlocks(answers, general),
     filename: `Caracterizacion_Entorno_Hogar_${CM.replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`,
     headerLogoData: logoData, headerLogoSize: logoSize,
@@ -2734,13 +2754,12 @@ function hogarMatrixGroupPlan(matrixKey, extraCols = []) {
   const num = hogarNum(title);
   const esCantidad = matrixKey === 'cursoVida';
   const keys = rows.flatMap(row => cols.map(col => `${title} · ${row} · ${col}`));
-  // Matriz de cantidades → 0 en celdas vacías. Matriz de marcas (X): si no se marcó
-  // ninguna celda, todas muestran NINGUNO; si hay marcas, las demás quedan vacías.
+  // Matriz de cantidades → 0 en celdas vacías. Matriz de marcas (X) → vacía si el usuario no marcó.
   const celda = (r, key) => {
     const a = r.respuestas || {};
     if (!hogarVacio(a[key])) return hogarUp(String(a[key]).trim());
     if (esCantidad) return HOGAR_DEF_CERO;
-    return keys.some(k => !hogarVacio(a[k])) ? '' : HOGAR_DEF_NINGUNO;
+    return ''; // matriz de X: solo se escribe lo que marcó el usuario
   };
   const subcols = keys.map(key => {
     const [, row, col] = key.split(' · ');
@@ -2760,9 +2779,8 @@ function hogarChecklistGroupPlan(question) {
   const subcols = options.map(o => ({
     header: `${num} · ${o}`,
     get: r => {
-      const raw = (r.respuestas || {})[label];
-      if (hogarVacio(raw)) return HOGAR_DEF_NINGUNO; // pregunta sin contestar
-      return hogarAnswerHasOption(raw, o) ? 'X' : '';
+      // Columnas de X: solo se marca la opción que eligió el usuario; el resto queda vacío.
+      return hogarAnswerHasOption((r.respuestas || {})[label], o) ? 'X' : '';
     }
   }));
   return { kind: 'group', groupTitle: label, subcols };
@@ -3256,12 +3274,24 @@ async function exportHogarCSV() {
   const recs = getRecs(CM, 'hogar').slice().sort((a, b) => a.id - b.id);
   if (!recs.length) { toast('No hay registros de Hogar para exportar', 'err'); return; }
 
-  const colsFijas = ['Fecha','Municipio','Dirección','Teléfono','Quien diligencia','Quien atiende','Hora inicio','Hora fin'];
+  // Datos de referencia de la app + preguntas de Generalidades con su texto completo, tal cual la ficha.
+  const colsFijas = [
+    'Fecha de registro', 'Municipio', 'Dirección de la vivienda', 'Teléfono de contacto',
+    'Fecha (Día/mes/año)', 'Hora Inicio', 'Hora Culminación',
+    'Nombre de quien diligencia la ficha',
+    'Tipo de documento de identificación de quien diligencia la ficha',
+    'Número de Identificación de quien diligencia la ficha (No. de identificación sin puntos, comas o guiones.)',
+    'Nombre de la Persona que Atiende la Visita (MAYUSCULA)',
+    'Tipo de documento de identificación de quien atiende la visita',
+    'Número de Identificación de quien atiende la visita (No. de identificación sin puntos, comas o guiones.)'
+  ];
+  const NP = HOGAR_DEF_NO_PERTENECE, CERO = HOGAR_DEF_CERO;
   const getFijas = [
-    r => hogarPick(r.fecha, HOGAR_DEF_NO_PERTENECE), r => hogarPick(r.municipio, HOGAR_DEF_NO_PERTENECE),
-    r => hogarPick(r.direccion, HOGAR_DEF_NO_PERTENECE), r => hogarPick(r.telefono, HOGAR_DEF_CERO),
-    r => hogarPick(r.diligencia, HOGAR_DEF_NO_PERTENECE), r => hogarPick(r.atiende, HOGAR_DEF_NO_PERTENECE),
-    r => hogarPick(r.inicio, HOGAR_DEF_NO_PERTENECE), r => hogarPick(r.fin, HOGAR_DEF_NO_PERTENECE)
+    r => hogarPick(r.fecha, NP), r => hogarPick(r.municipio, NP),
+    r => hogarPick(r.direccion, NP), r => hogarPick(r.telefono, CERO),
+    r => hogarPick(r.fechaVisita, NP), r => hogarPick(r.inicio, NP), r => hogarPick(r.fin, NP),
+    r => hogarPick(r.diligencia, NP), r => hogarPick(r.diligenciaTipoDoc, NP), r => hogarPick(r.diligenciaNumDoc, CERO),
+    r => hogarPick(r.atiende, NP), r => hogarPick(r.atiendeTipoDoc, NP), r => hogarPick(r.atiendeNumDoc, CERO)
   ];
   const plan = hogarExcelColumnPlan();
 
@@ -3283,12 +3313,23 @@ async function exportHogarCSV() {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'PIC Departamental';
   wb.created = new Date();
-  const ws = wb.addWorksheet('Hogar', { views: [{ state: 'frozen', xSplit: colsFijas.length, ySplit: 2 }] });
+  const ws = wb.addWorksheet('Hogar', { views: [{ state: 'frozen', xSplit: 3, ySplit: 2 }] });
 
   cols.forEach((c, i) => { ws.getColumn(i + 1).width = Math.min(Math.max(c.header2.length + 2, 11), c.grouped ? 30 : 40); });
 
   const row1 = ws.getRow(1), row2 = ws.getRow(2);
-  row1.height = 46; row2.height = 62;
+  // Alto de los encabezados calculado con el texto completo de cada pregunta (sin cortar nada).
+  const lineasEnc = (texto, ancho) => Math.max(1, Math.ceil(String(texto).length / Math.max(1, ancho * 0.9)));
+  const altoEnc = lineas => Math.min(400, lineas * 14 + 8);
+  let alto2 = 62;
+  cols.forEach((c, i) => { if (c.grouped) alto2 = Math.max(alto2, altoEnc(lineasEnc(c.header2, ws.getColumn(i + 1).width))); });
+  let alto1 = 46;
+  cols.forEach((c, i) => { if (!c.grouped) alto1 = Math.max(alto1, altoEnc(lineasEnc(c.header2, ws.getColumn(i + 1).width)) - alto2); });
+  groupRanges.forEach(g => {
+    let ancho = 0; for (let k = g.start; k <= g.end; k++) ancho += ws.getColumn(k).width;
+    alto1 = Math.max(alto1, altoEnc(lineasEnc(g.title, ancho)));
+  });
+  row1.height = alto1; row2.height = alto2;
 
   // Columnas simples: encabezado combinado verticalmente (filas 1 y 2 en una sola celda).
   cols.forEach((c, i) => {
@@ -3330,10 +3371,10 @@ async function exportHogarCSV() {
 
   // ── Hoja 2 · Integrantes del hogar (antes no se incluía en ningún export) ──
   const wsInt = wb.addWorksheet('Integrantes del hogar', { views: [{ state: 'frozen', ySplit: 1 }] });
-  const intHeaders = ['Fecha','Dirección','Teléfono','Integrante N°', ...HOGAR_MIEMBRO_FIELDS.map(([label]) => label)];
+  const intHeaders = ['Fecha de registro','Dirección de la vivienda','Teléfono de contacto','Integrante N°', ...HOGAR_MIEMBRO_FIELDS.map(([label]) => label)];
   wsInt.columns = intHeaders.map(h => ({ header: h, width: Math.min(Math.max(h.length + 2, 12), 32) }));
   const intHeaderRow = wsInt.getRow(1);
-  intHeaderRow.height = 30;
+  intHeaderRow.height = Math.max(30, ...intHeaders.map(h => altoEnc(Math.ceil(h.length / Math.min(Math.max(h.length + 2, 12), 32) / 0.9))));
   intHeaderRow.eachCell(cell => hogarExcelStyleHeaderCell(cell, HOGAR_EXCEL_HEADER_FILL));
   let intIdx = 0;
   recs.forEach(r => {
