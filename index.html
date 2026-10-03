@@ -1775,57 +1775,116 @@ function cancelHogarEdit() {
   toast('Edición cancelada');
 }
 
+// ════════════════════════════════════════════════════════════
+//  EXPORTES HOGAR (PDF y Excel): valores por defecto + MAYÚSCULAS
+//  · Toda pregunta aparece siempre, aunque no se haya contestado.
+//  · Sin respuesta → "0" (cantidades), "NINGUNO" (varias opciones,
+//    "otro/cuál", observaciones) o "NO PERTENECE" (selección única,
+//    Sí/No y textos que no se diligenciaron).
+//  · Todas las respuestas se escriben en MAYÚSCULAS.
+// ════════════════════════════════════════════════════════════
+const HOGAR_DEF_NINGUNO = 'NINGUNO', HOGAR_DEF_NO_PERTENECE = 'NO PERTENECE', HOGAR_DEF_CERO = '0';
+
+function hogarVacio(v) { return v === undefined || v === null || String(v).trim() === ''; }
+function hogarUp(v) { return String(v ?? '').toUpperCase(); }
+// Devuelve la respuesta en mayúsculas o, si está vacía, el valor por defecto.
+function hogarPick(v, def) { return hogarVacio(v) ? hogarUp(def) : hogarUp(String(v).trim()); }
+
+// Valor por defecto de cada pregunta de HOGAR_SECTIONS según su tipo.
+const HOGAR_DEFAULTS = (() => {
+  const map = {};
+  HOGAR_SECTIONS.forEach(([, preguntas]) => preguntas.forEach(([label, opts]) => {
+    if (label.startsWith('__MATRIX_')) return;
+    let def;
+    if (label.startsWith('5.3.7 ¿Se comparten')) def = HOGAR_DEF_NO_PERTENECE;      // se responde Sí/No
+    else if (opts) def = opts.startsWith('multiple|') ? HOGAR_DEF_NINGUNO : HOGAR_DEF_NO_PERTENECE;
+    else if (label.toLowerCase().includes('observaciones')) def = HOGAR_DEF_NINGUNO;
+    else if (label.includes('Código')) def = HOGAR_DEF_NINGUNO;                       // códigos DANE: un 0 sería engañoso
+    else if (HOGAR_NUMERIC_LABELS.includes(label)) def = HOGAR_DEF_CERO;
+    else if (label.includes('(si aplica)')) def = HOGAR_DEF_NINGUNO;
+    else def = HOGAR_DEF_NO_PERTENECE;
+    map[label] = def;
+  }));
+  map['5.3.7 Otro ¿Cuál? (si aplica)'] = HOGAR_DEF_NINGUNO;
+  return map;
+})();
+
+// Esta pregunta está duplicada en la ficha (existe '5.3.7 Otro ¿Cuál? (si aplica)'):
+// solo se muestra si alguien la contestó, para no repetir "NINGUNO" dos veces seguidas.
+const HOGAR_SIN_DEFECTO_EN_PDF = new Set(['5.3.7 Otro, ¿cuál? (si aplica)']);
+
+// Campos "otros" de las matrices de movilidad (se muestran siempre).
+const HOGAR_MATRIZ_OTROS = { movilidad: '4.2.1 Otros, ¿Cuáles?', demora: '4.2.2 Otros, ¿Cuál?' };
+
+// Valor por defecto de cada dato del integrante del hogar.
+function hogarMiembroValor(key, value) {
+  const textoLibre = ['Segundo apellido', 'Segundo nombre', 'Régimen especial ¿cuál?', 'Población en condición o situación diferencial', 'Organización social'];
+  const def = key === 'N° de identificación' ? HOGAR_DEF_CERO : (textoLibre.includes(key) ? HOGAR_DEF_NINGUNO : HOGAR_DEF_NO_PERTENECE);
+  return hogarPick(value, def);
+}
+
 function buildHogarPdfBlocks(answers, general) {
+  const NP = HOGAR_DEF_NO_PERTENECE, CERO = HOGAR_DEF_CERO;
   const blocks = [{ type: 'section', title: 'GENERALIDADES' }];
   [
-    ['Fecha (Día/mes/año)', general.fecha], ['Hora Inicio', general.inicio], ['Hora Culminación', general.fin],
-    ['Nombre de quien diligencia la ficha', general.diligencia],
-    ['Tipo de documento de identificación de quien diligencia la ficha', general.diligenciaTipoDoc],
-    ['Número de Identificación de quien diligencia la ficha (No. de identificación sin puntos, comas o guiones.)', general.diligenciaNumDoc]
-  ].forEach(([label, value]) => blocks.push({ type: 'row', label, value }));
+    ['Fecha (Día/mes/año)', general.fecha, NP], ['Hora Inicio', general.inicio, NP], ['Hora Culminación', general.fin, NP],
+    ['Nombre de quien diligencia la ficha', general.diligencia, NP],
+    ['Tipo de documento de identificación de quien diligencia la ficha', general.diligenciaTipoDoc, NP],
+    ['Número de Identificación de quien diligencia la ficha (No. de identificación sin puntos, comas o guiones.)', general.diligenciaNumDoc, CERO]
+  ].forEach(([label, value, def]) => blocks.push({ type: 'row', label, value: hogarPick(value, def) }));
   [
-    ['Nombre de la Persona que Atiende la Visita (MAYUSCULA)', general.atiende],
-    ['Tipo de documento de identificación de quien atiende la visita', general.atiendeTipoDoc],
-    ['Número de Identificación de quien atiende la visita (No. de identificación sin puntos, comas o guiones.)', general.atiendeNumDoc],
-    ['Dirección de la vivienda', general.direccion], ['Teléfono de contacto', general.telefono]
-  ].forEach(([label, value]) => blocks.push({ type: 'row', label, value }));
+    ['Nombre de la Persona que Atiende la Visita (MAYUSCULA)', general.atiende, NP],
+    ['Tipo de documento de identificación de quien atiende la visita', general.atiendeTipoDoc, NP],
+    ['Número de Identificación de quien atiende la visita (No. de identificación sin puntos, comas o guiones.)', general.atiendeNumDoc, CERO],
+    ['Dirección de la vivienda', general.direccion, NP], ['Teléfono de contacto', general.telefono, CERO]
+  ].forEach(([label, value, def]) => blocks.push({ type: 'row', label, value: hogarPick(value, def) }));
+
   const appendMatrix = (matrixKey) => {
-    const [title] = HOGAR_MATRICES[matrixKey];
-    const rows = Object.entries(answers).filter(([label]) => label.startsWith(title + ' · '));
-    if (!rows.length) return;
+    const [title, rows, cols] = HOGAR_MATRICES[matrixKey];
+    const prefix = title + ' · ';
     blocks.push({ type: 'section', title });
-    rows.forEach(([label, value]) => blocks.push({ type: 'row', label: label.slice(title.length + 3).replace(' · ', ' - '), value }));
+    // Matriz de cantidades (curso de vida): cada celda se muestra, con 0 si quedó vacía.
+    if (matrixKey === 'cursoVida') {
+      rows.forEach(row => cols.forEach(col => blocks.push({
+        type: 'row', label: `${row} - ${col}`, value: hogarPick(answers[`${prefix}${row} · ${col}`], CERO)
+      })));
+      return;
+    }
+    const otroLabel = HOGAR_MATRIZ_OTROS[matrixKey];
+    const otroKey = otroLabel ? prefix + otroLabel : null;
+    const marcadas = Object.entries(answers).filter(([label, v]) => label.startsWith(prefix) && label !== otroKey && !hogarVacio(v));
+    if (!marcadas.length) blocks.push({ type: 'row', label: 'Respuesta', value: HOGAR_DEF_NINGUNO });
+    else marcadas.forEach(([label, value]) => blocks.push({ type: 'row', label: label.slice(prefix.length).replace(' · ', ' - '), value: hogarPick(value, HOGAR_DEF_NINGUNO) }));
+    if (otroKey) blocks.push({ type: 'row', label: otroLabel, value: hogarPick(answers[otroKey], HOGAR_DEF_NINGUNO) });
   };
+
+  const appendQuestion = (q) => {
+    const label = q[0];
+    if (HOGAR_SIN_DEFECTO_EN_PDF.has(label) && hogarVacio(answers[label])) return;
+    blocks.push({ type: 'row', label, value: hogarPick(answers[label], HOGAR_DEFAULTS[label] ?? HOGAR_DEF_NO_PERTENECE) });
+  };
+
   HOGAR_SECTIONS.forEach(section => {
-    const included = section[1].filter(q => answers[q[0]]);
-    const hasMatrix = (section[0] === 'Información de la vivienda' && Object.keys(answers).some(k => k.startsWith(HOGAR_MATRICES.cursoVida[0] + ' · '))) ||
-      (section[0] === '4.1 Infraestructura de vivienda, equipamiento y servicios' && Object.keys(answers).some(k => k.startsWith(HOGAR_MATRICES.usosElementos[0] + ' · '))) ||
-      (section[0] === '4.2 Movilidad' && ['movilidad','demora'].some(key => Object.keys(answers).some(k => k.startsWith(HOGAR_MATRICES[key][0] + ' · ')))) ||
-      (section[0] === '4.3 Accidentes en el hogar' && Object.keys(answers).some(k => k.startsWith(HOGAR_MATRICES.accidentes[0] + ' · '))) ||
-      (section[0] === '5.3 Higiene' && Object.keys(answers).some(k => k.startsWith(HOGAR_MATRICES.higiene[0] + ' · ')));
-    if (!included.length && !hasMatrix && !(section[0] === 'Información de la vivienda' && answers['Integrantes del hogar'])) return;
     blocks.push({ type: 'section', title: section[0].toUpperCase() });
     section[1].forEach(q => {
       if (q[0] === '__MATRIX_MOVILIDAD__') { appendMatrix('movilidad'); appendMatrix('demora'); return; }
       if (q[0] === '__MATRIX_ACCIDENTES__') { appendMatrix('accidentes'); return; }
       if (q[0] === '__MATRIX_4114__') { appendMatrix('usosElementos'); return; }
-      if (answers[q[0]]) blocks.push({ type: 'row', label: q[0], value: answers[q[0]] });
+      appendQuestion(q);
       if (q[0].startsWith('5.3.3 ¿Cómo se realiza')) appendMatrix('higiene');
-      if (q[0].startsWith('5.3.7 ¿Se comparten') && answers['5.3.7 Otro ¿Cuál? (si aplica)']) blocks.push({ type: 'row', label: '5.3.7 Otro ¿Cuál? (si aplica)', value: answers['5.3.7 Otro ¿Cuál? (si aplica)'] });
+      if (q[0].startsWith('5.3.7 ¿Se comparten')) {
+        blocks.push({ type: 'row', label: '5.3.7 Otro ¿Cuál? (si aplica)', value: hogarPick(answers['5.3.7 Otro ¿Cuál? (si aplica)'], HOGAR_DEF_NINGUNO) });
+      }
     });
     if (section[0] === 'Información de la vivienda') {
       appendMatrix('cursoVida');
-      if (answers['Integrantes del hogar']) {
-        // Cada integrante se muestra como su propio sub-bloque, con la pregunta
-        // exacta de la ficha (3.1 Primer apellido, 3.2 Tipo de documento, etc.)
-        // en vez de una sola línea con todo mezclado.
-        answers['Integrantes del hogar'].forEach((m, i) => {
-          blocks.push({ type: 'section', title: `2. INFORMACIÓN DEMOGRÁFICA — Integrante ${i + 1}` });
-          HOGAR_MIEMBRO_FIELDS.forEach(([label, key]) => {
-            if (m[key]) blocks.push({ type: 'row', label, value: m[key] });
-          });
-        });
-      }
+      // Cada integrante es su propio sub-bloque. Si no se registró ninguno,
+      // se muestra el Integrante 1 con los valores por defecto.
+      const lista = Array.isArray(answers['Integrantes del hogar']) && answers['Integrantes del hogar'].length ? answers['Integrantes del hogar'] : [{}];
+      lista.forEach((m, i) => {
+        blocks.push({ type: 'section', title: `2. INFORMACIÓN DEMOGRÁFICA — Integrante ${i + 1}` });
+        HOGAR_MIEMBRO_FIELDS.forEach(([label, key]) => blocks.push({ type: 'row', label, value: hogarMiembroValor(key, m[key]) }));
+      });
     }
   });
   return blocks;
@@ -1840,7 +1899,7 @@ function renderInstitutionalPdf(opts) {
   } = opts;
   const clean = value => String(value ?? '—').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ').replace(/[\\()]/g, '\\$&');
   const wrap = (value, width) => {
-    const words = clean(value).split(/\s+/), rows = []; let line = '';
+    const words = clean(value).replace(/\\([\\()])/g, '$1').split(/\s+/), rows = []; let line = ''; // text() vuelve a escapar: se evita el doble escape que mostraba \( \)
     words.forEach(word => { if ((line + ' ' + word).trim().length > width && line) { rows.push(line); line = word; } else line = (line + ' ' + word).trim(); });
     return rows.length || line ? [...rows, line].filter(Boolean) : ['—'];
   };
@@ -2673,13 +2732,23 @@ function hogarAnswerHasOption(raw, option) {
 function hogarMatrixGroupPlan(matrixKey, extraCols = []) {
   const [title, rows, cols] = HOGAR_MATRICES[matrixKey];
   const num = hogarNum(title);
-  const subcols = rows.flatMap(row => cols.map(col => ({
-    header: `${num} · ${row} · ${col}`,
-    get: r => (r.respuestas || {})[`${title} · ${row} · ${col}`] ?? ''
-  })));
+  const esCantidad = matrixKey === 'cursoVida';
+  const keys = rows.flatMap(row => cols.map(col => `${title} · ${row} · ${col}`));
+  // Matriz de cantidades → 0 en celdas vacías. Matriz de marcas (X): si no se marcó
+  // ninguna celda, todas muestran NINGUNO; si hay marcas, las demás quedan vacías.
+  const celda = (r, key) => {
+    const a = r.respuestas || {};
+    if (!hogarVacio(a[key])) return hogarUp(String(a[key]).trim());
+    if (esCantidad) return HOGAR_DEF_CERO;
+    return keys.some(k => !hogarVacio(a[k])) ? '' : HOGAR_DEF_NINGUNO;
+  };
+  const subcols = keys.map(key => {
+    const [, row, col] = key.split(' · ');
+    return { header: `${num} · ${row} · ${col}`, get: r => celda(r, key) };
+  });
   extraCols.forEach(({ label, key }) => subcols.push({
     header: `${num} · ${label}`,
-    get: r => (r.respuestas || {})[key] ?? ''
+    get: r => hogarPick((r.respuestas || {})[key], HOGAR_DEF_NINGUNO)
   }));
   return { kind: 'group', groupTitle: title, subcols };
 }
@@ -2690,13 +2759,17 @@ function hogarChecklistGroupPlan(question) {
   const num = hogarNum(label);
   const subcols = options.map(o => ({
     header: `${num} · ${o}`,
-    get: r => hogarAnswerHasOption((r.respuestas || {})[label], o) ? 'X' : ''
+    get: r => {
+      const raw = (r.respuestas || {})[label];
+      if (hogarVacio(raw)) return HOGAR_DEF_NINGUNO; // pregunta sin contestar
+      return hogarAnswerHasOption(raw, o) ? 'X' : '';
+    }
   }));
   return { kind: 'group', groupTitle: label, subcols };
 }
 
 function hogarSimplePlan(key, header) {
-  return { kind: 'simple', header: header ?? key, get: r => (r.respuestas || {})[key] ?? '' };
+  return { kind: 'simple', header: header ?? key, get: r => hogarPick((r.respuestas || {})[key], HOGAR_DEFAULTS[key] ?? HOGAR_DEF_NO_PERTENECE) };
 }
 
 function hogarExcelColumnPlan() {
@@ -3184,7 +3257,12 @@ async function exportHogarCSV() {
   if (!recs.length) { toast('No hay registros de Hogar para exportar', 'err'); return; }
 
   const colsFijas = ['Fecha','Municipio','Dirección','Teléfono','Quien diligencia','Quien atiende','Hora inicio','Hora fin'];
-  const getFijas = [r=>r.fecha, r=>r.municipio, r=>r.direccion, r=>r.telefono, r=>r.diligencia, r=>r.atiende, r=>r.inicio, r=>r.fin];
+  const getFijas = [
+    r => hogarPick(r.fecha, HOGAR_DEF_NO_PERTENECE), r => hogarPick(r.municipio, HOGAR_DEF_NO_PERTENECE),
+    r => hogarPick(r.direccion, HOGAR_DEF_NO_PERTENECE), r => hogarPick(r.telefono, HOGAR_DEF_CERO),
+    r => hogarPick(r.diligencia, HOGAR_DEF_NO_PERTENECE), r => hogarPick(r.atiende, HOGAR_DEF_NO_PERTENECE),
+    r => hogarPick(r.inicio, HOGAR_DEF_NO_PERTENECE), r => hogarPick(r.fin, HOGAR_DEF_NO_PERTENECE)
+  ];
   const plan = hogarExcelColumnPlan();
 
   // Aplanamos el plan a una sola lista de columnas, guardando dónde empieza
@@ -3259,11 +3337,11 @@ async function exportHogarCSV() {
   intHeaderRow.eachCell(cell => hogarExcelStyleHeaderCell(cell, HOGAR_EXCEL_HEADER_FILL));
   let intIdx = 0;
   recs.forEach(r => {
-    const miembros = (r.respuestas || {})['Integrantes del hogar'];
-    if (!Array.isArray(miembros)) return;
+    const registrados = (r.respuestas || {})['Integrantes del hogar'];
+    const miembros = (Array.isArray(registrados) ? registrados : []).filter(m => Object.values(m).some(Boolean));
+    if (!miembros.length) miembros.push({}); // sin integrantes: una fila con valores por defecto
     miembros.forEach((m, i) => {
-      if (!Object.values(m).some(Boolean)) return;
-      const fila = [r.fecha, r.direccion, r.telefono, i + 1, ...HOGAR_MIEMBRO_FIELDS.map(([, key]) => m[key] ?? '')];
+      const fila = [hogarPick(r.fecha, HOGAR_DEF_NO_PERTENECE), hogarPick(r.direccion, HOGAR_DEF_NO_PERTENECE), hogarPick(r.telefono, HOGAR_DEF_CERO), i + 1, ...HOGAR_MIEMBRO_FIELDS.map(([, key]) => hogarMiembroValor(key, m[key]))];
       const row = wsInt.addRow(fila);
       const bg = intIdx % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC';
       row.eachCell(cell => { cell.alignment = { vertical: 'top' }; cell.border = { bottom: THIN_BORDER }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } }; });
