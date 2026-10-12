@@ -65,7 +65,7 @@
       window.fbSaveHogar = async function (municipio, registro) {
         await waitAuth();
         const ref = doc(db, 'municipios', municipio, 'hogar', String(registro.id));
-        await setDoc(ref, registro, { merge: true });
+        await setDoc(ref, registro); // reemplazo completo: así las respuestas borradas al editar no reaparecen
       };
 
       // Elimina un registro de Hogar
@@ -1733,10 +1733,19 @@ function populateHogarForm(r) {
     if (!label || answers[label] === undefined) return;
     const val = answers[label];
     if (el.type === 'checkbox') {
-      const selected = String(val).split(/,\s*/);
-      el.checked = selected.includes(el.value);
+      // Las respuestas múltiples se guardan con ' | ' (o ', ' en registros antiguos).
+      const txt = String(val);
+      // Registros antiguos (separador ', ') con opciones que contienen comas: se busca la opción completa.
+      el.checked = hogarAnswerHasOption(txt, el.value) || (!txt.includes(' | ') && (', ' + txt + ', ').includes(', ' + el.value + ', '));
     } else if (el.type === 'radio') {
-      el.checked = el.value === val;
+      el.checked = String(el.value).trim() === String(val).trim();
+    } else if (el.tagName === 'SELECT') {
+      const v = String(val);
+      if (![...el.options].some(o => o.value === v)) {
+        const match = [...el.options].find(o => o.value.trim().toLowerCase() === v.trim().toLowerCase());
+        if (match) el.value = match.value;
+        else { const o = document.createElement('option'); o.textContent = v; o.value = v; el.appendChild(o); el.value = v; }
+      } else el.value = v;
     } else {
       el.value = val;
     }
